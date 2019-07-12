@@ -3,5 +3,5 @@ all:
 	(cd CVShareMem; make all)
 
 clean:
-	(cd CVQuote_Debug; make clean)
+	(cd CVQuote; make clean)
 	(cd CVShareMem; make clean)

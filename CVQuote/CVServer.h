@@ -64,10 +64,7 @@ enum TSKClientStauts
 
 enum TSKRequestMarket
 {
-	rmTS,
-	rmTF,
-	rmOF,
-	rmOS,
+	rmBitmex,
 	rmNum
 };
 
@@ -123,13 +120,13 @@ class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_sh
 		bool GetAccount(char* pID, char* pAgent, char* pVersion, vector<char*> &vAccountData);
 
 		bool RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv);
-		bool SendAll(const char* pWhat, const unsigned char* pBuf, int nToSend);
 
 		void InitialBranchAccountInfo();
 		bool CheckBranchAccount(TSKRequestMarket rmRequestMarket, unsigned char* pRequstMessage);
 
 	public:
 		CSKClient(struct TSKClientAddrInfo &ClientAddrInfo);
+		bool SendAll(const char* pWhat, const unsigned char* pBuf, int nToSend);
 		virtual ~CSKClient();
 
 		void TriggerSendRequestEvent(CSKServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength);

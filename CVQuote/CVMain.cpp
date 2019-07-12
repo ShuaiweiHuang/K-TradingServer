@@ -37,7 +37,11 @@ int main()
 	signal(SIGPIPE, SIG_IGN );
 	srand(time(NULL));
 
-#if 0
+	string strListenPort, strHeartBeatTime, strEPID;
+	ReadClientConfigFile("../ini/CVQuote.ini", strListenPort, strHeartBeatTime, strEPID);
+	int nService = 0;
+	if(struTSConfig.nServerCount > 0)
+		nService += 1<<0;
 	ReadConfigFile("../ini/CVQuote.ini", "BITMEX", struTSConfig);
 	CSKServers* pServers = NULL;
 	try
@@ -53,18 +57,11 @@ int main()
 	{
 		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
 	}
-#endif
-	string strListenPort, strHeartBeatTime, strEPID;
-	ReadClientConfigFile("CVQuote.ini", strListenPort, strHeartBeatTime, strEPID);
-	int nService = 0;
-	if(struTSConfig.nServerCount > 0)
-		nService += 1<<0;
 
 	CSKClients* pClients = NULL;
 	try
 	{
 		pClients = CSKClients::GetInstance();
-
 		if(pClients == NULL)
 			throw "GET_CLIENTS_ERROR";
 
@@ -79,6 +76,7 @@ int main()
 	{
 		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
 	}
+
 	return 0;
 }
 
@@ -130,5 +128,5 @@ void ReadClientConfigFile(string strConfigFileName, string& strListenPort, strin
 	assert(g_key_file_load_from_file(keyfile, strConfigFileName.c_str(), flags, &error));
 	strListenPort    = g_key_file_get_string(keyfile, "SERVER", "ListenPort",    NULL);
 	strHeartBeatTime = g_key_file_get_string(keyfile, "SERVER", "HeartBeatTime", NULL);
-	strEPID          = g_key_file_get_string(keyfile, "SERVER", "EPIDnum",     NULL);
+//	strEPID          = g_key_file_get_string(keyfile, "SERVER", "EPIDnum",     NULL);
 }

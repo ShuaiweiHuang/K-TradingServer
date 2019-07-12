@@ -1,6 +1,8 @@
 #ifndef INCLUDE_SKGLOBAL_H_
 #define INCLUDE_SKGLOBAL_H_
 
+#define CONNECT_TCP 1
+#define CONNECT_WEBSOCK 2
 #include "CVCommon/CVSharedMemory.h"
 
 /***** PACKET IDENTIFIER *****/

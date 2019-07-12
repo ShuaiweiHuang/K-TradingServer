@@ -1,10 +1,4 @@
-/*
- * CSKClientSocket.cpp
- *
- *  Created on: 2015年10月26日
- *      Author: alex
- */
-
+#include <iostream>
 #include <string.h>
 #include <sstream>
 #include <stddef.h>
@@ -16,8 +10,8 @@
 
 #include "ISKClientSocketCallback.h"
 #include "CVClientSocket.h"
-
-#include <iostream>
+#include "CVWebSocket.h"
+#include "../CVGlobal.h"
 using namespace std;
 
 CSKClientSocket::CSKClientSocket() 
@@ -51,48 +45,74 @@ CSKClientSocket::~CSKClientSocket()
 	// TODO Auto-generated destructor stub
 }
 
-void CSKClientSocket::Connect(string strHost, string strPort)
+void CSKClientSocket::Connect(string strHost, string strPort, int type)
+
 {
-	m_cssClientSocketStatus = cssConnecting;
-
-	m_AddrInfo.ai_family = AF_INET;
-	m_AddrInfo.ai_socktype = SOCK_STREAM;
-
-	/*
-	stringstream ss;
-
-	ss << nPort;
-
-	string strPort = ss.str();
-	*/
-
-	getaddrinfo( strHost.c_str(), strPort.c_str(), &m_AddrInfo, &m_AddrRes);
-
-	// make a socket:
-	m_nSocket = socket( m_AddrRes->ai_family, m_AddrRes->ai_socktype, m_AddrRes->ai_protocol);
-
-	// connect!
-	int nRs = connect( m_nSocket, m_AddrRes->ai_addr, m_AddrRes->ai_addrlen);
-
-	if ( nRs == 0)
+	if(type == CONNECT_TCP)
 	{
-		m_cssClientSocketStatus = cssConnected;
+		m_cssClientSocketStatus = cssConnecting;
 
-		if ( m_pClientSocketCallback)
+		m_AddrInfo.ai_family = AF_INET;
+		m_AddrInfo.ai_socktype = SOCK_STREAM;
+
+
+		getaddrinfo( strHost.c_str(), strPort.c_str(), &m_AddrInfo, &m_AddrRes);
+
+		m_nSocket = socket( m_AddrRes->ai_family, m_AddrRes->ai_socktype, m_AddrRes->ai_protocol);
+
+		int nRs = connect( m_nSocket, m_AddrRes->ai_addr, m_AddrRes->ai_addrlen);
+
+		if ( nRs == 0)
 		{
-			m_pClientSocketCallback->OnConnect();
+			m_cssClientSocketStatus = cssConnected;
+
+			if ( m_pClientSocketCallback)
+			{
+				m_pClientSocketCallback->OnConnect();
+			}
+		}
+		else
+		{
+			fprintf(stderr, "[%s][%d]", strerror(errno), errno);
+
+			m_cssClientSocketStatus = cssDisconnect;
+
+			if ( m_pClientSocketCallback)
+			{
+				m_pClientSocketCallback->OnDisconnect();
+			}
+		}
+	}
+	else if(type == CONNECT_WEBSOCK)
+	{
+		string uri = strHost + strPort;
+		try {
+			m_cfd.set_access_channels(websocketpp::log::alevel::all);
+			m_cfd.clear_access_channels(websocketpp::log::alevel::frame_payload);
+			m_cfd.set_error_channels(websocketpp::log::elevel::all);
+
+			m_cfd.init_asio();
+			m_cfd.set_message_handler(&on_message);
+			m_cfd.set_tls_init_handler(bind(&on_tls_init, strHost.c_str(), ::_1));
+
+			websocketpp::lib::error_code errcode;
+
+			client::connection_ptr con = m_cfd.get_connection(uri, errcode);
+
+			if (errcode) {
+				cout << "could not create connection because: " << errcode.message() << endl;
+				exit(-1);
+			}
+
+			m_cfd.connect(con);
+			m_cfd.get_alog().write(websocketpp::log::alevel::app, "Connecting to " + uri);
+		} catch (websocketpp::exception const & ecp) {
+			cout << ecp.what() << endl;
 		}
 	}
 	else
 	{
-		fprintf(stderr, "[%s][%d]", strerror(errno), errno);
-
-		m_cssClientSocketStatus = cssDisconnect;
-
-		if ( m_pClientSocketCallback)
-		{
-			m_pClientSocketCallback->OnDisconnect();
-		}
+		fprintf(stderr, "CONNECT_TYPE_FAIL\n");
 	}
 }
 

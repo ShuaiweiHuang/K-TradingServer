@@ -328,9 +328,7 @@ void CSKServers::StartUpServers()
 					if(!IsServerPoolFull((TSKRequestMarket)i, &(m_vvvServerPool.at(i).at(j))))
 					{
 						AddFreeServer((TSKRequestMarket)i, j);
-#ifdef DEBUG
 						cout << "Market = " << i << ",server count*pool = " << j <<  ",server obj. = "  << k << endl;
-#endif
 					}
 					else
 					{

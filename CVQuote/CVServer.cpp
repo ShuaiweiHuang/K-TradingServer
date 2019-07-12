@@ -76,6 +76,7 @@ CSKClient::~CSKClient()
 #endif
 }
 
+
 void* CSKClient::Run()
 {
 	unsigned char uncaRecvBuf[MAXDATA];
@@ -86,6 +87,10 @@ void* CSKClient::Run()
 	enum TSKRequestMarket rmRequestMarket = rmNum;
 	bool bLogon;
 
+	while(1) {
+		usleep(10);
+	//	send(m_ClientAddrInfo.nSocket, netmsg, strlen(netmsg), 0);
+	}
 	CSKClients* pClients = NULL;
 	try
 	{
@@ -124,7 +129,6 @@ void* CSKClient::Run()
 		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
 		return NULL;
 	}
-
 	while(m_csClientStatus != csOffline)
 	{
 		bool bSendLogonReply;
@@ -316,19 +320,7 @@ void* CSKClient::Run()
 
 					if(uncaEscapeBuf[1] == TS_ORDER_BYTE)
 					{
-						rmRequestMarket = rmTS;
-					}
-					else if(uncaEscapeBuf[1] == TF_ORDER_BYTE)
-					{
-						rmRequestMarket = rmTF;
-					}
-					else if(uncaEscapeBuf[1] == OF_ORDER_BYTE)
-					{
-						rmRequestMarket = rmOF;
-					}
-					else if(uncaEscapeBuf[1] == OS_ORDER_BYTE)
-					{
-						rmRequestMarket = rmOS;
+						rmRequestMarket = rmBitmex;
 					}
 					else
 					{
@@ -456,7 +448,7 @@ bool CSKClient::Logon(char* pID, char* pPasswd, struct TSKLogonReply &struLogonR
 	try
 	{
 		pClientSocket = new CSKClientSocket();
-		pClientSocket->Connect("pass.capital.com.tw", "80");
+		pClientSocket->Connect("pass.capital.com.tw", "80", CONNECT_TCP);
 	}
 	catch(exception& e)
 	{
@@ -711,7 +703,7 @@ bool CSKClient::GetAccount(char* pID, char* pAgent, char* pVersion, vector<char*
 	try
 	{
 		pClientSocket = new CSKClientSocket();
-		pClientSocket->Connect("aptrade.capital.com.tw", "4000");
+		pClientSocket->Connect("aptrade.capital.com.tw", "4000", CONNECT_TCP);
 	}
 	catch(exception& e)
 	{
@@ -1028,7 +1020,7 @@ bool CSKClient::CheckBranchAccount(TSKRequestMarket rmRequestMarket, unsigned ch
 {
 	try
 	{
-		if(rmRequestMarket == rmTS || rmRequestMarket == rmTF || rmRequestMarket == rmOF || rmRequestMarket == rmOS)
+		if(rmRequestMarket == rmBitmex)
 		{
 			char caBranchAccount[4+8+8+1];
 			memset(caBranchAccount, 0, sizeof(caBranchAccount));
@@ -1038,15 +1030,15 @@ bool CSKClient::CheckBranchAccount(TSKRequestMarket rmRequestMarket, unsigned ch
 			memcpy(caBranchAccount + pstruBranchAccountInfo->nBranchLength, pRequestMessage + pstruBranchAccountInfo->nAccountPosition, pstruBranchAccountInfo->nAccountLength);
 			memcpy(caBranchAccount + pstruBranchAccountInfo->nBranchLength + pstruBranchAccountInfo->nAccountLength, pRequestMessage + pstruBranchAccountInfo->nSubAccountPosition, pstruBranchAccountInfo->nSubAccountLength);
 
-		string strBranchAccount(caBranchAccount);
-		string strMarket(pstruBranchAccountInfo->pMarket);
-		string strMarketBranchAccount = strMarket + strBranchAccount;
+			string strBranchAccount(caBranchAccount);
+			string strMarket(pstruBranchAccountInfo->pMarket);
+			string strMarketBranchAccount = strMarket + strBranchAccount;
 
-		if(m_mMarketBranchAccount.count(strMarketBranchAccount) <= 0)
-			return false;
-			//return -1124;
-		else
-			return true;
+			if(m_mMarketBranchAccount.count(strMarketBranchAccount) <= 0)
+				return false;
+				//return -1124;
+			else
+				return true;
 		}
 		else
 			FprintfStderrLog("REQUEST_MARKET_ERROR", -1, rmRequestMarket, __FILE__, __LINE__);

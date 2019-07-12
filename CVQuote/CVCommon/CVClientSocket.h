@@ -13,6 +13,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include "CVWebSocket.h"
 
 using namespace std;
 
@@ -43,11 +44,12 @@ class CSKClientSocket
 		void Close();
 
 	public:
+		client m_cfd;
 		CSKClientSocket();
 		CSKClientSocket(ISKClientSocketCallback* pClientSocketCallback);
 		virtual ~CSKClientSocket();
 
-		void Connect(string strHost, string strPort);
+		void Connect(string strHost, string strPort, int type);
 		void Disconnect();
 
 		int Send(const unsigned char* pBuf, int nSize);

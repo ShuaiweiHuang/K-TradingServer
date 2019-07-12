@@ -33,7 +33,6 @@ class CSKClients: public CSKThread, public ISKSocketCallback
 		CSKServerSocket* m_pServerSocket;
 		string m_strListenPort;
 
-		vector<shared_ptr<CSKClient> > m_vClient;
 
 		int m_nService;
 
@@ -49,6 +48,7 @@ class CSKClients: public CSKThread, public ISKSocketCallback
 		void OnShutdown();
 
 	public:
+		vector<shared_ptr<CSKClient> > m_vClient;
 		string m_strHeartBeatTime;
 		static CSKClients* GetInstance();
 

@@ -6,6 +6,7 @@
 #include <memory>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include <sys/msg.h>
 
 #include "CVCommon/CVServerSocket.h"
 #include "CVWebClients.h"
@@ -108,6 +109,7 @@ void CSKClients::SetConfiguration(string& strListenPort, string& strHeartBeatTim
 		FprintfStderrLog("NEW_SERVERSOCKET_ERROR", -1, 0, NULL, 0, (unsigned char*)e.what(), strlen(e.what()));
 	}
 }
+
 
 void CSKClients::CheckClientVector()
 {

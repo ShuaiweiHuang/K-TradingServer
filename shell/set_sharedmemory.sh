@@ -57,7 +57,7 @@ elif [[ $SERVICE == "Quote" ]]; then
 	fi
 fi
 
-    BIN_DIR=../bin/
+    BIN_DIR=../bin
 
 $BIN_DIR/CVSetTickNumber $SERIALKEY $NUM
 echo set tick number as $NUM

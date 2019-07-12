@@ -38,12 +38,11 @@ CSKServer::CSKServer(string strWeb, string strQstr, TSKRequestMarket rmRequestMa
 	m_ssServerStatus = ssNone;
 
 	m_rmRequestMarket = rmRequestMarket;
-
 	pthread_mutex_init(&m_pmtxServerStatusLock, NULL);
 
 	switch(m_rmRequestMarket)
 	{
-		case rmTS:
+		case rmBitmex:
 			m_nReplyMessageLength = sizeof(struct SK_TS_REPLY);
 			m_uncaSecondByte = TS_ORDER_BYTE;
 
@@ -62,12 +61,14 @@ CSKServer::CSKServer(string strWeb, string strQstr, TSKRequestMarket rmRequestMa
 	try
 	{
 		m_pClientSocket = new CSKClientSocket(this);
-		m_pClientSocket->Connect( m_strWeb, m_strQstr);//start
+		m_pClientSocket->Connect( m_strWeb, m_strQstr, CONNECT_WEBSOCK);//start
 	}
 	catch (exception& e)
 	{
 		FprintfStderrLog("SERVER_NEW_SOCKET_ERROR", -1, 0, NULL, 0, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID), (unsigned char*)e.what(), strlen(e.what()));
 	}
+	printf("keanu server init\n");
+	Start();
 }
 
 CSKServer::~CSKServer() 
@@ -99,6 +100,7 @@ CSKServer::~CSKServer()
 void* CSKServer::Run()
 {
 	sprintf(m_caPthread_ID, "%020lu", Self());
+	m_pClientSocket->m_cfd.run();
 
 	try
 	{
@@ -313,7 +315,7 @@ void CSKServer::OnDisconnect()
 {
 	sleep(5);
 
-//	m_pClientSocket->Connect( m_strWeb, m_strQstr);//start & reset heartbeat
+//	m_pClientSocket->Connect( m_strWeb, m_strQstr, CONNECT_TCP);//start & reset heartbeat
 }
 
 void CSKServer::OnData(unsigned char* pBuf, int nSize)
@@ -481,7 +483,7 @@ void CSKServer::ReconnectSocket()
 	{
 		m_pClientSocket->Disconnect();
 
-		m_pClientSocket->Connect( m_strWeb, m_strQstr);//start & reset heartbeat
+		m_pClientSocket->Connect( m_strWeb, m_strQstr, CONNECT_TCP);//start & reset heartbeat
 	}
 }
 

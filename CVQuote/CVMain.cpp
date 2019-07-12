@@ -6,8 +6,8 @@
 #include <glib.h>
 #include <unistd.h>
 
-#include "CVServers.h"
-#include "CVWebClients.h"
+#include "CVServerManager.h"
+#include "CVWebClientManager.h"
 
 using namespace std;
 
@@ -18,7 +18,7 @@ extern void FprintfStderrLog(const char* pCause, int nError, int nData, const ch
                              unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
 void ReadConfigFile(string strConfigFileName, string strSection, struct TSKConfig &struConfig);
-void ReadClientConfigFile(string strConfigFileName, string& strListenPort, string& strHeartBeatTime, string &strEPID);
+void ReadClientConfigFile(string strConfigFileName, string& strListenPort, string& strHeartBeatTime, string &strEPIDNum);
 #define DECLARE_CONFIG_DATA(CONFIG)\
 	struct TSKConfig stru##CONFIG;\
 	memset(&stru##CONFIG, 0, sizeof(struct TSKConfig));\
@@ -37,16 +37,21 @@ int main()
 	signal(SIGPIPE, SIG_IGN );
 	srand(time(NULL));
 
-	string strListenPort, strHeartBeatTime, strEPID;
-	ReadClientConfigFile("../ini/CVQuote.ini", strListenPort, strHeartBeatTime, strEPID);
+	string strListenPort, strHeartBeatTime, strEPIDNum;
+	ReadClientConfigFile("../ini/CVQuote.ini", strListenPort, strHeartBeatTime, strEPIDNum);
+<<<<<<< HEAD
+=======
+
+>>>>>>> [CVQUOTE] add EPID
 	int nService = 0;
 	if(struTSConfig.nServerCount > 0)
 		nService += 1<<0;
-	ReadConfigFile("../ini/CVQuote.ini", "BITMEX", struTSConfig);
+
+	ReadConfigFile("../ini/CVQuote.ini", "EXCHANGE", struTSConfig);
 	CSKServers* pServers = NULL;
 	try
 	{
-		CSKServers* pServers = CSKServers::GetInstance();
+		pServers = CSKServers::GetInstance();
 		if(pServers == NULL)
 			throw "GET_SERVERS_ERROR";
 
@@ -58,6 +63,8 @@ int main()
 		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
 	}
 
+
+
 	CSKClients* pClients = NULL;
 	try
 	{
@@ -65,7 +72,7 @@ int main()
 		if(pClients == NULL)
 			throw "GET_CLIENTS_ERROR";
 
-		pClients->SetConfiguration(strListenPort, strHeartBeatTime, nService);
+		pClients->SetConfiguration(strListenPort, strHeartBeatTime, strEPIDNum, nService);
 		while(1)
 		{
 			pClients->CheckClientVector();
@@ -90,35 +97,35 @@ void ReadConfigFile(string strConfigFileName, string strSection, struct TSKConfi
 	flags = GKeyFileFlags(G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS);
 
 	assert(g_key_file_load_from_file(keyfile, strConfigFileName.c_str(), flags, &error));
-
-	struConfig.nPoolCount = g_key_file_get_integer(keyfile, strSection.c_str(), "PoolCount", NULL);
-	struConfig.nInitailServerObjectCount = g_key_file_get_integer(keyfile, strSection.c_str(), "InitialServerObjectCount", NULL);
-	struConfig.nMaximumServerObjectCount = g_key_file_get_integer(keyfile, strSection.c_str(), "MaximumServerObjectCount", NULL);
-	struConfig.nIncrementalServerObjectCount = g_key_file_get_integer(keyfile, strSection.c_str(), "IncrementalServerObjectCount", NULL);
 	struConfig.nServerCount = g_key_file_get_integer(keyfile, strSection.c_str(), "ServerCount", NULL);//todo->check?
 
 	char caWeb[5];
 	char caQstr[7];
+	char caName[7];
 
 	for(int i=0;i<struConfig.nServerCount;i++)
 	{
 		memset(caWeb, 0, sizeof(caWeb));
 		memset(caQstr, 0, sizeof(caQstr));
+		memset(caName, 0, sizeof(caName));
 
 		sprintf(caWeb, "WEB%02d", i+1);
 		sprintf(caQstr, "QSTR%02d", i+1);
+		sprintf(caName, "NAME%02d", i+1);
 
 		struct TSKServerInfo* pstruServerInfo = new struct TSKServerInfo;//destruct
 		pstruServerInfo->strWeb  = g_key_file_get_string(keyfile, strSection.c_str(), caWeb, NULL);
 		pstruServerInfo->strQstr = g_key_file_get_string(keyfile, strSection.c_str(), caQstr, NULL);
+		pstruServerInfo->strName = g_key_file_get_string(keyfile, strSection.c_str(), caName, NULL);
 		printf("Connect web: %s\n", pstruServerInfo->strWeb.c_str());
 		printf("Query strnig: %s\n", pstruServerInfo->strQstr.c_str());
+		printf("Exchange: %s\n", pstruServerInfo->strName.c_str());
 
 		struConfig.vServerInfo.push_back(pstruServerInfo);
 	}
 }
 
-void ReadClientConfigFile(string strConfigFileName, string& strListenPort, string& strHeartBeatTime, string& strEPID)
+void ReadClientConfigFile(string strConfigFileName, string& strListenPort, string& strHeartBeatTime, string& strEPIDNum)
 {
 	GKeyFile *keyfile;
 	GKeyFileFlags flags;
@@ -126,7 +133,7 @@ void ReadClientConfigFile(string strConfigFileName, string& strListenPort, strin
 	keyfile = g_key_file_new();
 	flags = GKeyFileFlags(G_KEY_FILE_KEEP_COMMENTS | G_KEY_FILE_KEEP_TRANSLATIONS);
 	assert(g_key_file_load_from_file(keyfile, strConfigFileName.c_str(), flags, &error));
+	strEPIDNum       = g_key_file_get_string(keyfile, "SERVER", "EpidNum",     NULL);
 	strListenPort    = g_key_file_get_string(keyfile, "SERVER", "ListenPort",    NULL);
 	strHeartBeatTime = g_key_file_get_string(keyfile, "SERVER", "HeartBeatTime", NULL);
-//	strEPID          = g_key_file_get_string(keyfile, "SERVER", "EPIDnum",     NULL);
 }

@@ -10,9 +10,10 @@
 
 #include "ISKClientSocketCallback.h"
 #include "CVClientSocket.h"
-#include "CVWebSocket.h"
+#include "../CVWebSocket.h"
 #include "../CVGlobal.h"
 using namespace std;
+
 
 CSKClientSocket::CSKClientSocket() 
 {
@@ -42,10 +43,9 @@ CSKClientSocket::CSKClientSocket(ISKClientSocketCallback* pClientSocketCallback)
 
 CSKClientSocket::~CSKClientSocket() 
 {
-	// TODO Auto-generated destructor stub
 }
 
-void CSKClientSocket::Connect(string strHost, string strPort, int type)
+void CSKClientSocket::Connect(string strHost, string strPara, string strName, int type)
 
 {
 	if(type == CONNECT_TCP)
@@ -56,7 +56,7 @@ void CSKClientSocket::Connect(string strHost, string strPort, int type)
 		m_AddrInfo.ai_socktype = SOCK_STREAM;
 
 
-		getaddrinfo( strHost.c_str(), strPort.c_str(), &m_AddrInfo, &m_AddrRes);
+		getaddrinfo( strHost.c_str(), strPara.c_str(), &m_AddrInfo, &m_AddrRes);
 
 		m_nSocket = socket( m_AddrRes->ai_family, m_AddrRes->ai_socktype, m_AddrRes->ai_protocol);
 
@@ -85,14 +85,18 @@ void CSKClientSocket::Connect(string strHost, string strPort, int type)
 	}
 	else if(type == CONNECT_WEBSOCK)
 	{
-		string uri = strHost + strPort;
+		string uri = strHost + strPara;
 		try {
 			m_cfd.set_access_channels(websocketpp::log::alevel::all);
 			m_cfd.clear_access_channels(websocketpp::log::alevel::frame_payload);
 			m_cfd.set_error_channels(websocketpp::log::elevel::all);
 
 			m_cfd.init_asio();
-			m_cfd.set_message_handler(&on_message);
+			if(strName == "BITMEX")
+				m_cfd.set_message_handler(&on_message_bitmex);
+			else if(strName == "BINANCE")
+				m_cfd.set_message_handler(&on_message_binance);
+
 			m_cfd.set_tls_init_handler(bind(&on_tls_init, strHost.c_str(), ::_1));
 
 			websocketpp::lib::error_code errcode;

@@ -12,14 +12,11 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <pthread.h>
-#ifdef WFMO
 #include <algorithm>
 #include <deque>
-#endif
 
 namespace neosmart
 {
-#ifdef WFMO
 	struct neosmart_wfmo_t_
 	{
 		pthread_mutex_t Mutex;
@@ -47,7 +44,6 @@ namespace neosmart
 		int WaitIndex;
 	};
 	typedef neosmart_wfmo_info_t_ *neosmart_wfmo_info_t;
-#endif
 
 	struct neosmart_event_t_
 	{
@@ -55,12 +51,9 @@ namespace neosmart
 		pthread_mutex_t Mutex;
 		bool AutoReset;
 		bool State;
-#ifdef WFMO
 		std::deque<neosmart_wfmo_info_t_> RegisteredWaits;
-#endif
 	};
 
-#ifdef WFMO
 	bool RemoveExpiredWaitHelper(neosmart_wfmo_info_t_ wait)
 	{
 		int result = pthread_mutex_trylock(&wait.Waiter->Mutex);
@@ -95,7 +88,6 @@ namespace neosmart
 
 		return false;
 	}
-#endif
 
 	neosmart_event_t CreateEvent(bool manualReset, bool initialState)
 	{
@@ -201,7 +193,6 @@ namespace neosmart
 		return result;
 	}
 
-#ifdef WFMO
 	int WaitForMultipleEvents(neosmart_event_t *events, int count, bool waitAll, uint64_t milliseconds)
 	{
 		int unused;
@@ -345,19 +336,16 @@ namespace neosmart
 
 		return result;
 	}
-#endif
 
 	int DestroyEvent(neosmart_event_t event)
 	{
 		int result = 0;
 
-#ifdef WFMO
 		result = pthread_mutex_lock(&event->Mutex);
 		assert(result == 0);
 		event->RegisteredWaits.erase(std::remove_if (event->RegisteredWaits.begin(), event->RegisteredWaits.end(), RemoveExpiredWaitHelper), event->RegisteredWaits.end());
 		result = pthread_mutex_unlock(&event->Mutex);
 		assert(result == 0);
-#endif
 
 		result = pthread_cond_destroy(&event->CVariable);
 		assert(result == 0);
@@ -380,7 +368,6 @@ namespace neosmart
 		//Depending on the event type, we either trigger everyone or only one
 		if (event->AutoReset)
 		{
-#ifdef WFMO
 			while (!event->RegisteredWaits.empty())
 			{
 				neosmart_wfmo_info_t i = &event->RegisteredWaits.front();
@@ -435,7 +422,6 @@ namespace neosmart
 
 				return 0;
 			}
-#endif
 			//event->State can be false if compiled with WFMO support
 			if (event->State)
 			{
@@ -450,7 +436,6 @@ namespace neosmart
 		}
 		else
 		{
-#ifdef WFMO
 			for (size_t i = 0; i < event->RegisteredWaits.size(); ++i)
 			{
 				neosmart_wfmo_info_t info = &event->RegisteredWaits[i];
@@ -497,7 +482,6 @@ namespace neosmart
 				assert(result == 0);
 			}
 			event->RegisteredWaits.clear();
-#endif
 			result = pthread_mutex_unlock(&event->Mutex);
 			assert(result == 0);
 
@@ -521,25 +505,6 @@ namespace neosmart
 		return 0;
 	}
 
-#ifdef PULSE
-	int PulseEvent(neosmart_event_t event)
-	{
-		//This may look like it's a horribly inefficient kludge with the sole intention of reducing code duplication,
-		//but in reality this is what any PulseEvent() implementation must look like. The only overhead (function 
-		//calls aside, which your compiler will likely optimize away, anyway), is if only WFMO auto-reset waits are active
-		//there will be overhead to unnecessarily obtain the event mutex for ResetEvent() after. In all other cases (being 
-		//no pending waits, WFMO manual-reset waits, or any WFSO waits), the event mutex must first be released for the
-		//waiting thread to resume action prior to locking the mutex again in order to set the event state to unsignaled, 
-		//or else the waiting threads will loop back into a wait (due to checks for spurious CVariable wakeups).
-
-		int result = SetEvent(event);
-		assert(result == 0);
-		result = ResetEvent(event);
-		assert(result == 0);
-
-		return 0;
-	}
-#endif
 }
 
 #endif //_WIN32

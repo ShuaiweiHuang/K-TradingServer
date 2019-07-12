@@ -7,26 +7,18 @@
 #include <sys/time.h>
 #include <fstream>
 
-#include "CVWebClients.h"
+#include "CVWebClientManager.h"
 #include "CVWebClient.h"
 #include "CVGlobal.h"
 #include "Include/CVTSFormat.h"
 
-
-#ifdef MNTRMSG
-extern struct MNTRMSGS g_MNTRMSG;
-#endif
-
-#ifdef TIMETEST
-extern void InsertTimeLogToSharedMemory(struct timeval *timeval_Start, struct timeval *timeval_End, enum TSKTimePoint tpTimePoint, long lOrderNumber);
-#endif
 
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0, 
                              unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKServer::CSKServer(string strWeb, string strQstr, TSKRequestMarket rmRequestMarket, int nPoolIndex)
+CSKServer::CSKServer(string strWeb, string strQstr, string strName, TSKRequestMarket rmRequestMarket)
 {
 	m_shpClient = NULL;
 	m_pHeartbeat = NULL;
@@ -34,40 +26,22 @@ CSKServer::CSKServer(string strWeb, string strQstr, TSKRequestMarket rmRequestMa
 
 	m_strWeb = strWeb;
 	m_strQstr = strQstr;
+	m_strName = strName;
 
 	m_ssServerStatus = ssNone;
 
 	m_rmRequestMarket = rmRequestMarket;
 	pthread_mutex_init(&m_pmtxServerStatusLock, NULL);
 
-	switch(m_rmRequestMarket)
-	{
-		case rmBitmex:
-			m_nReplyMessageLength = sizeof(struct SK_TS_REPLY);
-			m_uncaSecondByte = TS_ORDER_BYTE;
-
-			m_nOriginalOrderLength = sizeof(struct SK_TS_ORDER);
-
-			struct SK_TS_REPLY sk_ts_reply;
-			m_nReplyMsgLength = sizeof(sk_ts_reply.reply_msg);
-			break;
-		default:
-			FprintfStderrLog("REQUEST_MARKET_ERROR", -1, m_rmRequestMarket, __FILE__, __LINE__);
-			break;
-	}
-
-	m_nPoolIndex = nPoolIndex;
-
 	try
 	{
 		m_pClientSocket = new CSKClientSocket(this);
-		m_pClientSocket->Connect( m_strWeb, m_strQstr, CONNECT_WEBSOCK);//start
+		m_pClientSocket->Connect( m_strWeb, m_strQstr, m_strName, CONNECT_WEBSOCK);//start
 	}
 	catch (exception& e)
 	{
 		FprintfStderrLog("SERVER_NEW_SOCKET_ERROR", -1, 0, NULL, 0, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID), (unsigned char*)e.what(), strlen(e.what()));
 	}
-	printf("keanu server init\n");
 	Start();
 }
 
@@ -100,21 +74,8 @@ CSKServer::~CSKServer()
 void* CSKServer::Run()
 {
 	sprintf(m_caPthread_ID, "%020lu", Self());
+
 	m_pClientSocket->m_cfd.run();
-
-	try
-	{
-		m_pHeartbeat = new CSKHeartbeat(this);
-		m_pHeartbeat->SetTimeInterval(HEARTBEAT_TIME_INTERVAL);
-		m_pHeartbeat->Start();
-
-		m_pRequest = new CSKRequest(this);
-	}
-	catch (exception& e)
-	{
-		FprintfStderrLog("NEW_HEARTBEAT_ERROR", -1, 0, __FILE__, __LINE__, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID), (unsigned char*)e.what(), strlen(e.what()));
-		return NULL;
-	}
 
 	CSKServers* pServers = NULL;
 	try
@@ -207,13 +168,6 @@ void* CSKServer::Run()
 			}
 			else if(uncaEscapeBuf[1] == m_uncaSecondByte)
 			{
-#ifdef TIMETEST
-				struct  timeval timeval_Start;
-				struct  timeval timeval_End;
-				gettimeofday (&timeval_Start, NULL);
-				static int order_count = 0;
-#endif
-
 				CSKClient* pClient = m_shpClient.get();
 				if(pClient)
 				{
@@ -230,19 +184,7 @@ void* CSKServer::Run()
 						}
 
 						bool bSendRequestReply = pClient->SendRequestReply(m_uncaSecondByte, uncaRecvBuf, m_nReplyMessageLength);
-						if(bSendRequestReply == true)
-						{
-#ifdef TIMETEST
-							gettimeofday (&timeval_End, NULL) ;
-							InsertTimeLogToSharedMemory(&timeval_Start, &timeval_End, tpProxyToClient, order_count);
-							InsertTimeLogToSharedMemory(NULL, &timeval_End, tpProxyProcessEnd, order_count);
-							order_count++;
-#endif
-#ifdef MNTRMSG
-							g_MNTRMSG.num_of_order_Reply++;
-#endif
-						}
-						else
+						if(bSendRequestReply == false)
 							FprintfStderrLog("SEND_REQUEST_REPLY_ERROR", -1, 0, NULL, 0, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID), uncaRecvBuf, m_nReplyMessageLength);
 
 					m_shpClient = NULL;
@@ -250,15 +192,6 @@ void* CSKServer::Run()
 				else
 					FprintfStderrLog("CLIENT_OBJECT_NULL_ERROR", -1, 0, NULL, 0, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID), uncaRecvBuf, m_nReplyMessageLength);
 
-				SetStatus(ssFree);
-
-				if(pServers)
-				{
-					pServers->ChangeInuseServerCount(m_rmRequestMarket, m_nPoolIndex, -1);
-#ifdef MNTRMSG
-					pServers->UpdateAvailableServerNum(m_rmRequestMarket);
-#endif
-				}
 			}
 			else
 				FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, uncaEscapeBuf[1], __FILE__, __LINE__, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID));
@@ -315,7 +248,7 @@ void CSKServer::OnDisconnect()
 {
 	sleep(5);
 
-//	m_pClientSocket->Connect( m_strWeb, m_strQstr, CONNECT_TCP);//start & reset heartbeat
+	m_pClientSocket->Connect( m_strWeb, m_strQstr, m_strName, CONNECT_WEBSOCK);//start & reset heartbeat
 }
 
 void CSKServer::OnData(unsigned char* pBuf, int nSize)
@@ -347,12 +280,6 @@ void CSKServer::OnHeartbeatError(int nData, const char* pErrorMessage)
 
 void CSKServer::OnRequest()
 {
-#ifdef TIMETEST
-	static int request_count = 0;
-	struct  timeval timeval_Start;
-	struct  timeval timeval_End;
-	gettimeofday (&timeval_Start, NULL) ;
-#endif
 	bool bSendAll = SendAll("SEND_REQUEST", m_uncaRequestMessage, m_nRequestMessageLength);
 
 	if(bSendAll == false)
@@ -360,16 +287,6 @@ void CSKServer::OnRequest()
 		FprintfStderrLog("ON_REQUEST_ERROR", -1, 0, NULL, 0, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID), m_uncaRequestMessage, m_nRequestMessageLength);
 		return;
 	}
-#ifdef TIMETEST
-	gettimeofday (&timeval_End, NULL) ;
-//	InsertTimeLogToSharedMemory(&timeval_Start, &timeval_End, tpProxyToServer, request_count);
-	request_count++;
-#endif
-
-#ifdef MNTRMSG
-	g_MNTRMSG.num_of_order_Sent++;
-#endif
-
 }
 
 void CSKServer::OnRequestError(int nData, const char* pErrorMessage)
@@ -483,7 +400,7 @@ void CSKServer::ReconnectSocket()
 	{
 		m_pClientSocket->Disconnect();
 
-		m_pClientSocket->Connect( m_strWeb, m_strQstr, CONNECT_TCP);//start & reset heartbeat
+		m_pClientSocket->Connect( m_strWeb, m_strQstr, m_strName, CONNECT_TCP);//start & reset heartbeat
 	}
 }
 

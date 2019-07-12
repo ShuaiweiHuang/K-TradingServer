@@ -50,9 +50,10 @@ class CSKClients: public CSKThread, public ISKSocketCallback
 	public:
 		vector<shared_ptr<CSKClient> > m_vClient;
 		string m_strHeartBeatTime;
+		string m_strEPIDNum;
 		static CSKClients* GetInstance();
 
-		void SetConfiguration(string& strListenPort, string& strHeartBeatTime, int& nService);
+		void SetConfiguration(string& strListenPort, string& strHeartBeatTime, string& strEPIDNum, int& nService);
 
 		void CheckClientVector();
 		void PushBackClientToVector(shared_ptr<CSKClient>& shpClient);

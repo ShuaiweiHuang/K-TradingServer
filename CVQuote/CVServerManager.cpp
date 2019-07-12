@@ -9,9 +9,9 @@
 #include <sys/msg.h>
 
 #include "CVCommon/CVServerSocket.h"
-#include "CVWebClients.h"
+#include "CVWebClientManager.h"
 #include "CVWebClient.h"
-#include "CVServers.h"
+#include "CVServerManager.h"
 #include "CVServer.h"
 
 
@@ -93,10 +93,11 @@ CSKClients* CSKClients::GetInstance()
 	return instance;
 }
 
-void CSKClients::SetConfiguration(string& strListenPort, string& strHeartBeatTime, int& nService)
+void CSKClients::SetConfiguration(string& strListenPort, string& strHeartBeatTime, string& strEPIDNum, int& nService)
 {
 	m_strListenPort = strListenPort;
 	m_strHeartBeatTime = strHeartBeatTime;
+	m_strEPIDNum = strEPIDNum;
 	m_nService = nService;
 
 	try

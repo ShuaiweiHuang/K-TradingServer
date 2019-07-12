@@ -11,7 +11,8 @@ using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
 
-void on_message(websocketpp::connection_hdl, client::message_ptr msg);
+void on_message_bitmex(websocketpp::connection_hdl, client::message_ptr msg);
+void on_message_binance(websocketpp::connection_hdl, client::message_ptr msg);
 
 bool verify_subject_alternative_name(const char * hostname, X509 * cert);
 bool verify_common_name(const char * hostname, X509 * cert);

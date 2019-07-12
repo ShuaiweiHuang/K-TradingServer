@@ -16,25 +16,13 @@
 #include "CVCommon/ISKHeartbeatCallback.h"
 #include "CVCommon/CVThread.h"
 #include "CVHeartbeat.h"
+#include "CVGlobal.h"
 #include "Include/CVLogonFormat.h"
-
-#define BUFFERSIZE	1024
-#define IPLEN		16
-#define UIDLEN		10
 
 class CSKServer;
 
 using namespace std;
 
-#ifdef MNTRMSG
-#define QUEUESIZE 10
-struct LogMesssage
-{
-	int logon_index;
-	int logon_msg_len[QUEUESIZE];
-	char logon_msg_buf[QUEUESIZE][BUFFERSIZE];
-};
-#endif
 union L
 {
     unsigned char uncaByte[16];
@@ -65,6 +53,7 @@ enum TSKClientStauts
 enum TSKRequestMarket
 {
 	rmBitmex,
+	//rmBinance,
 	rmNum
 };
 
@@ -96,19 +85,11 @@ class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_sh
 		int m_nTFReplyMsgLength;//80
 		int m_nOFReplyMsgLength;//80
 		int m_nOSReplyMsgLength;//78
-#ifdef MNTRMSG
-		char m_userID[UIDLEN];
-#endif
 		map<string, string> m_mMarketBranchAccount;
 
 		vector<struct TSKBranchAccountInfo*> m_vBranchAccountInfo;
 
 		pthread_mutex_t m_pmtxClientStatusLock;
-#ifdef SSLTLS
-		SSL* m_ssl;
-		BIO* m_accept_bio;
-		BIO* m_bio;
-#endif
 	protected:
 		void* Run();
 
@@ -141,13 +122,5 @@ class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_sh
 		TSKClientStauts GetStatus();
 
 		int GetClientSocket();
-#ifdef SSLTLS
-		EVP_PKEY    *generatePrivateKey();
-		X509        *generateCertificate(EVP_PKEY *pkey);
-		void		init_openssl();
-#endif
-#ifdef MNTRMSG
-		struct LogMesssage m_LogMessageQueue;
-#endif
 };
 #endif

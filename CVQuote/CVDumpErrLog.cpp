@@ -7,8 +7,7 @@ void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFi
 										unsigned char* pMessage1 = NULL, int nMessage1Length = 0, 
 										unsigned char* pMessage2 = NULL, int nMessage2Length = 0)
 {
-    struct timeval tv;
-	//time_t t = time(NULL);
+	struct timeval tv;
 	gettimeofday(&tv,NULL);
 	struct tm tm = *localtime(&tv.tv_sec);
 

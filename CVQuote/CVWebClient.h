@@ -18,7 +18,7 @@
 #include "CVRequest.h"
 #include "CVServer.h"
 
-#define MAX_TIG_DATA_LENGTH 4096 
+#define MAX_DATA_LENGTH 4096 
 
 class CSKClient;
 
@@ -48,6 +48,7 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 
 		string m_strWeb;
 		string m_strQstr;
+		string m_strName;
 
 		TSKServerStatus m_ssServerStatus;
 
@@ -56,7 +57,7 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 		//int m_nRequestMessageLength;
 		int m_nReplyMessageLength;
 
-		unsigned char m_uncaRequestMessage[MAX_TIG_DATA_LENGTH];
+		unsigned char m_uncaRequestMessage[MAX_DATA_LENGTH];
 		int m_nRequestMessageLength;
 
 		int m_nOriginalOrderLength;
@@ -86,7 +87,7 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 		void ReconnectSocket();
 
 	public:
-		CSKServer(string strHost, string strPort, TSKRequestMarket rmRequestMarket, int nPoolIndex);
+		CSKServer(string strHost, string strPort, string strName, TSKRequestMarket rmRequestMarket);
 		virtual ~CSKServer();
 
 		void SetCallback(shared_ptr<CSKClient>& shpClient);

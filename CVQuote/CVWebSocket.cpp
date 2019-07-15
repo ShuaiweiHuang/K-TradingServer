@@ -129,7 +129,7 @@ bool verify_subject_alternative_name(const char * hostname, X509 * cert) {
 		}
 		char * dns_name = (char *) ASN1_STRING_data(current_name->d.dNSName);
 		// Make sure there isn't an embedded NUL character in the DNS name
-		if (ASN1_STRING_length(current_name->d.dNSName) != strlen(dns_name)) {
+		if (ASN1_STRING_length(current_name->d.dNSName) != strlen(dns_name)) 
 			break;
 	
 		// Compare expected hostname with the CN
@@ -140,7 +140,6 @@ bool verify_subject_alternative_name(const char * hostname, X509 * cert) {
 	return result;
 }
 
-/// Verify that the certificate common name matches the given hostname
 bool verify_common_name(const char * hostname, X509 * cert) {
 	// Find the position of the CN field in the Subject field of the certificate
 	int common_name_loc = X509_NAME_get_index_by_NID(X509_get_subject_name(cert), NID_commonName, -1);
@@ -193,3 +192,4 @@ context_ptr on_tls_init(const char * hostname, websocketpp::connection_hdl) {
     context_ptr ctx = websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
     return ctx;
 }
+

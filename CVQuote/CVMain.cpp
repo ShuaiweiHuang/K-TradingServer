@@ -39,10 +39,7 @@ int main()
 
 	string strListenPort, strHeartBeatTime, strEPIDNum;
 	ReadClientConfigFile("../ini/CVQuote.ini", strListenPort, strHeartBeatTime, strEPIDNum);
-<<<<<<< HEAD
-=======
 
->>>>>>> [CVQUOTE] add EPID
 	int nService = 0;
 	if(struTSConfig.nServerCount > 0)
 		nService += 1<<0;

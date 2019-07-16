@@ -5,7 +5,7 @@
 using namespace std;
 
 void on_message_binance(websocketpp::connection_hdl, client::message_ptr msg) {
-#if DEBUG
+#ifdef DEBUG
 	printf("[on_message_binance]\n");
 #endif
 	static char netmsg[BUFFERSIZE];
@@ -30,12 +30,12 @@ void on_message_binance(websocketpp::connection_hdl, client::message_ptr msg) {
 	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end()); 
 	size_str   = to_string(jtable["q"]);
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end()); 
+#ifdef DEBUG
 	cout << jtable["T"]<<" " ;
-#if DEBUG
-	//std::cout << std::setw(4) << jtable << " ";
-	std::cout << std::setw(4) << symbol_str << " ";
-	std::cout << std::setw(4) << price_str << " ";
-	std::cout << std::setw(4) << size_str << endl;
+	//cout << setw(4) << jtable << " ";
+	cout << setw(4) << symbol_str << " ";
+	cout << setw(4) << price_str << " ";
+	cout << setw(4) << size_str << endl;
 #endif
 	int size_int = stof(size_str) * 1000000;
 	size_str = to_string(size_int);
@@ -78,7 +78,6 @@ void on_message_bitmex(websocketpp::connection_hdl, client::message_ptr msg) {
         	throw "GET_CLIENTS_ERROR";
         for(int i=0 ; i<jtable["data"].size() ; i++)
         {
-//		std::cout << std::setw(4) << jtable << endl;
                 memset(netmsg, 0, BUFFERSIZE);
                 memset(timemsg, 0, 8);
                 static int tick_count=0;
@@ -90,6 +89,10 @@ void on_message_bitmex(websocketpp::connection_hdl, client::message_ptr msg) {
                 sprintf(netmsg, "01_ID=%s.BMEX,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
 			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
                 int msglen = strlen(netmsg);
+#if DEBUG
+//		cout << setw(4) << jtable << endl;
+//		cout << netmsg << endl;
+#endif
                 netmsg[strlen(netmsg)] = 0x0D;
                 netmsg[strlen(netmsg)] = 0x0A;
 

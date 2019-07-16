@@ -46,12 +46,6 @@ CSKClient::~CSKClient()
 	}
 
 	pthread_mutex_destroy(&m_pmtxClientStatusLock);
-#ifdef SSLTLS
-	SSL_shutdown(m_ssl);
-	BIO_free_all(m_bio);
-	BIO_free_all(m_accept_bio);
-	ERR_free_strings();
-#endif
 }
 
 
@@ -143,12 +137,15 @@ bool CSKClient::SendAll(const char* pWhat, const unsigned char* pBuf, int nToSen
 		{
 			if(nSend == nToSend)
 			{
-				FprintfStderrLog(pWhat, 0, 0, __FILE__, __LINE__, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)pBuf + nSended, nSend);
+				//FprintfStderrLog(pWhat, 0, 0, __FILE__, __LINE__, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)pBuf + nSended, nSend);
+#ifdef DEBUG
+				FprintfStderrLog(pWhat, 0, 0, __FILE__, __LINE__, (unsigned char*)pBuf + nSended, nSend);
+#endif
 				break;
 			}
 			else if(nSend < nToSend)
 			{
-				FprintfStderrLog(pWhat, -1, 0, __FILE__, __LINE__, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)pBuf + nSended, nSend);
+				FprintfStderrLog(pWhat, -1, 0, __FILE__, __LINE__, (unsigned char*)pBuf + nSended, nSend);
 				nSended += nSend;
 			}
 			else

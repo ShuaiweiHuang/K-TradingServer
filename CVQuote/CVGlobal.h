@@ -1,16 +1,20 @@
 #ifndef INCLUDE_SKGLOBAL_H_
 #define INCLUDE_SKGLOBAL_H_
 
-#define CONNECT_TCP	1
-#define CONNECT_WEBSOCK	2
+#define CONNECT_TCP		1
+#define CONNECT_WEBSOCK		2
 
-#define BUFFERSIZE	1024
-#define IPLEN		16
-#define UIDLEN		10
+#define BUFFERSIZE		1024
+#define IPLEN			16
+#define UIDLEN			10
+#define SCALE_VOL_BINANCE	1000000
 
 #include "CVCommon/CVSharedMemory.h"
 
 /***** PACKET IDENTIFIER *****/
+#define GTA_TAIL_BYTE_1						0x0D
+#define GTA_TAIL_BYTE_2						0x0A
+
 #define ESCAPE_BYTE 						0x1b
 
 #define LOGON_BYTE 						0x20

@@ -6,8 +6,8 @@
 #include <glib.h>
 #include <unistd.h>
 
-#include "CVServerManager.h"
-#include "CVWebClientManager.h"
+#include "CVServer.h"
+#include "CVWebConns.h"
 
 using namespace std;
 
@@ -19,6 +19,7 @@ extern void FprintfStderrLog(const char* pCause, int nError, int nData, const ch
 
 void ReadConfigFile(string strConfigFileName, string strSection, struct TSKConfig &struConfig);
 void ReadClientConfigFile(string strConfigFileName, string& strListenPort, string& strHeartBeatTime, string &strEPIDNum);
+
 #define DECLARE_CONFIG_DATA(CONFIG)\
 	struct TSKConfig stru##CONFIG;\
 	memset(&stru##CONFIG, 0, sizeof(struct TSKConfig));\
@@ -27,24 +28,18 @@ void ReadClientConfigFile(string strConfigFileName, string& strListenPort, strin
 int main()
 {
 	InitialGlobal();
+        setbuf(stdout, NULL);
+        signal(SIGPIPE, SIG_IGN );
+        srand(time(NULL));
+
 	DECLARE_CONFIG_DATA(TSConfig);
-	DECLARE_CONFIG_DATA(TFConfig);
-	DECLARE_CONFIG_DATA(OFConfig);
-	DECLARE_CONFIG_DATA(OSConfig);
-
-
-	setbuf(stdout, NULL);
-	signal(SIGPIPE, SIG_IGN );
-	srand(time(NULL));
 
 	string strListenPort, strHeartBeatTime, strEPIDNum;
 	ReadClientConfigFile("../ini/CVQuote.ini", strListenPort, strHeartBeatTime, strEPIDNum);
 
 	int nService = 0;
-	if(struTSConfig.nServerCount > 0)
-		nService += 1<<0;
-
 	ReadConfigFile("../ini/CVQuote.ini", "EXCHANGE", struTSConfig);
+
 	CSKServers* pServers = NULL;
 	try
 	{
@@ -59,8 +54,6 @@ int main()
 	{
 		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
 	}
-
-
 
 	CSKClients* pClients = NULL;
 	try

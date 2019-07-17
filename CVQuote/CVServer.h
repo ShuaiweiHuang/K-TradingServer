@@ -1,5 +1,5 @@
-#ifndef SKCLIENT_H_
-#define SKCLIENT_H_
+#ifndef CSKCLIENTS_H_
+#define CSKCLIENTS_H_
 
 #include <string>
 #include <sys/socket.h>
@@ -7,120 +7,61 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <vector>
-#include <map>
 #include <memory>
-#include <openssl/aes.h>
+#include <iostream>
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
+#include <fstream>
 
-#include "CVCommon/ISKHeartbeatCallback.h"
+#include "CVCommon/ISKSocketCallback.h"
 #include "CVCommon/CVThread.h"
-#include "CVHeartbeat.h"
+#include "CVCommon/CVServerSocket.h"
+#include "CVCommon/CVSharedMemory.h"
+#include "CVServiceHandler.h"
 #include "CVGlobal.h"
-#include "Include/CVLogonFormat.h"
-
-class CSKServer;
 
 using namespace std;
 
-union L
-{
-    unsigned char uncaByte[16];
-    short value;
-};
-
-struct TSKClientAddrInfo
-{
-    int nSocket;
-	char caIP[IPLEN];
-    struct sockaddr_storage ClientAddr;
-};
-
-struct TSKAccountRecvBuf
-{
-	int nRecved;
-	unsigned char uncaRecvBuf[BUFFERSIZE];
-};
-
-enum TSKClientStauts
-{
-	csNone,
-	csLogoning,
-	csOnline,
-	csOffline
-};
-
-enum TSKRequestMarket
-{
-	rmBitmex,
-	//rmBinance,
-	rmNum
-};
-
-struct TSKBranchAccountInfo
-{
-	const char* pMarket;
-
-	int nBranchPosition;
-	int nAccountPosition;
-	int nSubAccountPosition;
-
-	int nBranchLength;
-	int nAccountLength;
-	int nSubAccountLength;
-};
-
-class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_shared_from_this<CSKClient>
+class CSKClients: public CSKThread, public ISKSocketCallback
 {
 	private:
-		struct TSKClientAddrInfo m_ClientAddrInfo;
-		unsigned char m_uncaLogonID[10];
+		CSKClients();
+		virtual ~CSKClients();
+		static CSKClients* instance;
+		static pthread_mutex_t ms_mtxInstance;
 
-		CSKHeartbeat* m_pHeartbeat;
+		CSKServerSocket* m_pServerSocket;
+		string m_strListenPort;
 
-		TSKClientStauts m_csClientStatus;
 
-		int m_nOriginalOrderLength;
-		int m_nTSReplyMsgLength;//78
-		int m_nTFReplyMsgLength;//80
-		int m_nOFReplyMsgLength;//80
-		int m_nOSReplyMsgLength;//78
-		map<string, string> m_mMarketBranchAccount;
+		int m_nService;
 
-		vector<struct TSKBranchAccountInfo*> m_vBranchAccountInfo;
+		pthread_mutex_t m_pmtxClientVectorLock;
 
-		pthread_mutex_t m_pmtxClientStatusLock;
+#ifdef MNTRMSG
+		fstream m_fileLogon;
+#endif
+
 	protected:
 		void* Run();
-
-		void OnHeartbeatRequest();
-		void OnHeartbeatLost();
-		void OnHeartbeatError(int nData, const char* pErrorMessage);
-
-		bool Logon(char* pID, char* pPasswd, struct TSKLogonReply &struLogonReply);
-		bool GetAccount(char* pID, char* pAgent, char* pVersion, vector<char*> &vAccountData);
-
-		bool RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv);
-
-		void InitialBranchAccountInfo();
-		bool CheckBranchAccount(TSKRequestMarket rmRequestMarket, unsigned char* pRequstMessage);
+		void OnListening();
+		void OnShutdown();
 
 	public:
-		CSKClient(struct TSKClientAddrInfo &ClientAddrInfo);
-		bool SendAll(const char* pWhat, const unsigned char* pBuf, int nToSend);
-		virtual ~CSKClient();
+		vector<shared_ptr<CSKClient> > m_vClient;
+		string m_strHeartBeatTime;
+		string m_strEPIDNum;
+		static CSKClients* GetInstance();
 
-		void TriggerSendRequestEvent(CSKServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength);
+		void SetConfiguration(string& strListenPort, string& strHeartBeatTime, string& strEPIDNum, int& nService);
 
-		bool SendLogonReply(struct TSKLogonReply &struLogonReply);
-		bool SendAccountCount(short sCount);
-		bool SendAccountData(vector<char*> &vAccountData);
-		bool SendRequestReply(unsigned char uncaSecondByte, unsigned char* unpRequestReplyMessage, int nRequestReplyMessageLength);
-		bool SendRequestErrorReply(unsigned char uncaSecondByte, unsigned char* pOriginalRequstMessage, int nOriginalRequestMessageLength, const char* pErrorMessage, short nErrorCode);
-
-		void SetStatus(TSKClientStauts csStatus);
-		TSKClientStauts GetStatus();
-
-		int GetClientSocket();
+		void CheckClientVector();
+		void PushBackClientToVector(shared_ptr<CSKClient>& shpClient);
+		void EraseClientFromVector(vector<shared_ptr<CSKClient> >::iterator iter);
+		void ShutdownClient(int nSocket);
+		bool IsServiceRunning(enum TSKRequestMarket& rmRequestMarket);
+#ifdef MNTRMSG
+		void FlushLogMessageToFile();
+#endif
 };
 #endif

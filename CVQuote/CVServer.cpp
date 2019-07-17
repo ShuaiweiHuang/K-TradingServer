@@ -1,248 +1,161 @@
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-#include <assert.h>
-#include <exception>
-#include <unistd.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
 #include <fstream>
-#include <stdlib.h>
+#include <cstring>
+#include <algorithm>
+#include <exception>
+#include <iostream>
+#include <memory>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <sys/msg.h>
 
-#include "CVServer.h" 
-#include "CVServerManager.h" 
-#include "CVWebClientManager.h"
-#include "CVCommon/CVClientSocket.h"
-#include "CVGlobal.h"
-#include "Include/CVTSFormat.h"
-#include "Include/CVTFFormat.h"
-#include "Include/CVOFFormat.h"
-#include "Include/CVOSFormat.h"
+#include "CVCommon/CVServerSocket.h"
+#include "CVWebConn.h"
+#include "CVWebConns.h"
+#include "CVServiceHandler.h"
+#include "CVServer.h"
 
-#include<iostream>
+
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0,
                              unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
+CSKClients* CSKClients::instance = NULL;
+pthread_mutex_t CSKClients::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
+
+CSKClients::CSKClients()
 {
-	memset(&m_ClientAddrInfo, 0, sizeof(struct TSKClientAddrInfo));
-	memcpy(&m_ClientAddrInfo, &ClientAddrInfo, sizeof(struct TSKClientAddrInfo));
-	m_pHeartbeat = NULL;
-	m_csClientStatus = csNone;
-	pthread_mutex_init(&m_pmtxClientStatusLock, NULL);
-	srand(time(NULL));
-	//Start();
+	pthread_mutex_init(&m_pmtxClientVectorLock, NULL);
 }
 
-CSKClient::~CSKClient() 
+CSKClients::~CSKClients()
 {
-	if( m_pHeartbeat)
+	if(m_pServerSocket)
 	{
-		delete m_pHeartbeat;
-		m_pHeartbeat = NULL;
+		m_pServerSocket->ShutdownServer();
+
+		delete m_pServerSocket;
+
+		m_pServerSocket = NULL;
 	}
 
-	pthread_mutex_destroy(&m_pmtxClientStatusLock);
+	m_vClient.clear();//to check
+
+	pthread_mutex_destroy(&m_pmtxClientVectorLock);
 }
 
-
-void* CSKClient::Run()
+void* CSKClients::Run()
 {
-}
-
-void CSKClient::OnHeartbeatLost()
-{
-	FprintfStderrLog("HEARTBEAT_LOST", -1, 0, NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID));
-	SetStatus(csOffline);
-}
-
-void CSKClient::OnHeartbeatRequest()
-{
-	bool bSendAll = SendAll("HEARTBEAT_REQUEST", g_uncaHeaetbeatRequestBuf, sizeof(g_uncaHeaetbeatRequestBuf));
-	if(bSendAll == false)
+	while(m_pServerSocket->GetStatus() == sssListening)
 	{
-		FprintfStderrLog("HEARTBEAT_REQUEST_ERROR", -1, 0, NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), g_uncaHeaetbeatRequestBuf, sizeof(g_uncaHeaetbeatRequestBuf));
+		struct TSKClientAddrInfo ClientAddrInfo;
+		memset(&ClientAddrInfo, 0, sizeof(struct TSKClientAddrInfo));
+
+		ClientAddrInfo.nSocket = m_pServerSocket->Accept(&ClientAddrInfo.ClientAddr);
+		socklen_t addr_size = sizeof(ClientAddrInfo.ClientAddr);
+
+		struct sockaddr_in *sin = (struct sockaddr_in *)&ClientAddrInfo.ClientAddr;
+		unsigned char *ip = (unsigned char *)&sin->sin_addr.s_addr;
+		sprintf(ClientAddrInfo.caIP,"%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);//to do
+
+		FprintfStderrLog("ACCEPT_CLIENT_IP", 0, 0, NULL, 0, reinterpret_cast<unsigned char*>(ClientAddrInfo.caIP), strlen(ClientAddrInfo.caIP));
+		shared_ptr<CSKClient> shpClient = make_shared<CSKClient>(ClientAddrInfo);
+		PushBackClientToVector(shpClient);
+	}
+
+	return NULL;
+}
+
+void CSKClients::OnListening()
+{
+	Start();
+}
+
+void CSKClients::OnShutdown()
+{
+}
+
+CSKClients* CSKClients::GetInstance()
+{
+	if(instance == NULL)
+	{
+		pthread_mutex_lock(&ms_mtxInstance);//lock
+
+		if(instance == NULL)
+		{
+			instance = new CSKClients();
+			FprintfStderrLog("CLIENTS_ONE", 0, 0);
+		}
+
+		pthread_mutex_unlock(&ms_mtxInstance);//unlock
+	}
+
+	return instance;
+}
+
+void CSKClients::SetConfiguration(string& strListenPort, string& strHeartBeatTime, string& strEPIDNum, int& nService)
+{
+	m_strListenPort = strListenPort;
+	m_strHeartBeatTime = strHeartBeatTime;
+	m_strEPIDNum = strEPIDNum;
+	m_nService = nService;
+
+	try
+	{
+		m_pServerSocket = new CSKServerSocket(this);
+		m_pServerSocket->Listen(m_strListenPort);
+	}
+	catch (exception& e)
+	{
+		FprintfStderrLog("NEW_SERVERSOCKET_ERROR", -1, 0, NULL, 0, (unsigned char*)e.what(), strlen(e.what()));
 	}
 }
 
-void CSKClient::OnHeartbeatError(int nData, const char* pErrorMessage)
-{
-	FprintfStderrLog(pErrorMessage, -1, nData, __FILE__, __LINE__, m_uncaLogonID, sizeof(m_uncaLogonID));
-}
 
-bool CSKClient::RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv)
+void CSKClients::CheckClientVector()
 {
-	int nRecv = 0;
-	int nRecved = 0;
-
-	do
+	vector<shared_ptr<CSKClient> >::iterator iter = m_vClient.begin();
+	while(iter != m_vClient.end())
 	{
-		nToRecv -= nRecv;
-		nRecv = recv(m_ClientAddrInfo.nSocket, pBuf + nRecved, nToRecv, 0);
+		CSKClient* pClient = (*iter).get();
+		if(pClient->GetStatus() == csOffline && (*iter).unique())
+		{
+			ShutdownClient(pClient->GetClientSocket());
 
-		if(nRecv > 0)
-		{
-			if(m_pHeartbeat)
-				m_pHeartbeat->TriggerGetReplyEvent();
-			else
-				FprintfStderrLog("HEARTBEAT_NULL_ERROR", -1, 0, __FILE__, __LINE__, m_uncaLogonID, sizeof(m_uncaLogonID));
-
-			FprintfStderrLog(pWhat, 0, 0, __FILE__, 0, m_uncaLogonID, sizeof(m_uncaLogonID), pBuf + nRecved, nRecv);
-			nRecved += nRecv;
-		}
-		else if(nRecv == 0)
-		{
-			SetStatus(csOffline);
-			FprintfStderrLog("RECV_SK_CLOSE", 0, 0, NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID));
-			break;
-		}
-		else if(nRecv == -1)
-		{
-			SetStatus(csOffline);
-			FprintfStderrLog("RECV_SK_ERROR", -1, errno, NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)strerror(errno), strlen(strerror(errno)));
-			break;
+			EraseClientFromVector(iter);
 		}
 		else
 		{
-			SetStatus(csOffline);
-			FprintfStderrLog("RECV_SK_ELSE_ERROR", -1, errno, NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)strerror(errno), strlen(strerror(errno)));
-			break;
+			iter++;
 		}
 	}
-	while(nRecv != nToRecv);
-
-	return nRecv == nToRecv ? true : false;
 }
 
-bool CSKClient::SendAll(const char* pWhat, const unsigned char* pBuf, int nToSend)
+void CSKClients::PushBackClientToVector(shared_ptr<CSKClient>& shpClient)
 {
-	int nSend = 0;
-	int nSended = 0;
+	pthread_mutex_lock(&m_pmtxClientVectorLock);
 
-	do
-	{
-		nToSend -= nSend;
+	m_vClient.push_back(move(shpClient));
 
-		nSend = send(m_ClientAddrInfo.nSocket, pBuf + nSended, nToSend, 0);
-		if(nSend <= 0) // socket close or disconnect
-		{
-			SetStatus(csOffline);
-			FprintfStderrLog("SEND_SK_ERROR", -1, errno, NULL, 0, (unsigned char*)pBuf, nToSend, (unsigned char*)strerror(errno), strlen(strerror(errno)));
-			break;
-		}
-		else
-		{
-			if(nSend == nToSend)
-			{
-				//FprintfStderrLog(pWhat, 0, 0, __FILE__, __LINE__, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)pBuf + nSended, nSend);
-#ifdef DEBUG
-				FprintfStderrLog(pWhat, 0, 0, __FILE__, __LINE__, (unsigned char*)pBuf + nSended, nSend);
-#endif
-				break;
-			}
-			else if(nSend < nToSend)
-			{
-				FprintfStderrLog(pWhat, -1, 0, __FILE__, __LINE__, (unsigned char*)pBuf + nSended, nSend);
-				nSended += nSend;
-			}
-			else
-			{
-				FprintfStderrLog("SEND_SK_ELSE_ERROR", -1, errno, NULL, 0, (unsigned char*)pBuf, nToSend, (unsigned char*)strerror(errno), strlen(strerror(errno)));
-				break;
-			}
-		}
-	}
-	while(nSend != nToSend);
-
-	return nSend == nToSend ? true : false;
+	pthread_mutex_unlock(&m_pmtxClientVectorLock);
 }
 
-void CSKClient::TriggerSendRequestEvent(CSKServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength)
+void CSKClients::EraseClientFromVector(vector<shared_ptr<CSKClient> >::iterator iter)
 {
-	shared_ptr<CSKClient> shpClient{ shared_from_this() };
+	pthread_mutex_lock(&m_pmtxClientVectorLock);
 
-	pServer->SetCallback(shpClient);
-	pServer->SetRequestMessage(pRequestMessage, nRequestMessageLength);
-	pServer->m_pRequest->TriggerWakeUpEvent();
+	m_vClient.erase(iter);
+
+	pthread_mutex_unlock(&m_pmtxClientVectorLock);
 }
 
-bool CSKClient::SendRequestReply(unsigned char uncaSecondByte, unsigned char* unpRequestReplyMessage, int nRequestReplyMessageLength)
+void CSKClients::ShutdownClient(int nSocket)
 {
-	unsigned char* unpSendBuf = new unsigned char[2 + sizeof(struct SK_TS_REPLY)];
-	bool bSendAll = false;
-
-	memset(unpSendBuf, 0, 2 + sizeof(struct SK_TS_REPLY));
-	unpSendBuf[0] = ESCAPE_BYTE;
-	unpSendBuf[1] = uncaSecondByte;
-	memcpy(unpSendBuf + 2, unpRequestReplyMessage, sizeof(struct SK_TS_REPLY));
-
-	bSendAll = SendAll("SEND_REQUEST_REPLY", unpSendBuf, 2 + sizeof(struct SK_TS_REPLY));
-	delete [] unpSendBuf;
-
-	return bSendAll;
+	if(m_pServerSocket)
+		m_pServerSocket->ShutdownClient(nSocket);
 }
 
-bool CSKClient::SendRequestErrorReply(unsigned char uncaSecondByte, unsigned char* pOriginalRequstMessage, int nOriginalRequestMessageLength, const char* pErrorMessage, short nErrorCode)
+bool CSKClients::IsServiceRunning(enum TSKRequestMarket& rmRequestMarket)
 {
-	int nErrorMessageLength;
-
-	switch(uncaSecondByte)
-	{
-		case TS_ORDER_BYTE:
-			nErrorMessageLength = m_nTSReplyMsgLength;
-			break;
-		case TF_ORDER_BYTE:
-			nErrorMessageLength = m_nTFReplyMsgLength;
-			break;
-		case OF_ORDER_BYTE:
-			nErrorMessageLength = m_nOFReplyMsgLength;
-			break;
-		case OS_ORDER_BYTE:
-			nErrorMessageLength = m_nOSReplyMsgLength;
-			break;
-		default:
-			FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, uncaSecondByte, __FILE__, __LINE__, m_uncaLogonID, sizeof(m_uncaLogonID), pOriginalRequstMessage, nOriginalRequestMessageLength);
-	}
-
-	int nReplyMessageLength = m_nOriginalOrderLength + nErrorMessageLength + ORDER_REPLY_ERROR_CODE_LENGTH;
-	unsigned char* unpPlainBuf = new unsigned char[nReplyMessageLength];
-
-	memset(unpPlainBuf, 0, nReplyMessageLength);
-
-
-	union L l;
-	memset(&l,0,16);
-
-	l.value = nErrorCode;
-
-	memcpy(unpPlainBuf, pOriginalRequstMessage, nOriginalRequestMessageLength);
-	memcpy(unpPlainBuf + nOriginalRequestMessageLength, pErrorMessage, strlen(pErrorMessage));
-	memcpy(unpPlainBuf + nOriginalRequestMessageLength + nErrorMessageLength, l.uncaByte, ORDER_REPLY_ERROR_CODE_LENGTH);
-	bool bSendAll = SendAll("SEND_REQUEST_ERROR_REPLY", unpPlainBuf, 2 + nReplyMessageLength);
-
-	delete [] unpPlainBuf;
-
-	return bSendAll;
-}
-
-void CSKClient::SetStatus(TSKClientStauts csStatus)
-{
-	pthread_mutex_lock(&m_pmtxClientStatusLock);//lock
-
-	m_csClientStatus = csStatus;
-
-	pthread_mutex_unlock(&m_pmtxClientStatusLock);//unlock
-}
-
-TSKClientStauts CSKClient::GetStatus()
-{
-	return m_csClientStatus;
-}
-
-int CSKClient::GetClientSocket()
-{
-	return m_ClientAddrInfo.nSocket;
+	return (m_nService & 1<<rmRequestMarket) ? true : false;
 }

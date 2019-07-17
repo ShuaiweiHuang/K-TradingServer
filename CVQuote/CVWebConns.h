@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 
-#include "CVWebClient.h"
+#include "CVWebConn.h"
 
 using namespace neosmart;
 using namespace std;

@@ -10,8 +10,6 @@
 
 using namespace std;
 
-//extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
-
 CSKHeartbeat::CSKHeartbeat(ISKHeartbeatCallback* pHeartbeatCallback)
 {
 	m_nTimeInterval = 0;

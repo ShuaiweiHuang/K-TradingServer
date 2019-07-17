@@ -1,10 +1,11 @@
 #include "CVWebSocket.h"
-#include "CVServerManager.h"
+#include "CVServiceHandler.h"
 #include "CVServer.h"
 #include "CVGlobal.h"
+
 using namespace std;
 
-void on_message_binance(websocketpp::connection_hdl, client::message_ptr msg) {
+void CB_Message_Binance(websocketpp::connection_hdl, client::message_ptr msg) {
 #ifdef DEBUG
 	printf("[on_message_binance]\n");
 #endif
@@ -30,23 +31,20 @@ void on_message_binance(websocketpp::connection_hdl, client::message_ptr msg) {
 	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end()); 
 	size_str   = to_string(jtable["q"]);
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end()); 
-#ifdef DEBUG
-	cout << jtable["T"]<<" " ;
-	//cout << setw(4) << jtable << " ";
-	cout << setw(4) << symbol_str << " ";
-	cout << setw(4) << price_str << " ";
-	cout << setw(4) << size_str << endl;
-#endif
-	int size_int = stof(size_str) * 1000000;
+	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
 	size_str = to_string(size_int);
 
 	sprintf(netmsg, "01_ID=%s.BINANCE,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
 		symbol_str.c_str(), time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance++, pClients->m_strEPIDNum.c_str());
 
 	int msglen = strlen(netmsg);
-	netmsg[strlen(netmsg)] = 0x0D;
-	netmsg[strlen(netmsg)] = 0x0A;
+	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
+	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
 
+#if DEBUG
+		cout << setw(4) << jtable << endl;
+		cout << netmsg << endl;
+#endif
 	vector<shared_ptr<CSKClient> >::iterator iter = pClients->m_vClient.begin();
 
 	while(iter != pClients->m_vClient.end())
@@ -62,7 +60,7 @@ void on_message_binance(websocketpp::connection_hdl, client::message_ptr msg) {
 }
 
 
-void on_message_bitmex(websocketpp::connection_hdl, client::message_ptr msg) {
+void CB_Message_Bitmex(websocketpp::connection_hdl, client::message_ptr msg) {
 #if DEBUG
 	printf("[on_message_bitmex]\n");
 #endif
@@ -89,12 +87,12 @@ void on_message_bitmex(websocketpp::connection_hdl, client::message_ptr msg) {
                 sprintf(netmsg, "01_ID=%s.BMEX,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
 			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
                 int msglen = strlen(netmsg);
-#if DEBUG
+#ifdef DEBUG
 //		cout << setw(4) << jtable << endl;
-//		cout << netmsg << endl;
+		cout << netmsg << endl;
 #endif
-                netmsg[strlen(netmsg)] = 0x0D;
-                netmsg[strlen(netmsg)] = 0x0A;
+                netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
+                netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
 
 		vector<shared_ptr<CSKClient> >::iterator iter = pClients->m_vClient.begin();
 
@@ -111,87 +109,7 @@ void on_message_bitmex(websocketpp::connection_hdl, client::message_ptr msg) {
 
         }
 }
-
-bool verify_subject_alternative_name(const char * hostname, X509 * cert) {
-
-	STACK_OF(GENERAL_NAME) * san_names = NULL;
-	san_names = (STACK_OF(GENERAL_NAME) *) X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
-	if (san_names == NULL) {
-		return false;
-	}
-   
-	int san_names_count = sk_GENERAL_NAME_num(san_names);
-    
-	bool result = false;
-    
-	for (int i = 0; i < san_names_count; i++) {
-		const GENERAL_NAME * current_name = sk_GENERAL_NAME_value(san_names, i);
-
-		if (current_name->type != GEN_DNS) {
-			continue;
-		}
-		char * dns_name = (char *) ASN1_STRING_data(current_name->d.dNSName);
-		// Make sure there isn't an embedded NUL character in the DNS name
-		if (ASN1_STRING_length(current_name->d.dNSName) != strlen(dns_name)) 
-			break;
-	
-		// Compare expected hostname with the CN
-		result = (strcasecmp(hostname, dns_name) == 0);
-	}
-	sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
-    
-	return result;
-}
-
-bool verify_common_name(const char * hostname, X509 * cert) {
-	// Find the position of the CN field in the Subject field of the certificate
-	int common_name_loc = X509_NAME_get_index_by_NID(X509_get_subject_name(cert), NID_commonName, -1);
-	if (common_name_loc < 0) {
-		return false;
-	}
-    
-	// Extract the CN field
-	X509_NAME_ENTRY * common_name_entry = X509_NAME_get_entry(X509_get_subject_name(cert), common_name_loc);
-	if (common_name_entry == NULL) {
-		return false;
-	}
-    
-	// Convert the CN field to a C string
-	ASN1_STRING * common_name_asn1 = X509_NAME_ENTRY_get_data(common_name_entry);
-	if (common_name_asn1 == NULL) {
-		return false;
-	}
-
-	char * common_name_str = (char *) ASN1_STRING_data(common_name_asn1);
-    
-	// Make sure there isn't an embedded NUL character in the CN
-	if (ASN1_STRING_length(common_name_asn1) != strlen(common_name_str)) {
-		return false;
-	}
-    
-	// Compare expected hostname with the CN
-	return (strcasecmp(hostname, common_name_str) == 0);
-}
-
-bool verify_certificate(const char * hostname, bool preverified, boost::asio::ssl::verify_context& ctx) {
-	int depth = X509_STORE_CTX_get_error_depth(ctx.native_handle());
-
-	if (depth == 0 && preverified) {
-		X509* cert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-        
-		if (verify_subject_alternative_name(hostname, cert)) {
-			return true;
-		} else if (verify_common_name(hostname, cert)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	return preverified;
-}
-
-context_ptr on_tls_init(const char * hostname, websocketpp::connection_hdl) {
+context_ptr CB_TLS_Init(const char * hostname, websocketpp::connection_hdl) {
     context_ptr ctx = websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
     return ctx;
 }

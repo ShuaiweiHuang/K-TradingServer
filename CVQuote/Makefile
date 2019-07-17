@@ -2,7 +2,7 @@ CC = g++
 
 CFLAGS = -O2 -std=c++11 -fpermissive -DDEBUG_OFF
 
-SRC = CVHeartbeat.cpp CVServer.cpp CVWebClientManager.cpp CVDumpErrLog.cpp CVGlobal.cpp CVRequest.cpp CVWebClient.cpp CVServerManager.cpp ./CVCommon/CVClientSocket.cpp ./CVCommon/CVPevents.cpp ./CVCommon/CVServerSocket.cpp ./CVCommon/CVSharedMemory.cpp ./CVCommon/CVThread.cpp CVWebSocket.cpp
+SRC = CVHeartbeat.cpp CVServer.cpp CVWebConns.cpp CVDumpErrLog.cpp CVGlobal.cpp CVRequest.cpp CVWebConn.cpp CVServiceHandler.cpp ./CVCommon/CVClientSocket.cpp ./CVCommon/CVPevents.cpp ./CVCommon/CVServerSocket.cpp ./CVCommon/CVSharedMemory.cpp ./CVCommon/CVThread.cpp CVWebSocket.cpp
  
 
 SERVER_OBJS = $(SRC:.cpp=.o) CVMain.o

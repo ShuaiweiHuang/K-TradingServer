@@ -12,6 +12,7 @@
 #include "CVClientSocket.h"
 #include "../CVWebSocket.h"
 #include "../CVGlobal.h"
+
 using namespace std;
 
 
@@ -93,11 +94,11 @@ void CSKClientSocket::Connect(string strHost, string strPara, string strName, in
 
 			m_cfd.init_asio();
 			if(strName == "BITMEX")
-				m_cfd.set_message_handler(&on_message_bitmex);
+				m_cfd.set_message_handler(&CB_Message_Bitmex);
 			else if(strName == "BINANCE")
-				m_cfd.set_message_handler(&on_message_binance);
+				m_cfd.set_message_handler(&CB_Message_Binance);
 
-			m_cfd.set_tls_init_handler(bind(&on_tls_init, strHost.c_str(), ::_1));
+			m_cfd.set_tls_init_handler(bind(&CB_TLS_Init, strHost.c_str(), ::_1));
 
 			websocketpp::lib::error_code errcode;
 

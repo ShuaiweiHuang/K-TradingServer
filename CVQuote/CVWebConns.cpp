@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <stdexcept>
 
-#include "CVWebClientManager.h"
+#include "CVWebConns.h"
 #include "CVGlobal.h"
 
 using namespace std;
@@ -24,15 +24,15 @@ void CSKServers::AddFreeServer(enum TSKRequestMarket rmRequestMarket, int nServe
 {
 	try
 	{
-			CSKServer* pServer = new CSKServer(m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strWeb,
-							   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strQstr,
-							   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName,
-							   rmRequestMarket);
+		CSKServer* pServer = new CSKServer(m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strWeb,
+						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strQstr,
+						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName,
+						   rmRequestMarket);
 
-				printf("[%s] WebSocket URL: %s%s\n",
-				m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName.c_str(),
-				m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strWeb.c_str(),
-				m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strQstr.c_str());
+		printf("[%s] WebSocket URL: %s%s\n",
+		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName.c_str(),
+		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strWeb.c_str(),
+		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strQstr.c_str());
 
 	}
 	catch(const out_of_range& e)

@@ -24,6 +24,7 @@ extern void FprintfStderrLog(const char* pCause, int nError, int nData, const ch
 
 CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
 {
+	signal(SIGPIPE, SIG_IGN);
 	memset(&m_ClientAddrInfo, 0, sizeof(struct TSKClientAddrInfo));
 	memcpy(&m_ClientAddrInfo, &ClientAddrInfo, sizeof(struct TSKClientAddrInfo));
 	m_pHeartbeat = NULL;

@@ -6,5 +6,5 @@ then
 echo "$service is running!!!"
 else
 cd /home/keanu.huang/CVTraderServer/shell/
-./run_quote.sh
+./kill_quote.sh; ./run_quote.sh
 fi

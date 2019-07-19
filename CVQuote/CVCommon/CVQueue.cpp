@@ -1,4 +1,4 @@
-#include "SKQueue.h"
+#include "CVQueue.h"
 #include <cstring>
 
 using namespace std;
@@ -18,7 +18,7 @@ CSKQueue::~CSKQueue()
 	}*/
 }
 
-int CSKQueue::GetMessage(unsigned char* pBuf, long lType, int nFlag)
+int CSKQueue::GetMessage(char* pBuf, long lType, int nFlag)
 {
 	int nGetMessage= msgrcv(m_nID, (void *)&m_QueueMessage, BUFSIZE, lType, nFlag);
 
@@ -33,7 +33,7 @@ int CSKQueue::GetMessage(unsigned char* pBuf, long lType, int nFlag)
 	}
 }
 
-int CSKQueue::SendMessage(const unsigned char* pBuf, int nSize, long lType, int nFlag)
+int CSKQueue::SendMessage(char* pBuf, int nSize, long lType, int nFlag)
 {
 	m_QueueMessage.lMessageType = lType;
 	memset(m_QueueMessage.uncaMessageBuf, 0, BUFSIZE);

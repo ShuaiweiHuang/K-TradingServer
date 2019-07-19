@@ -10,6 +10,7 @@
 #include <websocketpp/client.hpp>
 #include <iostream>
 #include <nlohmann/json.hpp>
+
 typedef websocketpp::client<websocketpp::config::asio_tls_client> client;
 typedef websocketpp::lib::shared_ptr<websocketpp::lib::asio::ssl::context> context_ptr;
 
@@ -44,7 +45,6 @@ class CSKClientSocket
 		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
 		static void CB_Message_Binance(websocketpp::connection_hdl, client::message_ptr msg);
 		static void CB_Message_Bitmex (websocketpp::connection_hdl, client::message_ptr msg);
-
 	protected:
 		void Close();
 

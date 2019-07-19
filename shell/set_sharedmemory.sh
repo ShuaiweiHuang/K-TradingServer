@@ -42,18 +42,14 @@ fi
 if [[ $SERVICE == "Trade" ]]; then
 	if [[ $MARKET == "BITMEX" ]]; then
 		SERIALKEY=11
-#		TIGKEY=12	
 	elif [[ $MARKET == "CME" ]]; then
 		SERIALKEY=21
-#		TIGKEY=22	
 	fi
 elif [[ $SERVICE == "Quote" ]]; then
 	if [[ $MARKET == "BITMEX" ]]; then
 		SERIALKEY=51
-#		TIGKEY=52	
-	elif [[ $MARKET == "CME" ]]; then
+	elif [[ $MARKET == "BINANCE" ]]; then
 		SERIALKEY=61
-#		TIGKEY=62	
 	fi
 fi
 

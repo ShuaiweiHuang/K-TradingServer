@@ -1,9 +1,3 @@
-/*
- * CSKThread.h
- *
- *  Created on: 2015年11月11日
- *      Author: alex
- */
 #ifndef SKCOMMON_SKTHREAD_H_
 #define SKCOMMON_SKTHREAD_H_
 

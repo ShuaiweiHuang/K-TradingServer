@@ -22,8 +22,8 @@ class CSKQueue
 		CSKQueue();
 		virtual ~CSKQueue();
 
-		int GetMessage(unsigned char* pBuf, long lType = 0, int nFlag = 0);
-		int SendMessage(const unsigned char* pBuf, int nSize, long lType = 1, int nFlag = 0);
+		int GetMessage(char* pBuf, long lType = 0, int nFlag = 0);
+		int SendMessage(char* pBuf, int nSize, long lType = 1, int nFlag = 0);
 
         int Create(key_t kKey);
         int Remove();

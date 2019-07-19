@@ -10,6 +10,8 @@
 
 #include "ISKClientSocketCallback.h"
 #include "CVClientSocket.h"
+
+#include "../CVQueueNodes.h"
 #include "../CVServer.h"
 #include "../CVGlobal.h"
 
@@ -47,7 +49,6 @@ CSKClientSocket::~CSKClientSocket()
 }
 
 void CSKClientSocket::Connect(string strHost, string strPara, string strName, int type)
-
 {
 	if(type == CONNECT_TCP)
 	{
@@ -89,7 +90,7 @@ void CSKClientSocket::Connect(string strHost, string strPara, string strName, in
 		string uri = strHost + strPara;
 		try {
 			m_cfd.set_access_channels(websocketpp::log::alevel::all);
-			m_cfd.clear_access_channels(websocketpp::log::alevel::frame_payload);
+			m_cfd.clear_access_channels(websocketpp::log::alevel::frame_payload|websocketpp::log::alevel::frame_header|websocketpp::log::alevel::control);
 			m_cfd.set_error_channels(websocketpp::log::elevel::all);
 
 			m_cfd.init_asio();
@@ -237,8 +238,11 @@ void CSKClientSocket::CB_Message_Bitmex(websocketpp::connection_hdl con, client:
         string price_str, size_str, side_str, time_str, symbol_str;
         json jtable = json::parse(str.c_str());
         static CSKClients* pClients = CSKClients::GetInstance();
+
+
         if(pClients == NULL)
                 throw "GET_CLIENTS_ERROR";
+
         for(int i=0 ; i<jtable["data"].size() ; i++)
         {
                 memset(netmsg, 0, BUFFERSIZE);
@@ -252,15 +256,17 @@ void CSKClientSocket::CB_Message_Bitmex(websocketpp::connection_hdl con, client:
                 sprintf(netmsg, "01_ID=%s.BMEX,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
                         symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
                 int msglen = strlen(netmsg);
+                netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
+                netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
+		CSKQueueDAO* pQueueDAO = CSKQueueDAOs::GetInstance()->GetDAO();
+		assert(pClients);
+		int nResult = pQueueDAO->SendData(netmsg, strlen(netmsg));
 #ifdef DEBUG
                 cout << setw(4) << jtable << endl;
                 cout << netmsg << endl;
 #endif
-                netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
-                netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
-
+#if 0
                 vector<shared_ptr<CSKClient> >::iterator iter = pClients->m_vClient.begin();
-
                 while(iter != pClients->m_vClient.end())
                 {
                         CSKClient* pClient = (*iter).get();
@@ -271,7 +277,7 @@ void CSKClientSocket::CB_Message_Bitmex(websocketpp::connection_hdl con, client:
                         pClient->SendAll(NULL, netmsg, strlen(netmsg));
                         iter++;
                 }
-
+#endif
         }
 }
 
@@ -310,13 +316,16 @@ void CSKClientSocket::CB_Message_Binance(websocketpp::connection_hdl, client::me
         int msglen = strlen(netmsg);
         netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
         netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
+	CSKQueueDAO* pQueueDAO = CSKQueueDAOs::GetInstance()->GetDAO();
+	assert(pClients);
+	int nResult = pQueueDAO->SendData(netmsg, strlen(netmsg));
 
 #if DEBUG
-                cout << setw(4) << jtable << endl;
-                cout << netmsg << endl;
+	cout << setw(4) << jtable << endl;
+	cout << netmsg << endl;
 #endif
+#if 0
         vector<shared_ptr<CSKClient> >::iterator iter = pClients->m_vClient.begin();
-
         while(iter != pClients->m_vClient.end())
         {
                 CSKClient* pClient = (*iter).get();
@@ -327,5 +336,6 @@ void CSKClientSocket::CB_Message_Binance(websocketpp::connection_hdl, client::me
                 pClient->SendAll(NULL, netmsg, strlen(netmsg));
                 iter++;
         }
+#endif
 }
 

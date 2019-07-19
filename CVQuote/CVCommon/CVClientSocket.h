@@ -1,10 +1,3 @@
-/*
- * CSKSocket.h
- *
- *  Created on: 2015年10月26日
- *      Author: alex
- */
-
 #ifndef CSKCLIENTSOCKET_H_
 #define CSKCLIENTSOCKET_H_
 
@@ -13,8 +6,17 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include "../CVWebSocket.h"
+#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/client.hpp>
+#include <iostream>
+#include <nlohmann/json.hpp>
+typedef websocketpp::client<websocketpp::config::asio_tls_client> client;
+typedef websocketpp::lib::shared_ptr<websocketpp::lib::asio::ssl::context> context_ptr;
 
+using json = nlohmann::json;
+using websocketpp::lib::placeholders::_1;
+using websocketpp::lib::placeholders::_2;
+using websocketpp::lib::bind;
 using namespace std;
 
 enum TSKClientSocketStatus 
@@ -39,6 +41,9 @@ class CSKClientSocket
 
 		struct addrinfo m_AddrInfo;
 		struct addrinfo* m_AddrRes;
+		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
+		static void CB_Message_Binance(websocketpp::connection_hdl, client::message_ptr msg);
+		static void CB_Message_Bitmex (websocketpp::connection_hdl, client::message_ptr msg);
 
 	protected:
 		void Close();

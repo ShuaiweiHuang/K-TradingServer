@@ -19,6 +19,7 @@ CSKHeartbeat::CSKHeartbeat(ISKHeartbeatCallback* pHeartbeatCallback)
 
 	m_PEvent[0] = CreateEvent(0,0);
 	m_PEvent[1] = CreateEvent(0,0);
+	Start();
 }
 
 CSKHeartbeat::~CSKHeartbeat()
@@ -32,7 +33,7 @@ void* CSKHeartbeat::Run()
 	while(m_pHeartbeatCallback)
 	{
 		int nIndex = -1;
-		int nResult = WaitForMultipleEvents(m_PEvent, 2, false, 5000, nIndex);
+		int nResult = WaitForMultipleEvents(m_PEvent, 2, false, 10000, nIndex);
 
 		if(nResult != 0 && nResult != WAIT_TIMEOUT)
 		{
@@ -43,21 +44,16 @@ void* CSKHeartbeat::Run()
 
 		if(nResult == WAIT_TIMEOUT)
 		{
-			m_nIdleTime += 5;
-
+			m_nIdleTime += 10;
 			if(m_nIdleTime < m_nTimeInterval)
 			{
 				continue;
 			}
-			else if(m_nIdleTime == m_nTimeInterval || m_nIdleTime == m_nTimeInterval + 5)
+			else if(m_nIdleTime >= m_nTimeInterval)
 			{
 				if(m_pHeartbeatCallback)
 					m_pHeartbeatCallback->OnHeartbeatRequest();
-			}
-			else if(m_nIdleTime == m_nTimeInterval + 10)
-			{
-				if(m_pHeartbeatCallback)
-					m_pHeartbeatCallback->OnHeartbeatLost();//end the session
+				m_nIdleTime = 0;
 			}
 			else
 			{
@@ -97,7 +93,6 @@ void CSKHeartbeat::SetTimeInterval(int nTimeInterval)
 void CSKHeartbeat::TriggerGetReplyEvent()
 {
 	SetEvent(m_PEvent[0]);
-	//neosmart::SetEvent(m_PEvent);
 }
 
 void CSKHeartbeat::TriggerTerminateEvent()

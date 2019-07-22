@@ -226,7 +226,6 @@ context_ptr CSKClientSocket::CB_TLS_Init(const char * hostname, websocketpp::con
     return ctx;
 }
 
-
 void CSKClientSocket::CB_Message_Bitmex(websocketpp::connection_hdl con, client::message_ptr msg) {
 #if DEBUG
         printf("[on_message_bitmex]\n");
@@ -260,23 +259,10 @@ void CSKClientSocket::CB_Message_Bitmex(websocketpp::connection_hdl con, client:
                 netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
 		CSKQueueDAO* pQueueDAO = CSKQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
-		int nResult = pQueueDAO->SendData(netmsg, strlen(netmsg));
+		pQueueDAO->SendData(netmsg, strlen(netmsg));
 #ifdef DEBUG
                 cout << setw(4) << jtable << endl;
                 cout << netmsg << endl;
-#endif
-#if 0
-                vector<shared_ptr<CSKClient> >::iterator iter = pClients->m_vClient.begin();
-                while(iter != pClients->m_vClient.end())
-                {
-                        CSKClient* pClient = (*iter).get();
-                        if(pClient->GetStatus() == csOffline && (*iter).unique()) {
-                                iter++;
-                                continue;
-                        }
-                        pClient->SendAll(NULL, netmsg, strlen(netmsg));
-                        iter++;
-                }
 #endif
         }
 }
@@ -318,24 +304,10 @@ void CSKClientSocket::CB_Message_Binance(websocketpp::connection_hdl, client::me
         netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
 	CSKQueueDAO* pQueueDAO = CSKQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
-	int nResult = pQueueDAO->SendData(netmsg, strlen(netmsg));
-
+	pQueueDAO->SendData(netmsg, strlen(netmsg));
 #if DEBUG
 	cout << setw(4) << jtable << endl;
 	cout << netmsg << endl;
-#endif
-#if 0
-        vector<shared_ptr<CSKClient> >::iterator iter = pClients->m_vClient.begin();
-        while(iter != pClients->m_vClient.end())
-        {
-                CSKClient* pClient = (*iter).get();
-                if(pClient->GetStatus() == csOffline && (*iter).unique()) {
-                        iter++;
-                        continue;
-                }
-                pClient->SendAll(NULL, netmsg, strlen(netmsg));
-                iter++;
-        }
 #endif
 }
 

@@ -76,7 +76,6 @@ class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_sh
 		struct TSKClientAddrInfo m_ClientAddrInfo;
 		unsigned char m_uncaLogonID[10];
 
-		CSKHeartbeat* m_pHeartbeat;
 
 		TSKClientStauts m_csClientStatus;
 
@@ -90,6 +89,7 @@ class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_sh
 		vector<struct TSKBranchAccountInfo*> m_vBranchAccountInfo;
 
 		pthread_mutex_t m_pmtxClientStatusLock;
+		string m_strEPID;
 	protected:
 		void* Run();
 
@@ -122,5 +122,6 @@ class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_sh
 		TSKClientStauts GetStatus();
 
 		int GetClientSocket();
+		CSKHeartbeat* m_pHeartbeat;
 };
 #endif

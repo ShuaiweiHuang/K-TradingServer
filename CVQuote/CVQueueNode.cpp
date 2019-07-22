@@ -65,7 +65,11 @@ void* CSKQueueDAO::Run()
 					iter++;
 					continue;
 				}
-				pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf));
+				if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) == false)
+				{
+					pClient->~CSKClient();
+				}
+				pClient->m_pHeartbeat->TriggerGetReplyEvent();
 #ifdef DEBUG
 				printf("send msg: %s\n", uncaRecvBuf);
 #endif
@@ -80,7 +84,7 @@ int CSKQueueDAO::SendData(char* pBuf, int nSize, long lType, int nFlag)
 {
 	int nResult = -1;
 #ifdef DEBUG
-	printf("SERVER: queue data send at key %d\n", m_kSendKey);
+	printf("SERVER: queue data send at key %d\ndata contents: %s\n", m_kSendKey, pBuf);
 #endif
 	if(m_pSendQueue)
 	{

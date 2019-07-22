@@ -19,13 +19,6 @@ unsigned char g_uncaHeaetbeatReplyBuf[6];
 const char* REPEAT_LOGON_STATUS_CODE = "7160";
 const char* REPEAT_LOGON_ERROR_CODE = "M716";
 
-const char* g_pSendCipherKeyFirstErrorMessage 		= "請先傳送解密金鑰！";
-const char* g_pLogonFirstErrorMessage 				= "下單前請先登入";
-const char* g_pBranchAccountErrorMessage 			= "分公司、帳號或子帳欄位錯誤！";
-const char* g_pProxyIPSetErrorMessage 				= "代理伺服器設定錯誤！";
-const char* g_pProxyNotProvideServiceErrorMessage 	= "代理伺服器無提供此市場服務";
-const char* g_pProxyServiceBusyErrorMessage 		= "代理伺服器網路繁忙，請稍後再試";
-
 char g_caWhat[7][128] = {"RECV_KEY", "RECV_LOGON", "RECV_HEARTBEAT", "RECV_TS",
 														 			 "RECV_TF", 
 														 			 "RECV_OF", 

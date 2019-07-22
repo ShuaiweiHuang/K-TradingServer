@@ -73,13 +73,6 @@ extern unsigned char g_uncaHeaetbeatReplyBuf[6];
 extern const char* REPEAT_LOGON_STATUS_CODE;
 extern const char* REPEAT_LOGON_ERROR_CODE;
 
-extern const char* g_pSendCipherKeyFirstErrorMessage;
-extern const char* g_pLogonFirstErrorMessage;
-extern const char* g_pBranchAccountErrorMessage;
-extern const char* g_pProxyIPSetErrorMessage;
-extern const char* g_pProxyNotProvideServiceErrorMessage;
-extern const char* g_pProxyServiceBusyErrorMessage;
-
 extern char g_caWhat[7][128];
 extern char g_caWhatError[7][128];
 #endif

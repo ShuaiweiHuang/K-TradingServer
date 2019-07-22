@@ -4,12 +4,13 @@
 #ifdef _WIN32
 #include <Windows.h>
 #endif
-
+#include <string>
 #include "CVCommon/CVPevents.h"
 #include "CVCommon/CVThread.h"
 #include "CVCommon/ISKHeartbeatCallback.h"
 
 using namespace neosmart;
+using namespace std;
 
 class ISKHeartbeatCallback;
 
@@ -28,10 +29,9 @@ class CSKHeartbeat: public CSKThread
 	public:
 		CSKHeartbeat(ISKHeartbeatCallback* pHeartbeatCallback);
 		virtual ~CSKHeartbeat();
-
-		void SetTimeInterval(int nTimeInterval);
-
+		void SetTimeInterval(int);
 		void TriggerGetReplyEvent();
 		void TriggerTerminateEvent();
+
 };
 #endif

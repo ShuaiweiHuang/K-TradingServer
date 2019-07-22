@@ -31,6 +31,31 @@ CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
 	m_csClientStatus = csNone;
 	pthread_mutex_init(&m_pmtxClientStatusLock, NULL);
 	srand(time(NULL));
+        CSKClients* pClients = NULL;
+        try
+        {
+                pClients = CSKClients::GetInstance();
+
+                if(pClients == NULL)
+                        throw "GET_CLIENTS_ERROR";
+        }
+        catch(const char* pErrorMessage)
+        {
+                FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
+        }
+
+	m_strEPID = pClients->m_strEPIDNum;
+       try
+        {
+                m_pHeartbeat = new CSKHeartbeat(this);
+                m_pHeartbeat->SetTimeInterval( stoi(pClients->m_strHeartBeatTime) );
+        }
+        catch(exception& e)
+        {
+                FprintfStderrLog("NEW_HEARTBEAT_ERROR", -1, 0, __FILE__, __LINE__, (unsigned char*)e.what(), strlen(e.what()));
+        }
+
+
 	//Start();
 }
 
@@ -52,17 +77,26 @@ void* CSKClient::Run()
 
 void CSKClient::OnHeartbeatLost()
 {
+
 }
 
 void CSKClient::OnHeartbeatRequest()
 {
-#if 0
-	bool bSendAll = SendAll("HEARTBEAT_REQUEST", g_uncaHeaetbeatRequestBuf, sizeof(g_uncaHeaetbeatRequestBuf));
+	char caHeaetbeatRequestBuf[128];
+	time_t t = time(NULL);
+	struct tm tm = *localtime(&t);
+
+	memset(caHeaetbeatRequestBuf, 0, 128);
+
+	sprintf(caHeaetbeatRequestBuf, "03_ServerDate=%d%02d%02d,ServerTime=%02d%02d%02d00,EPID=%s,\r\n",
+		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, m_strEPID.c_str());
+
+	bool bSendAll = SendAll("HEARTBEAT_REQUEST", caHeaetbeatRequestBuf, sizeof(caHeaetbeatRequestBuf));
+
 	if(bSendAll == false)
 	{
 		FprintfStderrLog("HEARTBEAT_REQUEST_ERROR", -1, 0, NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), g_uncaHeaetbeatRequestBuf, sizeof(g_uncaHeaetbeatRequestBuf));
 	}
-#endif
 }
 
 void CSKClient::OnHeartbeatError(int nData, const char* pErrorMessage)

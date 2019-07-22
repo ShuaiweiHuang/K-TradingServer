@@ -20,7 +20,7 @@
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0,
-                             unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
+			     unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
 CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
 {
@@ -31,32 +31,32 @@ CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
 	m_csClientStatus = csNone;
 	pthread_mutex_init(&m_pmtxClientStatusLock, NULL);
 	srand(time(NULL));
-        CSKClients* pClients = NULL;
-        try
-        {
-                pClients = CSKClients::GetInstance();
+	CSKClients* pClients = NULL;
+	try
+	{
+		pClients = CSKClients::GetInstance();
 
-                if(pClients == NULL)
-                        throw "GET_CLIENTS_ERROR";
-        }
-        catch(const char* pErrorMessage)
-        {
-                FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
-        }
+		if(pClients == NULL)
+			throw "GET_CLIENTS_ERROR";
+	}
+	catch(const char* pErrorMessage)
+	{
+		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
+	}
 
 	m_strEPID = pClients->m_strEPIDNum;
        try
-        {
-                m_pHeartbeat = new CSKHeartbeat(this);
-                m_pHeartbeat->SetTimeInterval( stoi(pClients->m_strHeartBeatTime) );
-        }
-        catch(exception& e)
-        {
-                FprintfStderrLog("NEW_HEARTBEAT_ERROR", -1, 0, __FILE__, __LINE__, (unsigned char*)e.what(), strlen(e.what()));
-        }
+	{
+		m_pHeartbeat = new CSKHeartbeat(this);
+		m_pHeartbeat->SetTimeInterval( stoi(pClients->m_strHeartBeatTime) );
+	}
+	catch(exception& e)
+	{
+		FprintfStderrLog("NEW_HEARTBEAT_ERROR", -1, 0, __FILE__, __LINE__, (unsigned char*)e.what(), strlen(e.what()));
+	}
 
 
-	//Start();
+	Start();
 }
 
 CSKClient::~CSKClient() 
@@ -73,6 +73,23 @@ CSKClient::~CSKClient()
 
 void* CSKClient::Run()
 {
+	unsigned char uncaRecvBuf[BUFFERSIZE];
+
+	while(m_csClientStatus != csOffline)
+	{
+		memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
+		int bRecvAll = RecvAll(NULL, uncaRecvBuf, BUFFERSIZE);
+
+		if(bRecvAll) {
+			printf("Client received string %s\n", uncaRecvBuf);
+		}
+		sleep(1);
+	}
+	if(m_pHeartbeat)
+		m_pHeartbeat->TriggerTerminateEvent();
+
+	return NULL;
+
 }
 
 void CSKClient::OnHeartbeatLost()

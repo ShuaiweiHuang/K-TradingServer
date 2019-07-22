@@ -53,7 +53,6 @@ enum TSKClientStauts
 enum TSKRequestMarket
 {
 	rmBitmex,
-	//rmBinance,
 	rmNum
 };
 

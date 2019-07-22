@@ -10,8 +10,7 @@
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0,
-												unsigned char* pMessage1 = NULL, int nMessage1Length = 0, 
-												unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
+				unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
 CSKServers* CSKServers::instance = NULL;
 pthread_mutex_t CSKServers::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
@@ -33,6 +32,7 @@ void CSKServers::AddFreeServer(enum TSKRequestMarket rmRequestMarket, int nServe
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName.c_str(),
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strWeb.c_str(),
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strQstr.c_str());
+		m_vServerPool.push_back(pServer);
 
 	}
 	catch(const out_of_range& e)
@@ -61,26 +61,23 @@ CSKServers* CSKServers::GetInstance()
 
 void CSKServers::SetConfiguration(struct TSKConfig* pstruConfig)
 {
-	m_vServerConfig.push_back(pstruConfig);//TS,TF,OF,OS
+	m_vServerConfig.push_back(pstruConfig);
 }
 
 void CSKServers::StartUpServers()
 {
 	try
 	{
-		m_vvvServerPool.resize(rmNum);
+		printf("Number of Markets : %d\n", rmNum);
 
 		for(int i=0 ; i<rmNum ; i++)
 		{
-			m_vvvServerPool.at(i).resize(m_vServerConfig.at(i)->nServerCount);
+			printf("Number of Server : %d\n", m_vServerConfig.at(i)->nServerCount);
 		}
 
-		printf("Number of Markets : %d\n", rmNum);
-
-		for(int i=0;i<rmNum;i++)
+		for(int i=0 ; i<rmNum ; i++)
 		{
-			printf("Number of Server : %d\n", m_vServerConfig.at(i)->nServerCount);
-			for(int j=0;j<m_vServerConfig.at(i)->nServerCount;j++)
+			for(int j=0 ; j<m_vServerConfig.at(i)->nServerCount ; j++)
 			{
 				AddFreeServer((TSKRequestMarket)i, j);
 			}
@@ -91,4 +88,34 @@ void CSKServers::StartUpServers()
 		FprintfStderrLog("OUT_OF_RANGE_ERROR", -1, 0, __FILE__, __LINE__, (unsigned char*)e.what(), strlen(e.what()));
 	}
 
+}
+
+void CSKServers::RestartUpServers()
+{
+#if 0
+	vector<CSKServer*>::iterator iter = m_vServerPool.begin();
+	while(iter != m_vServerPool.end())
+	{
+		(*iter)~pServer();
+	}
+	StartUpServers();
+#endif
+}
+
+void CSKServers::CheckServerVector()
+{
+        vector<CSKServer*>::iterator iter = m_vServerPool.begin();
+	m_alive_check = 0;
+        while(iter != m_vServerPool.end())
+        {
+		iter++;
+		m_alive_check++;
+        }
+
+	if(m_vServerConfig.at(0)->nServerCount != m_alive_check)
+		RestartUpServers();
+
+#ifdef DEBUG
+	cout <<"current alive web server = " << m_alive_check << endl;
+#endif
 }

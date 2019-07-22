@@ -46,9 +46,6 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 		CSKHeartbeat* m_pHeartbeat;
 		CSKRequest* m_pRequest;
 
-		string m_strWeb;
-		string m_strQstr;
-		string m_strName;
 
 		TSKServerStatus m_ssServerStatus;
 
@@ -95,5 +92,8 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 
 		void SetStatus(TSKServerStatus ssServerStatus);
 		TSKServerStatus GetStatus();
+		string m_strWeb;
+		string m_strQstr;
+		string m_strName;
 };
 #endif

@@ -6,10 +6,9 @@
 #endif
 
 #include "CVCommon/CVPevents.h"
+#include "CVWebConn.h"
 #include <vector>
 #include <string>
-
-#include "CVWebConn.h"
 
 using namespace neosmart;
 using namespace std;
@@ -34,9 +33,10 @@ class CSKServers //public CSKThread
 		virtual ~CSKServers();
 		static CSKServers* instance;
 		static pthread_mutex_t ms_mtxInstance;
-
-		vector<struct TSKConfig*> m_vServerConfig;//TS,TF,OF,OS
-		vector<vector<vector<CSKServer*> > > m_vvvServerPool;
+		int m_alive_check;
+		vector<struct TSKConfig*> m_vServerConfig;
+		//vector<vector<vector<CSKServer*> > > m_vvvServerPool;
+		vector<CSKServer*> m_vServerPool;
 
 	protected:
 		void AddFreeServer(enum TSKRequestMarket rmRequestMarket, int nPoolIndex);
@@ -45,5 +45,7 @@ class CSKServers //public CSKThread
 		static CSKServers* GetInstance();
 		void SetConfiguration(struct TSKConfig* pstruConfig);
 		void StartUpServers();
+		void RestartUpServers();
+		void CheckServerVector();
 };
 #endif

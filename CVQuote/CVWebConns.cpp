@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 #include "CVWebConns.h"
+#include "CVWebConn.h"
 #include "CVGlobal.h"
 
 using namespace std;

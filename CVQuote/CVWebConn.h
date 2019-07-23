@@ -46,7 +46,6 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 		CSKHeartbeat* m_pHeartbeat;
 		CSKRequest* m_pRequest;
 
-
 		TSKServerStatus m_ssServerStatus;
 
 		TSKRequestMarket m_rmRequestMarket;
@@ -63,13 +62,15 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 		int m_nPoolIndex;
 
 		pthread_mutex_t m_pmtxServerStatusLock;
+		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
+		static void OnData_Bitmex(websocketpp::connection_hdl, client::message_ptr msg);
+		static void OnData_Binance(websocketpp::connection_hdl, client::message_ptr msg);
 
 	protected:
 		void* Run();
 
 		void OnConnect();
 		void OnDisconnect();
-		void OnData( unsigned char* pBuf, int nSize);
 
 		void OnHeartbeatLost();
 		void OnHeartbeatRequest();
@@ -80,6 +81,7 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 
 		bool RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv);
 		bool SendAll(const char* pWhat, const unsigned char* pBuf, int nToSend);
+		void OnData(unsigned char* pBuf, int nSize);
 
 		void ReconnectSocket();
 

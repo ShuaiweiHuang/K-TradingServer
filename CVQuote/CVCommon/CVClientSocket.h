@@ -8,7 +8,6 @@
 #include <netinet/in.h>
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/client.hpp>
-#include <iostream>
 #include <nlohmann/json.hpp>
 
 typedef websocketpp::client<websocketpp::config::asio_tls_client> client;
@@ -42,9 +41,6 @@ class CSKClientSocket
 
 		struct addrinfo m_AddrInfo;
 		struct addrinfo* m_AddrRes;
-		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
-		static void CB_Message_Binance(websocketpp::connection_hdl, client::message_ptr msg);
-		static void CB_Message_Bitmex (websocketpp::connection_hdl, client::message_ptr msg);
 	protected:
 		void Close();
 

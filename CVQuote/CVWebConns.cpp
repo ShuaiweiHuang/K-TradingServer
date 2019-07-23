@@ -105,13 +105,13 @@ void CSKServers::RestartUpServers()
 
 void CSKServers::CheckServerVector()
 {
-        vector<CSKServer*>::iterator iter = m_vServerPool.begin();
+	vector<CSKServer*>::iterator iter = m_vServerPool.begin();
 	m_alive_check = 0;
-        while(iter != m_vServerPool.end())
-        {
+	while(iter != m_vServerPool.end())
+	{
 		iter++;
 		m_alive_check++;
-        }
+	}
 
 	if(m_vServerConfig.at(0)->nServerCount != m_alive_check)
 		RestartUpServers();

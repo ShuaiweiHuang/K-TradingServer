@@ -74,11 +74,44 @@ void* CSKServer::Run()
 {
 	sprintf(m_caPthread_ID, "%020lu", Self());
 
-	m_pClientSocket->m_cfd.run();
+        CSKClients* pClients = NULL;
+        try
+        {
+                pClients = CSKClients::GetInstance();
 
-	ReconnectSocket();
+                if(pClients == NULL)
+                        throw "GET_CLIENTS_ERROR";
+        }
+        catch(const char* pErrorMessage)
+        {
+                FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
+                return NULL;
+        }
+        try
+        {
+                m_pHeartbeat = new CSKHeartbeat(this);
+                m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_WEB);
+                m_pHeartbeat->Start();
 
-	return NULL;
+        }
+        catch (exception& e)
+        {
+                FprintfStderrLog("NEW_HEARTBEAT_ERROR", -1, 0, __FILE__, __LINE__, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID), (unsigned char*)e.what(), strlen(e.what()));
+                return NULL;
+        }
+        try
+        {
+		m_pClientSocket->m_cfd.run();
+		printf("Websocket disconnect.\n");
+	}
+        catch (exception& e)
+        {
+		OnDisconnect();
+                return NULL;
+        }
+
+
+ 	return NULL;
 }
 
 void CSKServer::OnConnect()
@@ -124,7 +157,6 @@ void CSKServer::OnConnect()
 	}
 	else if(m_ssServerStatus == ssReconnecting)
 	{
-		SetStatus(ssFree);
 		FprintfStderrLog("RECONNECT_SUCCESS", 0, 0, NULL, 0, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID));
 
 		if(m_pHeartbeat)
@@ -161,7 +193,6 @@ void CSKServer::OnData_Bitmex(websocketpp::connection_hdl con, client::message_p
 	string price_str, size_str, side_str, time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
 	static CSKClients* pClients = CSKClients::GetInstance();
-
 
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
@@ -205,13 +236,14 @@ void CSKServer::OnData_Binance(websocketpp::connection_hdl con, client::message_
 	json jtable = json::parse(str.c_str());
 
 	static CSKClients* pClients = CSKClients::GetInstance();
+	static int tick_count_binance=0;
+
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
 	memset(netmsg, 0, BUFFERSIZE);
 	memset(timemsg, 0, 8);
 
-	static int tick_count_binance=0;
 	time_str   = "00000000";
 	symbol_str = to_string(jtable["s"]);
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
@@ -219,6 +251,7 @@ void CSKServer::OnData_Binance(websocketpp::connection_hdl con, client::message_
 	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
 	size_str   = to_string(jtable["q"]);
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
+
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
 	size_str = to_string(size_int);
 
@@ -244,6 +277,7 @@ void CSKServer::OnHeartbeatLost()
 
 void CSKServer::OnHeartbeatRequest()
 {
+	//add ping/pong message.
 }
 
 void CSKServer::OnHeartbeatError(int nData, const char* pErrorMessage)

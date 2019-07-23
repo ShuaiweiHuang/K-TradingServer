@@ -97,5 +97,6 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 		string m_strWeb;
 		string m_strQstr;
 		string m_strName;
+		string m_strEPID;
 };
 #endif

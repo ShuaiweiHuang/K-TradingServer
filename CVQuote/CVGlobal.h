@@ -3,7 +3,7 @@
 
 #define CONNECT_TCP		1
 #define CONNECT_WEBSOCK		2
-
+#define HEARTBEAT_INTERVAL_WEB  20
 #define BUFFERSIZE		1024
 #define IPLEN			16
 #define UIDLEN			10

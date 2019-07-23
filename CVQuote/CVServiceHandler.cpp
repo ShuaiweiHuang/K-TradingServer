@@ -32,6 +32,7 @@ CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
 	pthread_mutex_init(&m_pmtxClientStatusLock, NULL);
 	srand(time(NULL));
 	CSKClients* pClients = NULL;
+
 	try
 	{
 		pClients = CSKClients::GetInstance();
@@ -45,7 +46,7 @@ CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
 	}
 
 	m_strEPID = pClients->m_strEPIDNum;
-       try
+	try
 	{
 		m_pHeartbeat = new CSKHeartbeat(this);
 		m_pHeartbeat->SetTimeInterval( stoi(pClients->m_strHeartBeatTime) );
@@ -85,6 +86,7 @@ void* CSKClient::Run()
 		}
 		sleep(1);
 	}
+
 	if(m_pHeartbeat)
 		m_pHeartbeat->TriggerTerminateEvent();
 

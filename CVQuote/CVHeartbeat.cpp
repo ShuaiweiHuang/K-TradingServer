@@ -33,7 +33,7 @@ void* CSKHeartbeat::Run()
 	while(m_pHeartbeatCallback)
 	{
 		int nIndex = -1;
-		int nResult = WaitForMultipleEvents(m_PEvent, 2, false, 10000, nIndex);
+		int nResult = WaitForMultipleEvents(m_PEvent, 2, false, 5000, nIndex);
 
 		if(nResult != 0 && nResult != WAIT_TIMEOUT)
 		{
@@ -44,7 +44,7 @@ void* CSKHeartbeat::Run()
 
 		if(nResult == WAIT_TIMEOUT)
 		{
-			m_nIdleTime += 10;
+			m_nIdleTime += 5;
 			if(m_nIdleTime < m_nTimeInterval)
 			{
 				continue;

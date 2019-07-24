@@ -102,11 +102,11 @@ void* CSKServer::Run()
         try
         {
 		m_pClientSocket->m_cfd.run();
-		printf("Websocket disconnect.\n");
+		printf("Websocket disconnect: %s.\n", m_strName.c_str());
+		exit(-1);
 	}
         catch (exception& e)
         {
-		OnDisconnect();
                 return NULL;
         }
 
@@ -139,14 +139,14 @@ void CSKServer::OnConnect()
 
 			websocketpp::lib::error_code errcode;
 
-			client::connection_ptr con = m_pClientSocket->m_cfd.get_connection(uri, errcode);
+			m_pClientSocket->m_conn = m_pClientSocket->m_cfd.get_connection(uri, errcode);
 
 			if (errcode) {
 				cout << "could not create connection because: " << errcode.message() << endl;
 				exit(-1);
 			}
 
-			m_pClientSocket->m_cfd.connect(con);
+			m_pClientSocket->m_cfd.connect(m_pClientSocket->m_conn);
 			m_pClientSocket->m_cfd.get_alog().write(websocketpp::log::alevel::app, "Connecting to " + uri);
 
 		}  catch (websocketpp::exception const & ecp) {
@@ -277,7 +277,10 @@ void CSKServer::OnHeartbeatLost()
 
 void CSKServer::OnHeartbeatRequest()
 {
-	//add ping/pong message.
+#if 0	//Websocket problems, wrong PONG response
+        auto msg = m_pClientSocket->m_conn->send("ping");
+        cout << msg.message() << endl;
+#endif
 }
 
 void CSKServer::OnHeartbeatError(int nData, const char* pErrorMessage)

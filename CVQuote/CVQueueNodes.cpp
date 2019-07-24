@@ -68,7 +68,7 @@ CSKQueueDAOs* CSKQueueDAOs::GetInstance()
 		if(instance == NULL)
 		{
 			instance = new CSKQueueDAOs();
-			cout << "QueueDAOs One" << endl;
+			cout << "QueueNodes One" << endl;
 		}
 
 		pthread_mutex_unlock(&ms_mtxInstance);//unlock

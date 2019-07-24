@@ -46,6 +46,7 @@ class CSKClientSocket
 
 	public:
 		client m_cfd;
+		client::connection_ptr m_conn;
 		CSKClientSocket();
 		CSKClientSocket(ISKClientSocketCallback* pClientSocketCallback);
 		virtual ~CSKClientSocket();

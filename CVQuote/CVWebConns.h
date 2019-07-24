@@ -46,6 +46,6 @@ class CSKServers //public CSKThread
 		void SetConfiguration(struct TSKConfig* pstruConfig);
 		void StartUpServers();
 		void RestartUpServers();
-		void CheckServerVector();
+		CSKServer* GetServerByName(string name);
 };
 #endif

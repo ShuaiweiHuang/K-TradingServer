@@ -197,8 +197,11 @@ void CSKServer::OnData_Bitmex(websocketpp::connection_hdl con, client::message_p
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
+	string strname = "BITMEX";
+	static CSKServer* pServer = CSKServers::GetInstance()->GetServerByName(strname);
+
 	for(int i=0 ; i<jtable["data"].size() ; i++)
-	{
+	{ 
 		memset(netmsg, 0, BUFFERSIZE);
 		memset(timemsg, 0, 8);
 		static int tick_count=0;
@@ -213,6 +216,7 @@ void CSKServer::OnData_Bitmex(websocketpp::connection_hdl con, client::message_p
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
 		CSKQueueDAO* pQueueDAO = CSKQueueDAOs::GetInstance()->GetDAO();
+		pServer->m_pHeartbeat->TriggerTerminateEvent();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
 #ifdef DEBUG
@@ -277,10 +281,10 @@ void CSKServer::OnHeartbeatLost()
 
 void CSKServer::OnHeartbeatRequest()
 {
-#if 0	//Websocket problems, wrong PONG response
-        auto msg = m_pClientSocket->m_conn->send("ping");
-        cout << msg.message() << endl;
-#endif
+	if(m_strName == "BITMEX") {
+		auto msg = m_pClientSocket->m_conn->send("ping");
+		cout << m_strName << " send \"PING\" and response: "<< msg.message() << endl;
+	}
 }
 
 void CSKServer::OnHeartbeatError(int nData, const char* pErrorMessage)

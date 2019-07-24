@@ -50,7 +50,6 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 
 		TSKRequestMarket m_rmRequestMarket;
 		unsigned char m_uncaSecondByte;
-		//int m_nRequestMessageLength;
 		int m_nReplyMessageLength;
 
 		unsigned char m_uncaRequestMessage[MAX_DATA_LENGTH];

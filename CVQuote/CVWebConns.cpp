@@ -103,20 +103,22 @@ void CSKServers::RestartUpServers()
 #endif
 }
 
-void CSKServers::CheckServerVector()
+CSKServer* CSKServers::GetServerByName(string name)
 {
 	vector<CSKServer*>::iterator iter = m_vServerPool.begin();
 	m_alive_check = 0;
 	while(iter != m_vServerPool.end())
 	{
+		if((*iter)->m_strName == name)
+			return *iter;
 		iter++;
 		m_alive_check++;
 	}
 
 	if(m_vServerConfig.at(0)->nServerCount != m_alive_check)
 		RestartUpServers();
-
 #ifdef DEBUG
 	cout <<"current alive web server = " << m_alive_check << endl;
 #endif
+	return NULL;
 }

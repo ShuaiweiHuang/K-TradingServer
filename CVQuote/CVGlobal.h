@@ -8,7 +8,7 @@
 #define IPLEN			16
 #define UIDLEN			10
 #define SCALE_VOL_BINANCE	1000000
-
+#define HTBT_COUNT_LIMIT	10
 #include "CVCommon/CVSharedMemory.h"
 
 /***** PACKET IDENTIFIER *****/

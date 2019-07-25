@@ -87,11 +87,13 @@ void* CSKServer::Run()
                 FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
                 return NULL;
         }
+#if 1
         try
         {
                 m_pHeartbeat = new CSKHeartbeat(this);
                 m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_WEB);
                 m_pHeartbeat->Start();
+		m_heartbeat_count = 0;
 
         }
         catch (exception& e)
@@ -99,6 +101,7 @@ void* CSKServer::Run()
                 FprintfStderrLog("NEW_HEARTBEAT_ERROR", -1, 0, __FILE__, __LINE__, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID), (unsigned char*)e.what(), strlen(e.what()));
                 return NULL;
         }
+#endif
         try
         {
 		m_pClientSocket->m_cfd.run();
@@ -199,6 +202,7 @@ void CSKServer::OnData_Bitmex(websocketpp::connection_hdl con, client::message_p
 
 	string strname = "BITMEX";
 	static CSKServer* pServer = CSKServers::GetInstance()->GetServerByName(strname);
+	m_heartbeat_count = 0;
 
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
@@ -282,8 +286,14 @@ void CSKServer::OnHeartbeatLost()
 void CSKServer::OnHeartbeatRequest()
 {
 	if(m_strName == "BITMEX") {
-		auto msg = m_pClientSocket->m_conn->send("ping");
-		cout << m_strName << " send \"PING\" and response: "<< msg.message() << endl;
+		if(m_heartbeat_count <= HTBT_COUNT_LIMIT) {
+			auto msg = m_pClientSocket->m_conn->send("ping");
+			cout << m_strName << " send \"PING\" and response: "<< msg.message() << endl;
+			FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, NULL, 0,  NULL, 0);
+			m_heartbeat_count++;
+		}
+		else
+			exit(-1);
 	}
 }
 

@@ -57,8 +57,8 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 
 		int m_nOriginalOrderLength;
 		int m_nReplyMsgLength;//for reply_msg[78] reply_msg[80]
-
 		int m_nPoolIndex;
+		int m_heartbeat_count;
 
 		pthread_mutex_t m_pmtxServerStatusLock;
 		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);

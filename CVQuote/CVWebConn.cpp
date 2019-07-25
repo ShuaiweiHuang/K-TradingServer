@@ -93,7 +93,6 @@ void* CSKServer::Run()
                 m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_WEB);
                 m_pHeartbeat->Start();
 		m_heartbeat_count = 0;
-
         }
         catch (exception& e)
         {

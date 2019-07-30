@@ -1,7 +1,7 @@
-#ifndef INCLUDE_SKLOGONFORMAT_H_
-#define INCLUDE_SKLOGONFORMAT_H_
+#ifndef INCLUDE_CVLOGONFORMAT_H_
+#define INCLUDE_CVLOGONFORMAT_H_
 
-struct TSKLogon
+struct TCVLogon
 {
 	char logon_id[10];
 	//char SellerID[6];
@@ -11,7 +11,7 @@ struct TSKLogon
 	char version[10];
 };
 
-struct TSKLogonReply
+struct TCVLogonReply
 {
 	char status_code[4];//XXXX
 	char error_code[4];//MXXX

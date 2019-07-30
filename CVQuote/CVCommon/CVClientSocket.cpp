@@ -8,7 +8,7 @@
 #include <errno.h>
 #include <cstdio>
 
-#include "ISKClientSocketCallback.h"
+#include "ICVClientSocketCallback.h"
 #include "CVClientSocket.h"
 
 #include "../CVQueueNodes.h"
@@ -18,7 +18,7 @@
 using namespace std;
 
 
-CSKClientSocket::CSKClientSocket() 
+CCVClientSocket::CCVClientSocket() 
 {
 	m_pClientSocketCallback = NULL;
 
@@ -31,7 +31,7 @@ CSKClientSocket::CSKClientSocket()
 	memset( &m_AddrInfo, 0 , sizeof( struct addrinfo));
 }
 
-CSKClientSocket::CSKClientSocket(ISKClientSocketCallback* pClientSocketCallback)
+CCVClientSocket::CCVClientSocket(ICVClientSocketCallback* pClientSocketCallback)
 {
 	m_pClientSocketCallback = pClientSocketCallback;
 
@@ -44,11 +44,11 @@ CSKClientSocket::CSKClientSocket(ISKClientSocketCallback* pClientSocketCallback)
 	memset( &m_AddrInfo, 0 , sizeof( struct addrinfo));
 }
 
-CSKClientSocket::~CSKClientSocket() 
+CCVClientSocket::~CCVClientSocket() 
 {
 }
 
-void CSKClientSocket::Connect(string strHost, string strPara, string strName, int type)
+void CCVClientSocket::Connect(string strHost, string strPara, string strName, int type)
 {
 	if(type == CONNECT_TCP)
 	{
@@ -95,7 +95,7 @@ void CSKClientSocket::Connect(string strHost, string strPara, string strName, in
 	}
 }
 
-void CSKClientSocket::Close()
+void CCVClientSocket::Close()
 {
 	if ( m_cssClientSocketStatus == cssConnected)
 	{
@@ -117,17 +117,17 @@ void CSKClientSocket::Close()
 	}
 }
 
-void CSKClientSocket::Disconnect()
+void CCVClientSocket::Disconnect()
 {
 	Close();
 }
 
-TSKClientSocketStatus CSKClientSocket::GetStatus()
+TCVClientSocketStatus CCVClientSocket::GetStatus()
 {
 	return m_cssClientSocketStatus;
 }
 
-int CSKClientSocket::Send(const unsigned char* pBuf, int nSize)
+int CCVClientSocket::Send(const unsigned char* pBuf, int nSize)
 {
 	if ( m_cssClientSocketStatus == cssConnected)
 	{
@@ -150,7 +150,7 @@ int CSKClientSocket::Send(const unsigned char* pBuf, int nSize)
 	return 0;
 }
 
-int CSKClientSocket::Recv( unsigned char* pBuf, int nSize)
+int CCVClientSocket::Recv( unsigned char* pBuf, int nSize)
 {
 	if ( m_cssClientSocketStatus == cssConnected)
 	{
@@ -177,7 +177,7 @@ int CSKClientSocket::Recv( unsigned char* pBuf, int nSize)
 	return 0;
 }
 
-int CSKClientSocket::Recv()
+int CCVClientSocket::Recv()
 {
 	unsigned char caBuf[1024];
 

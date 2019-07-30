@@ -17,7 +17,7 @@ extern void FprintfStderrLog(const char* pCause, int nError, int nData, const ch
 
 extern int WaitForMultipleEvents(neosmart_event_t *events, int count, bool waitAll, uint64_t milliseconds);
 
-CSKRequest::CSKRequest(ISKRequestCallback* pRequestCallback)
+CCVRequest::CCVRequest(ICVRequestCallback* pRequestCallback)
 {
 	m_pRequestCallback = pRequestCallback;
 
@@ -29,13 +29,13 @@ CSKRequest::CSKRequest(ISKRequestCallback* pRequestCallback)
 	Start();
 }
 
-CSKRequest::~CSKRequest() 
+CCVRequest::~CCVRequest() 
 {
 	DestroyEvent(m_PEvent[0]);
 	DestroyEvent(m_PEvent[1]);
 }
 
-void* CSKRequest::Run()
+void* CCVRequest::Run()
 {
 	while(m_pRequestCallback)	
 	{
@@ -73,7 +73,7 @@ void* CSKRequest::Run()
 	return NULL;
 }
 
-/*void CSKRequest::SetRequestMessage(unsigned char* pRequestMessage, int nRequestMessageLength)
+/*void CCVRequest::SetRequestMessage(unsigned char* pRequestMessage, int nRequestMessageLength)
 {
 	try
 	{
@@ -90,12 +90,12 @@ void* CSKRequest::Run()
 	}
 }*/
 
-void CSKRequest::TriggerWakeUpEvent()
+void CCVRequest::TriggerWakeUpEvent()
 {
 	SetEvent(m_PEvent[0]);
 }
 
-void CSKRequest::TriggerTerminateEvent()
+void CCVRequest::TriggerTerminateEvent()
 {
 	SetEvent(m_PEvent[1]);
 }

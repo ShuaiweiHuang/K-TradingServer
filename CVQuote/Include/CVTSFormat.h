@@ -1,11 +1,11 @@
-#ifndef INCLUDE_SKTSFORMAT_H_
-#define INCLUDE_SKTSFORMAT_H_
+#ifndef INCLUDE_CVTSFORMAT_H_
+#define INCLUDE_CVTSFORMAT_H_
 //===================================================================================
 //=                          證券 格式                                              =
 //===================================================================================
 
 #ifdef IPVH_331
-struct SK_TS_ORDER
+struct CV_TS_ORDER
 {
 	char broker[4];				//	X(04)	證商代號	          BROKER_NO+BRANCH_NO
 	char agent[2];				//	X(02)	來源代碼	註一
@@ -39,7 +39,7 @@ struct SK_TS_ORDER
 	char reserved[32];
 };
 #else
-struct SK_TS_ORDER
+struct CV_TS_ORDER
 {
 	//char market[1];
 	char broker[4];				//	X(04)	證商代號	          BROKER_NO+BRANCH_NO
@@ -78,9 +78,9 @@ struct SK_TS_ORDER
 // 註四︰0=普通 1=代資 2=代券3=自資 4=自券 5=借券賣 6=借券賣  
 // 註五︰整股/定價/拍賣 =單位數(張數)  零股=股數 ; 新單時為委託數量,改量為取消數量
 
-struct SK_TS_REPLY
+struct CV_TS_REPLY
 {
-	struct SK_TS_ORDER original;
+	struct CV_TS_ORDER original;
 
 	char reply_msg[78];
 	char error_code[2];

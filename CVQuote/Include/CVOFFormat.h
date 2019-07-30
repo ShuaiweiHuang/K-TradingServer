@@ -1,9 +1,9 @@
-#ifndef INCLUDE_SKOFFORMAT_H_
-#define INCLUDE_SKOFFORMAT_H_
+#ifndef INCLUDE_CVOFFORMAT_H_
+#define INCLUDE_CVOFFORMAT_H_
 //===================================================================================
 //=                          海期 格式                                              =
 //===================================================================================
-struct SK_OF_ORDER
+struct CV_OF_ORDER
 {
    	char trade_type[1];				/* 0:new, 1:cancel 2:redue amount */ /* 20161222 add by A97585 */
 	//char head_broker[7];
@@ -63,9 +63,9 @@ L:PREVIOUS_FUND_VALUATION_POINT M:NEXT_FUND_VALUATION_POINT P:PEGGED */
 	char time_log10[8];//timetest*/
 };
 
-struct SK_OF_REPLY
+struct CV_OF_REPLY
 {
-	struct SK_OF_ORDER original;
+	struct CV_OF_ORDER original;
 
 	char reply_msg[80];
 	/*

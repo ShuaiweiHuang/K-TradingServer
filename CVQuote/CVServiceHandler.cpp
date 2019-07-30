@@ -22,20 +22,20 @@ using namespace std;
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0,
 			     unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
+CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo)
 {
 	signal(SIGPIPE, SIG_IGN);
-	memset(&m_ClientAddrInfo, 0, sizeof(struct TSKClientAddrInfo));
-	memcpy(&m_ClientAddrInfo, &ClientAddrInfo, sizeof(struct TSKClientAddrInfo));
+	memset(&m_ClientAddrInfo, 0, sizeof(struct TCVClientAddrInfo));
+	memcpy(&m_ClientAddrInfo, &ClientAddrInfo, sizeof(struct TCVClientAddrInfo));
 	m_pHeartbeat = NULL;
 	m_csClientStatus = csNone;
 	pthread_mutex_init(&m_pmtxClientStatusLock, NULL);
 	srand(time(NULL));
-	CSKClients* pClients = NULL;
+	CCVClients* pClients = NULL;
 
 	try
 	{
-		pClients = CSKClients::GetInstance();
+		pClients = CCVClients::GetInstance();
 
 		if(pClients == NULL)
 			throw "GET_CLIENTS_ERROR";
@@ -48,7 +48,7 @@ CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
 	m_strEPID = pClients->m_strEPIDNum;
 	try
 	{
-		m_pHeartbeat = new CSKHeartbeat(this);
+		m_pHeartbeat = new CCVHeartbeat(this);
 		m_pHeartbeat->SetTimeInterval( stoi(pClients->m_strHeartBeatTime) );
 	}
 	catch(exception& e)
@@ -60,7 +60,7 @@ CSKClient::CSKClient(struct TSKClientAddrInfo &ClientAddrInfo)
 	Start();
 }
 
-CSKClient::~CSKClient() 
+CCVClient::~CCVClient() 
 {
 	if( m_pHeartbeat)
 	{
@@ -72,7 +72,7 @@ CSKClient::~CSKClient()
 }
 
 
-void* CSKClient::Run()
+void* CCVClient::Run()
 {
 	unsigned char uncaRecvBuf[BUFFERSIZE];
 
@@ -94,12 +94,12 @@ void* CSKClient::Run()
 
 }
 
-void CSKClient::OnHeartbeatLost()
+void CCVClient::OnHeartbeatLost()
 {
 
 }
 
-void CSKClient::OnHeartbeatRequest()
+void CCVClient::OnHeartbeatRequest()
 {
 	char caHeaetbeatRequestBuf[128];
 	time_t t = time(NULL);
@@ -118,16 +118,16 @@ void CSKClient::OnHeartbeatRequest()
 	}
 }
 
-void CSKClient::OnHeartbeatError(int nData, const char* pErrorMessage)
+void CCVClient::OnHeartbeatError(int nData, const char* pErrorMessage)
 {
 }
 
-bool CSKClient::RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv)
+bool CCVClient::RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv)
 {
 	return false;
 }
 
-bool CSKClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
+bool CCVClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 {
 	int nSend = 0;
 	int nSended = 0;
@@ -140,7 +140,7 @@ bool CSKClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 		if(nSend <= 0) // socket close or disconnect
 		{
 			SetStatus(csOffline);
-			FprintfStderrLog("SEND_SK_ERROR", -1, errno, NULL, 0, (unsigned char*)pBuf, nToSend, (unsigned char*)strerror(errno), strlen(strerror(errno)));
+			FprintfStderrLog("SEND_CV_ERROR", -1, errno, NULL, 0, (unsigned char*)pBuf, nToSend, (unsigned char*)strerror(errno), strlen(strerror(errno)));
 			break;
 		}
 		else
@@ -159,7 +159,7 @@ bool CSKClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 			}
 			else
 			{
-				FprintfStderrLog("SEND_SK_ELSE_ERROR", -1, errno, NULL, 0, (unsigned char*)pBuf, nToSend, (unsigned char*)strerror(errno), strlen(strerror(errno)));
+				FprintfStderrLog("SEND_CV_ELSE_ERROR", -1, errno, NULL, 0, (unsigned char*)pBuf, nToSend, (unsigned char*)strerror(errno), strlen(strerror(errno)));
 				break;
 			}
 		}
@@ -169,19 +169,19 @@ bool CSKClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 	return nSend == nToSend ? true : false;
 }
 
-void CSKClient::TriggerSendRequestEvent(CSKServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength)
+void CCVClient::TriggerSendRequestEvent(CCVServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength)
 {
 }
 
-bool CSKClient::SendRequestReply(unsigned char uncaSecondByte, unsigned char* unpRequestReplyMessage, int nRequestReplyMessageLength)
+bool CCVClient::SendRequestReply(unsigned char uncaSecondByte, unsigned char* unpRequestReplyMessage, int nRequestReplyMessageLength)
 {
 }
 
-bool CSKClient::SendRequestErrorReply(unsigned char uncaSecondByte, unsigned char* pOriginalRequstMessage, int nOriginalRequestMessageLength, const char* pErrorMessage, short nErrorCode)
+bool CCVClient::SendRequestErrorReply(unsigned char uncaSecondByte, unsigned char* pOriginalRequstMessage, int nOriginalRequestMessageLength, const char* pErrorMessage, short nErrorCode)
 {
 }
 
-void CSKClient::SetStatus(TSKClientStauts csStatus)
+void CCVClient::SetStatus(TCVClientStauts csStatus)
 {
 	pthread_mutex_lock(&m_pmtxClientStatusLock);//lock
 
@@ -190,12 +190,12 @@ void CSKClient::SetStatus(TSKClientStauts csStatus)
 	pthread_mutex_unlock(&m_pmtxClientStatusLock);//unlock
 }
 
-TSKClientStauts CSKClient::GetStatus()
+TCVClientStauts CCVClient::GetStatus()
 {
 	return m_csClientStatus;
 }
 
-int CSKClient::GetClientSocket()
+int CCVClient::GetClientSocket()
 {
 	return m_ClientAddrInfo.nSocket;
 }

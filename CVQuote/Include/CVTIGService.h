@@ -1,5 +1,5 @@
-#ifndef INCLUDE_SKTIGSERVICE_H_
-#define INCLUDE_SKTIGSERVICE_H_
+#ifndef INCLUDE_CVTIGSERVICE_H_
+#define INCLUDE_CVTIGSERVICE_H_
 
 /*
 Service ID         (20Bytes)
@@ -14,7 +14,7 @@ Prefix             (2Bytes)
 EOL                (2Bytes)
 */
 
-struct TSKTIGService{
+struct TCVTIGService{
 	unsigned char uncaServiceID[20];
 	unsigned char uncaComma1[1];
 	unsigned char uncaPATHMONName[16];

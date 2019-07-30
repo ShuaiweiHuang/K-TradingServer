@@ -1,5 +1,5 @@
-#ifndef SKQUEUEDAO_H_
-#define SKQUEUEDAO_H_
+#ifndef CVQUEUEDAO_H_
+#define CVQUEUEDAO_H_
 
 #include <map>
 #include <string>
@@ -9,21 +9,21 @@
 
 using namespace std;
 
-class CSKQueueDAO: public CSKThread
+class CCVQueueDAO: public CCVThread
 {
 	private:
 		string m_strService;
 		key_t m_kRecvKey;
 		key_t m_kSendKey;
-		CSKQueue* m_pSendQueue;
-		CSKQueue* m_pRecvQueue;
+		CCVQueue* m_pSendQueue;
+		CCVQueue* m_pRecvQueue;
 
 	protected:
 		void* Run();
 
 	public:
-		CSKQueueDAO(string strService, key_t kSendKey, key_t kRecvKey);
-		virtual ~CSKQueueDAO();
+		CCVQueueDAO(string strService, key_t kSendKey, key_t kRecvKey);
+		virtual ~CCVQueueDAO();
 
 		int SendData(char* pBuf, int nSize, long lType = 1,int nFlag = 0);
 

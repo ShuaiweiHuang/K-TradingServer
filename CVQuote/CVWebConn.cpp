@@ -18,7 +18,7 @@ using namespace std;
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0, 
 			     unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKServer::CSKServer(string strWeb, string strQstr, string strName, TSKRequestMarket rmRequestMarket)
+CCVServer::CCVServer(string strWeb, string strQstr, string strName, TCVRequestMarket rmRequestMarket)
 {
 	m_shpClient = NULL;
 	m_pHeartbeat = NULL;
@@ -35,7 +35,7 @@ CSKServer::CSKServer(string strWeb, string strQstr, string strName, TSKRequestMa
 
 	try
 	{
-		m_pClientSocket = new CSKClientSocket(this);
+		m_pClientSocket = new CCVClientSocket(this);
 		m_pClientSocket->Connect( m_strWeb, m_strQstr, m_strName, CONNECT_WEBSOCK);//start
 	}
 	catch (exception& e)
@@ -44,7 +44,7 @@ CSKServer::CSKServer(string strWeb, string strQstr, string strName, TSKRequestMa
 	}
 }
 
-CSKServer::~CSKServer() 
+CCVServer::~CCVServer() 
 {
 	m_shpClient = NULL;
 
@@ -70,14 +70,14 @@ CSKServer::~CSKServer()
 	pthread_mutex_destroy(&m_pmtxServerStatusLock);
 }
 
-void* CSKServer::Run()
+void* CCVServer::Run()
 {
 	sprintf(m_caPthread_ID, "%020lu", Self());
 
-        CSKClients* pClients = NULL;
+        CCVClients* pClients = NULL;
         try
         {
-                pClients = CSKClients::GetInstance();
+                pClients = CCVClients::GetInstance();
 
                 if(pClients == NULL)
                         throw "GET_CLIENTS_ERROR";
@@ -89,7 +89,7 @@ void* CSKServer::Run()
         }
         try
         {
-                m_pHeartbeat = new CSKHeartbeat(this);
+                m_pHeartbeat = new CCVHeartbeat(this);
                 m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_WEB);
                 m_pHeartbeat->Start();
 		m_heartbeat_count = 0;
@@ -114,7 +114,7 @@ void* CSKServer::Run()
  	return NULL;
 }
 
-void CSKServer::OnConnect()
+void CCVServer::OnConnect()
 {
 
 	if(m_ssServerStatus == ssNone)
@@ -174,14 +174,14 @@ void CSKServer::OnConnect()
 	}
 }
 
-void CSKServer::OnDisconnect()
+void CCVServer::OnDisconnect()
 {
 	sleep(5);
 
 	m_pClientSocket->Connect( m_strWeb, m_strQstr, m_strName, CONNECT_WEBSOCK);//start & reset heartbeat
 }
 
-void CSKServer::OnData_Bitmex(websocketpp::connection_hdl con, client::message_ptr msg)
+void CCVServer::OnData_Bitmex(websocketpp::connection_hdl con, client::message_ptr msg)
 {
 #if DEBUG
 	printf("[on_message_bitmex]\n");
@@ -192,13 +192,13 @@ void CSKServer::OnData_Bitmex(websocketpp::connection_hdl con, client::message_p
 	string str = msg->get_payload();
 	string price_str, size_str, side_str, time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
-	static CSKClients* pClients = CSKClients::GetInstance();
+	static CCVClients* pClients = CCVClients::GetInstance();
 
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
 	string strname = "BITMEX";
-	static CSKServer* pServer = CSKServers::GetInstance()->GetServerByName(strname);
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
 	pServer->m_heartbeat_count = 0;
 
 	for(int i=0 ; i<jtable["data"].size() ; i++)
@@ -216,7 +216,7 @@ void CSKServer::OnData_Bitmex(websocketpp::connection_hdl con, client::message_p
 		int msglen = strlen(netmsg);
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
-		CSKQueueDAO* pQueueDAO = CSKQueueDAOs::GetInstance()->GetDAO();
+		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		pServer->m_pHeartbeat->TriggerTerminateEvent();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
@@ -228,7 +228,7 @@ void CSKServer::OnData_Bitmex(websocketpp::connection_hdl con, client::message_p
 
 }
 
-void CSKServer::OnData_Binance(websocketpp::connection_hdl con, client::message_ptr msg)
+void CCVServer::OnData_Binance(websocketpp::connection_hdl con, client::message_ptr msg)
 {
 #ifdef DEBUG
 	printf("[on_message_binance]\n");
@@ -240,7 +240,7 @@ void CSKServer::OnData_Binance(websocketpp::connection_hdl con, client::message_
 	string price_str, size_str, side_str, time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
 
-	static CSKClients* pClients = CSKClients::GetInstance();
+	static CCVClients* pClients = CCVClients::GetInstance();
 	static int tick_count_binance=0;
 
 	if(pClients == NULL)
@@ -266,7 +266,7 @@ void CSKServer::OnData_Binance(websocketpp::connection_hdl con, client::message_
 	int msglen = strlen(netmsg);
 	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
 	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
-	CSKQueueDAO* pQueueDAO = CSKQueueDAOs::GetInstance()->GetDAO();
+	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
 #if DEBUG
@@ -276,11 +276,11 @@ void CSKServer::OnData_Binance(websocketpp::connection_hdl con, client::message_
 
 }
 
-void CSKServer::OnHeartbeatLost()
+void CCVServer::OnHeartbeatLost()
 {
 }
 
-void CSKServer::OnHeartbeatRequest()
+void CCVServer::OnHeartbeatRequest()
 {
 	if(m_strName == "BITMEX") {
 		if(m_heartbeat_count <= HTBT_COUNT_LIMIT) {
@@ -296,33 +296,33 @@ void CSKServer::OnHeartbeatRequest()
 	}
 }
 
-void CSKServer::OnHeartbeatError(int nData, const char* pErrorMessage)
+void CCVServer::OnHeartbeatError(int nData, const char* pErrorMessage)
 {
 }
 
-void CSKServer::OnData(unsigned char* pBuf, int nSize)
+void CCVServer::OnData(unsigned char* pBuf, int nSize)
 {
 }
 
-void CSKServer::OnRequest()
+void CCVServer::OnRequest()
 {
 }
 
-void CSKServer::OnRequestError(int nData, const char* pErrorMessage)
+void CCVServer::OnRequestError(int nData, const char* pErrorMessage)
 {
 }
 
-bool CSKServer::RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv)
-{
-	return false;
-}
-
-bool CSKServer::SendAll(const char* pWhat, const unsigned char* pBuf, int nToSend)
+bool CCVServer::RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv)
 {
 	return false;
 }
 
-void CSKServer::ReconnectSocket()
+bool CCVServer::SendAll(const char* pWhat, const unsigned char* pBuf, int nToSend)
+{
+	return false;
+}
+
+void CCVServer::ReconnectSocket()
 {
 	sleep(5);
 
@@ -334,16 +334,16 @@ void CSKServer::ReconnectSocket()
 	}
 }
 
-void CSKServer::SetCallback(shared_ptr<CSKClient>& shpClient)
+void CCVServer::SetCallback(shared_ptr<CCVClient>& shpClient)
 {
 	m_shpClient = shpClient;
 }
 
-void CSKServer::SetRequestMessage(unsigned char* pRequestMessage, int nRequestMessageLength)
+void CCVServer::SetRequestMessage(unsigned char* pRequestMessage, int nRequestMessageLength)
 {
 }
 
-void CSKServer::SetStatus(TSKServerStatus ssServerStatus)
+void CCVServer::SetStatus(TCVServerStatus ssServerStatus)
 {
 	pthread_mutex_lock(&m_pmtxServerStatusLock);
 
@@ -352,12 +352,12 @@ void CSKServer::SetStatus(TSKServerStatus ssServerStatus)
 	pthread_mutex_unlock(&m_pmtxServerStatusLock);
 }
 
-TSKServerStatus CSKServer::GetStatus()
+TCVServerStatus CCVServer::GetStatus()
 {
 	return m_ssServerStatus;
 }
 
-context_ptr CSKServer::CB_TLS_Init(const char * hostname, websocketpp::connection_hdl) {
+context_ptr CCVServer::CB_TLS_Init(const char * hostname, websocketpp::connection_hdl) {
     context_ptr ctx = websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
     return ctx;
 }

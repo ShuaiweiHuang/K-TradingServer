@@ -13,18 +13,18 @@ using namespace std;
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0,
 				unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKServers* CSKServers::instance = NULL;
-pthread_mutex_t CSKServers::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
+CCVServers* CCVServers::instance = NULL;
+pthread_mutex_t CCVServers::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
 
-CSKServers::CSKServers() { }
+CCVServers::CCVServers() { }
 
-CSKServers::~CSKServers() { }
+CCVServers::~CCVServers() { }
 
-void CSKServers::AddFreeServer(enum TSKRequestMarket rmRequestMarket, int nServerIndex)
+void CCVServers::AddFreeServer(enum TCVRequestMarket rmRequestMarket, int nServerIndex)
 {
 	try
 	{
-		CSKServer* pServer = new CSKServer(m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strWeb,
+		CCVServer* pServer = new CCVServer(m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strWeb,
 						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strQstr,
 						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName,
 						   rmRequestMarket);
@@ -42,7 +42,7 @@ void CSKServers::AddFreeServer(enum TSKRequestMarket rmRequestMarket, int nServe
 	}
 }
 
-CSKServers* CSKServers::GetInstance()
+CCVServers* CCVServers::GetInstance()
 {
 	if(instance == NULL)
 	{
@@ -50,7 +50,7 @@ CSKServers* CSKServers::GetInstance()
 
 		if(instance == NULL)
 		{
-			instance = new CSKServers();
+			instance = new CCVServers();
 			FprintfStderrLog("SERVERS_ONE", 0, 0);
 		}
 
@@ -60,12 +60,12 @@ CSKServers* CSKServers::GetInstance()
 	return instance;
 }
 
-void CSKServers::SetConfiguration(struct TSKConfig* pstruConfig)
+void CCVServers::SetConfiguration(struct TCVConfig* pstruConfig)
 {
 	m_vServerConfig.push_back(pstruConfig);
 }
 
-void CSKServers::StartUpServers()
+void CCVServers::StartUpServers()
 {
 	try
 	{
@@ -80,7 +80,7 @@ void CSKServers::StartUpServers()
 		{
 			for(int j=0 ; j<m_vServerConfig.at(i)->nServerCount ; j++)
 			{
-				AddFreeServer((TSKRequestMarket)i, j);
+				AddFreeServer((TCVRequestMarket)i, j);
 			}
 		}
 	}
@@ -91,10 +91,10 @@ void CSKServers::StartUpServers()
 
 }
 
-void CSKServers::RestartUpServers()
+void CCVServers::RestartUpServers()
 {
 #if 0
-	vector<CSKServer*>::iterator iter = m_vServerPool.begin();
+	vector<CCVServer*>::iterator iter = m_vServerPool.begin();
 	while(iter != m_vServerPool.end())
 	{
 		(*iter)~pServer();
@@ -103,9 +103,9 @@ void CSKServers::RestartUpServers()
 #endif
 }
 
-CSKServer* CSKServers::GetServerByName(string name)
+CCVServer* CCVServers::GetServerByName(string name)
 {
-	vector<CSKServer*>::iterator iter = m_vServerPool.begin();
+	vector<CCVServer*>::iterator iter = m_vServerPool.begin();
 	m_alive_check = 0;
 	while(iter != m_vServerPool.end())
 	{

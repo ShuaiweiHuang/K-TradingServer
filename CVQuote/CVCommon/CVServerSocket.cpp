@@ -7,13 +7,13 @@
 #include <errno.h>
 #include <cstdio>
 
-#include "ISKSocketCallback.h"
+#include "ICVSocketCallback.h"
 #include "CVServerSocket.h"
 #include <iostream>
 
 using namespace std;
 
-CSKServerSocket::CSKServerSocket() 
+CCVServerSocket::CCVServerSocket() 
 {
 	m_pSocketCallback = NULL;
 
@@ -26,7 +26,7 @@ CSKServerSocket::CSKServerSocket()
 	memset( &m_AddrInfo, 0 , sizeof( struct addrinfo));
 }
 
-CSKServerSocket::CSKServerSocket( ISKSocketCallback* pSocketCallback)
+CCVServerSocket::CCVServerSocket( ICVSocketCallback* pSocketCallback)
 {
 	m_pSocketCallback = pSocketCallback;
 
@@ -41,12 +41,12 @@ CSKServerSocket::CSKServerSocket( ISKSocketCallback* pSocketCallback)
 	memset( &m_AddrInfo, 0 , sizeof( struct addrinfo));
 }
 
-CSKServerSocket::~CSKServerSocket() 
+CCVServerSocket::~CCVServerSocket() 
 {
 	// TODO Auto-generated destructor stub
 }
 
-void CSKServerSocket::Listen(string strPort, int nBacklog)
+void CCVServerSocket::Listen(string strPort, int nBacklog)
 {
 	//m_SocketStatus = sssStartListeningUp;
 
@@ -89,7 +89,7 @@ void CSKServerSocket::Listen(string strPort, int nBacklog)
 	}
 }
 
-int CSKServerSocket::Accept(struct sockaddr_storage* pClientAddr)
+int CCVServerSocket::Accept(struct sockaddr_storage* pClientAddr)
 {
 	int nClientSocket = -1 ;
 
@@ -98,7 +98,7 @@ int CSKServerSocket::Accept(struct sockaddr_storage* pClientAddr)
 	return nClientSocket;
 }
 
-void CSKServerSocket::Close()
+void CCVServerSocket::Close()
 {
 	if ( m_ServerSocketStatus == sssListening)
 	{
@@ -112,17 +112,17 @@ void CSKServerSocket::Close()
 	freeaddrinfo(m_AddrRes);
 }
 
-void CSKServerSocket::ShutdownServer()
+void CCVServerSocket::ShutdownServer()
 {
 	Close();
 }
 
-void CSKServerSocket::ShutdownClient(int nSocket)
+void CCVServerSocket::ShutdownClient(int nSocket)
 {
 	close(nSocket);
 }
 
-TSKServerSocketStatus CSKServerSocket::GetStatus()
+TCVServerSocketStatus CCVServerSocket::GetStatus()
 {
 	return m_ServerSocketStatus;
 }

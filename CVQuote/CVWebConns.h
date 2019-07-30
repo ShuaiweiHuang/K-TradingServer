@@ -1,5 +1,5 @@
-#ifndef SKSERVERS_H_
-#define SKSERVERS_H_
+#ifndef CVSERVERS_H_
+#define CVSERVERS_H_
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -13,39 +13,39 @@
 using namespace neosmart;
 using namespace std;
 
-struct TSKServerInfo
+struct TCVServerInfo
 {
 	string strWeb;
 	string strQstr;
 	string strName;
 };
 
-struct TSKConfig
+struct TCVConfig
 {
 	int nServerCount;
-	vector<struct TSKServerInfo*> vServerInfo;
+	vector<struct TCVServerInfo*> vServerInfo;
 };
 
-class CSKServers //public CSKThread
+class CCVServers //public CCVThread
 {
 	private:
-		CSKServers();
-		virtual ~CSKServers();
-		static CSKServers* instance;
+		CCVServers();
+		virtual ~CCVServers();
+		static CCVServers* instance;
 		static pthread_mutex_t ms_mtxInstance;
 		int m_alive_check;
-		vector<struct TSKConfig*> m_vServerConfig;
-		//vector<vector<vector<CSKServer*> > > m_vvvServerPool;
-		vector<CSKServer*> m_vServerPool;
+		vector<struct TCVConfig*> m_vServerConfig;
+		//vector<vector<vector<CCVServer*> > > m_vvvServerPool;
+		vector<CCVServer*> m_vServerPool;
 
 	protected:
-		void AddFreeServer(enum TSKRequestMarket rmRequestMarket, int nPoolIndex);
+		void AddFreeServer(enum TCVRequestMarket rmRequestMarket, int nPoolIndex);
 
 	public:
-		static CSKServers* GetInstance();
-		void SetConfiguration(struct TSKConfig* pstruConfig);
+		static CCVServers* GetInstance();
+		void SetConfiguration(struct TCVConfig* pstruConfig);
 		void StartUpServers();
 		void RestartUpServers();
-		CSKServer* GetServerByName(string name);
+		CCVServer* GetServerByName(string name);
 };
 #endif

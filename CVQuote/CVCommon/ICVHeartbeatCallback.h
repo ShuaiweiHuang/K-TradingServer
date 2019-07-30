@@ -1,7 +1,7 @@
-#ifndef SKINTERFACE_ISKHEARTBEATCALLBACK_H_
-#define SKINTERFACE_ISKHEARTBEATCALLBACK_H_
+#ifndef CVINTERFACE_ICVHEARTBEATCALLBACK_H_
+#define CVINTERFACE_ICVHEARTBEATCALLBACK_H_
 
-class ISKHeartbeatCallback 
+class ICVHeartbeatCallback 
 {
 	public:
 		virtual void OnHeartbeatLost()=0;
@@ -9,7 +9,7 @@ class ISKHeartbeatCallback
 
 		virtual void OnHeartbeatError(int nData, const char* pErrorMessage)=0;
 
-		virtual ~ISKHeartbeatCallback(){};
+		virtual ~ICVHeartbeatCallback(){};
 };
 
 #endif

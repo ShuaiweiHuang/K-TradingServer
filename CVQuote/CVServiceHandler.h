@@ -1,5 +1,5 @@
-#ifndef SKCLIENT_H_
-#define SKCLIENT_H_
+#ifndef CVCLIENT_H_
+#define CVCLIENT_H_
 
 #include <string>
 #include <sys/socket.h>
@@ -13,13 +13,13 @@
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
 
-#include "CVCommon/ISKHeartbeatCallback.h"
+#include "CVCommon/ICVHeartbeatCallback.h"
 #include "CVCommon/CVThread.h"
 #include "CVHeartbeat.h"
 #include "CVGlobal.h"
 #include "Include/CVLogonFormat.h"
 
-class CSKServer;
+class CCVServer;
 
 using namespace std;
 
@@ -29,20 +29,20 @@ union L
     short value;
 };
 
-struct TSKClientAddrInfo
+struct TCVClientAddrInfo
 {
     int nSocket;
 	char caIP[IPLEN];
     struct sockaddr_storage ClientAddr;
 };
 
-struct TSKAccountRecvBuf
+struct TCVAccountRecvBuf
 {
 	int nRecved;
 	unsigned char uncaRecvBuf[BUFFERSIZE];
 };
 
-enum TSKClientStauts
+enum TCVClientStauts
 {
 	csNone,
 	csLogoning,
@@ -50,13 +50,13 @@ enum TSKClientStauts
 	csOffline
 };
 
-enum TSKRequestMarket
+enum TCVRequestMarket
 {
 	rmBitmex,
 	rmNum
 };
 
-struct TSKBranchAccountInfo
+struct TCVBranchAccountInfo
 {
 	const char* pMarket;
 
@@ -69,14 +69,14 @@ struct TSKBranchAccountInfo
 	int nSubAccountLength;
 };
 
-class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_shared_from_this<CSKClient>
+class CCVClient: public CCVThread, public ICVHeartbeatCallback, public enable_shared_from_this<CCVClient>
 {
 	private:
-		struct TSKClientAddrInfo m_ClientAddrInfo;
+		struct TCVClientAddrInfo m_ClientAddrInfo;
 		unsigned char m_uncaLogonID[10];
 
 
-		TSKClientStauts m_csClientStatus;
+		TCVClientStauts m_csClientStatus;
 
 		int m_nOriginalOrderLength;
 		int m_nTSReplyMsgLength;//78
@@ -85,7 +85,7 @@ class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_sh
 		int m_nOSReplyMsgLength;//78
 		map<string, string> m_mMarketBranchAccount;
 
-		vector<struct TSKBranchAccountInfo*> m_vBranchAccountInfo;
+		vector<struct TCVBranchAccountInfo*> m_vBranchAccountInfo;
 
 		pthread_mutex_t m_pmtxClientStatusLock;
 		string m_strEPID;
@@ -96,31 +96,31 @@ class CSKClient: public CSKThread, public ISKHeartbeatCallback, public enable_sh
 		void OnHeartbeatLost();
 		void OnHeartbeatError(int nData, const char* pErrorMessage);
 
-		bool Logon(char* pID, char* pPasswd, struct TSKLogonReply &struLogonReply);
+		bool Logon(char* pID, char* pPasswd, struct TCVLogonReply &struLogonReply);
 		bool GetAccount(char* pID, char* pAgent, char* pVersion, vector<char*> &vAccountData);
 
 		bool RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv);
 
 		void InitialBranchAccountInfo();
-		bool CheckBranchAccount(TSKRequestMarket rmRequestMarket, unsigned char* pRequstMessage);
+		bool CheckBranchAccount(TCVRequestMarket rmRequestMarket, unsigned char* pRequstMessage);
 
 	public:
-		CSKClient(struct TSKClientAddrInfo &ClientAddrInfo);
+		CCVClient(struct TCVClientAddrInfo &ClientAddrInfo);
 		bool SendAll(const char* pWhat, char* pBuf, int nToSend);
-		virtual ~CSKClient();
+		virtual ~CCVClient();
 
-		void TriggerSendRequestEvent(CSKServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength);
+		void TriggerSendRequestEvent(CCVServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength);
 
-		bool SendLogonReply(struct TSKLogonReply &struLogonReply);
+		bool SendLogonReply(struct TCVLogonReply &struLogonReply);
 		bool SendAccountCount(short sCount);
 		bool SendAccountData(vector<char*> &vAccountData);
 		bool SendRequestReply(unsigned char uncaSecondByte, unsigned char* unpRequestReplyMessage, int nRequestReplyMessageLength);
 		bool SendRequestErrorReply(unsigned char uncaSecondByte,unsigned char* pOriginalRequstMessage,int nOriginalRequestMessageLength,const char* pErrorMessage,short nErrorCode);
 
-		void SetStatus(TSKClientStauts csStatus);
-		TSKClientStauts GetStatus();
+		void SetStatus(TCVClientStauts csStatus);
+		TCVClientStauts GetStatus();
 
 		int GetClientSocket();
-		CSKHeartbeat* m_pHeartbeat;
+		CCVHeartbeat* m_pHeartbeat;
 };
 #endif

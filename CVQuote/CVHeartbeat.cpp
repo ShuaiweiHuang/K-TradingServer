@@ -10,7 +10,7 @@
 
 using namespace std;
 
-CSKHeartbeat::CSKHeartbeat(ISKHeartbeatCallback* pHeartbeatCallback)
+CCVHeartbeat::CCVHeartbeat(ICVHeartbeatCallback* pHeartbeatCallback)
 {
 	m_nTimeInterval = 0;
 	m_nIdleTime = 0;
@@ -22,13 +22,13 @@ CSKHeartbeat::CSKHeartbeat(ISKHeartbeatCallback* pHeartbeatCallback)
 	Start();
 }
 
-CSKHeartbeat::~CSKHeartbeat()
+CCVHeartbeat::~CCVHeartbeat()
 {
 	DestroyEvent(m_PEvent[0]);
 	DestroyEvent(m_PEvent[1]);
 }
 
-void* CSKHeartbeat::Run()
+void* CCVHeartbeat::Run()
 {
 	while(m_pHeartbeatCallback)
 	{
@@ -85,17 +85,17 @@ void* CSKHeartbeat::Run()
 	return NULL;
 }
 
-void CSKHeartbeat::SetTimeInterval(int nTimeInterval)
+void CCVHeartbeat::SetTimeInterval(int nTimeInterval)
 {
 	m_nTimeInterval = nTimeInterval;
 }
 
-void CSKHeartbeat::TriggerGetReplyEvent()
+void CCVHeartbeat::TriggerGetReplyEvent()
 {
 	SetEvent(m_PEvent[0]);
 }
 
-void CSKHeartbeat::TriggerTerminateEvent()
+void CCVHeartbeat::TriggerTerminateEvent()
 {
 	SetEvent(m_PEvent[1]);
 }

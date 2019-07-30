@@ -1,5 +1,5 @@
-#ifndef CSKCLIENTS_H_
-#define CSKCLIENTS_H_
+#ifndef CCVCLIENTS_H_
+#define CCVCLIENTS_H_
 
 #include <string>
 #include <sys/socket.h>
@@ -13,7 +13,7 @@
 #include <openssl/bn.h>
 #include <fstream>
 
-#include "CVCommon/ISKSocketCallback.h"
+#include "CVCommon/ICVSocketCallback.h"
 #include "CVCommon/CVThread.h"
 #include "CVCommon/CVServerSocket.h"
 #include "CVCommon/CVSharedMemory.h"
@@ -22,15 +22,15 @@
 
 using namespace std;
 
-class CSKClients: public CSKThread, public ISKSocketCallback
+class CCVClients: public CCVThread, public ICVSocketCallback
 {
 	private:
-		CSKClients();
-		virtual ~CSKClients();
-		static CSKClients* instance;
+		CCVClients();
+		virtual ~CCVClients();
+		static CCVClients* instance;
 		static pthread_mutex_t ms_mtxInstance;
 
-		CSKServerSocket* m_pServerSocket;
+		CCVServerSocket* m_pServerSocket;
 		string m_strListenPort;
 
 
@@ -48,18 +48,18 @@ class CSKClients: public CSKThread, public ISKSocketCallback
 		void OnShutdown();
 
 	public:
-		vector<shared_ptr<CSKClient> > m_vClient;
+		vector<shared_ptr<CCVClient> > m_vClient;
 		string m_strHeartBeatTime;
 		string m_strEPIDNum;
-		static CSKClients* GetInstance();
+		static CCVClients* GetInstance();
 
 		void SetConfiguration(string& strListenPort, string& strHeartBeatTime, string& strEPIDNum, int& nService);
 
 		void CheckClientVector();
-		void PushBackClientToVector(shared_ptr<CSKClient>& shpClient);
-		void EraseClientFromVector(vector<shared_ptr<CSKClient> >::iterator iter);
+		void PushBackClientToVector(shared_ptr<CCVClient>& shpClient);
+		void EraseClientFromVector(vector<shared_ptr<CCVClient> >::iterator iter);
 		void ShutdownClient(int nSocket);
-		bool IsServiceRunning(enum TSKRequestMarket& rmRequestMarket);
+		bool IsServiceRunning(enum TCVRequestMarket& rmRequestMarket);
 #ifdef MNTRMSG
 		void FlushLogMessageToFile();
 #endif

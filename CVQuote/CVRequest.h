@@ -1,5 +1,5 @@
-#ifndef SKREQUEST_H_
-#define SKREQUEST_H_
+#ifndef CVREQUEST_H_
+#define CVREQUEST_H_
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -8,24 +8,24 @@
 #include "CVCommon/CVPevents.h"
 
 #include "CVCommon/CVThread.h"
-#include "CVCommon/ISKRequestCallback.h"
+#include "CVCommon/ICVRequestCallback.h"
 
 using namespace neosmart;
 
-class ISKRequestCallback;
+class ICVRequestCallback;
 
-class CSKRequest: public CSKThread
+class CCVRequest: public CCVThread
 {
 	private:
-		ISKRequestCallback* m_pRequestCallback;
+		ICVRequestCallback* m_pRequestCallback;
 		neosmart_event_t m_PEvent[2];
 
 	protected:
 		void* Run();
 
 	public:
-		CSKRequest(ISKRequestCallback* pRequestCallback);
-		virtual ~CSKRequest();
+		CCVRequest(ICVRequestCallback* pRequestCallback);
+		virtual ~CCVRequest();
 
 		void TriggerWakeUpEvent();
 		void TriggerTerminateEvent();

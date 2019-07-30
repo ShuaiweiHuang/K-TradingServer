@@ -1,5 +1,5 @@
-#ifndef SKQUEUEDAOS_H_
-#define SKQUEUEDAOS_H_
+#ifndef CVQUEUEDAOS_H_
+#define CVQUEUEDAOS_H_
 
 #include <vector>
 #include <string>
@@ -8,15 +8,15 @@
 
 using namespace std;
 
-class CSKQueueDAOs: public CSKThread
+class CCVQueueDAOs: public CCVThread
 {
 	private:
-		CSKQueueDAOs();
-		virtual ~CSKQueueDAOs();
-		static CSKQueueDAOs* instance;
+		CCVQueueDAOs();
+		virtual ~CCVQueueDAOs();
+		static CCVQueueDAOs* instance;
 		static pthread_mutex_t ms_mtxInstance;
 
-		vector<CSKQueueDAO*> m_vQueueDAO;
+		vector<CCVQueueDAO*> m_vQueueDAO;
 
 		int m_nNumberOfQueueDAO;
 		key_t m_kQueueDAOWriteStartKey;
@@ -34,12 +34,12 @@ class CSKQueueDAOs: public CSKThread
 		void* Run();
 
 	public:
-		static CSKQueueDAOs* GetInstance();
+		static CCVQueueDAOs* GetInstance();
 
 		void AddDAO(key_t kSendKey,key_t kRecvKey);
 		void RemoveDAO(key_t key);//Sendkey
 
-		CSKQueueDAO* GetDAO();//SendKey
+		CCVQueueDAO* GetDAO();//SendKey
 
 		void SetConfiguration(string strService, int nNumberOfQueueDAO, key_t kQueueDAOWriteStartKey, key_t kQueueDAOWriteEndKey,
 						      key_t kQueueDAOReadStartKey, key_t kQueueDAOReadEndKey);

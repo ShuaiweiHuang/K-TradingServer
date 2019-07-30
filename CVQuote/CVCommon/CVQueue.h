@@ -1,26 +1,26 @@
-#ifndef SKCOMMON_SKQUEUE_H_
-#define SKCOMMON_SKQUEUE_H_
+#ifndef CVCOMMON_CVQUEUE_H_
+#define CVCOMMON_CVQUEUE_H_
 
 #include<sys/msg.h>
 
 const int BUFSIZE = 1024;
 
-struct TSKQueueMessage
+struct TCVQueueMessage
 {
 	long lMessageType;
 	unsigned char uncaMessageBuf[BUFSIZE];
 };
 
-class CSKQueue
+class CCVQueue
 {
 	private:
 		int  m_nID;
 
-		struct TSKQueueMessage m_QueueMessage;
+		struct TCVQueueMessage m_QueueMessage;
 
 	public:
-		CSKQueue();
-		virtual ~CSKQueue();
+		CCVQueue();
+		virtual ~CCVQueue();
 
 		int GetMessage(char* pBuf, long lType = 0, int nFlag = 0);
 		int SendMessage(char* pBuf, int nSize, long lType = 1, int nFlag = 0);

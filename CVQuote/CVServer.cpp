@@ -20,15 +20,15 @@ using namespace std;
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0,
                              unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKClients* CSKClients::instance = NULL;
-pthread_mutex_t CSKClients::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
+CCVClients* CCVClients::instance = NULL;
+pthread_mutex_t CCVClients::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
 
-CSKClients::CSKClients()
+CCVClients::CCVClients()
 {
 	pthread_mutex_init(&m_pmtxClientVectorLock, NULL);
 }
 
-CSKClients::~CSKClients()
+CCVClients::~CCVClients()
 {
 	if(m_pServerSocket)
 	{
@@ -44,12 +44,12 @@ CSKClients::~CSKClients()
 	pthread_mutex_destroy(&m_pmtxClientVectorLock);
 }
 
-void* CSKClients::Run()
+void* CCVClients::Run()
 {
 	while(m_pServerSocket->GetStatus() == sssListening)
 	{
-		struct TSKClientAddrInfo ClientAddrInfo;
-		memset(&ClientAddrInfo, 0, sizeof(struct TSKClientAddrInfo));
+		struct TCVClientAddrInfo ClientAddrInfo;
+		memset(&ClientAddrInfo, 0, sizeof(struct TCVClientAddrInfo));
 
 		ClientAddrInfo.nSocket = m_pServerSocket->Accept(&ClientAddrInfo.ClientAddr);
 		socklen_t addr_size = sizeof(ClientAddrInfo.ClientAddr);
@@ -59,23 +59,23 @@ void* CSKClients::Run()
 		sprintf(ClientAddrInfo.caIP,"%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);//to do
 
 		FprintfStderrLog("ACCEPT_CLIENT_IP", 0, 0, NULL, 0, reinterpret_cast<unsigned char*>(ClientAddrInfo.caIP), strlen(ClientAddrInfo.caIP));
-		shared_ptr<CSKClient> shpClient = make_shared<CSKClient>(ClientAddrInfo);
+		shared_ptr<CCVClient> shpClient = make_shared<CCVClient>(ClientAddrInfo);
 		PushBackClientToVector(shpClient);
 	}
 
 	return NULL;
 }
 
-void CSKClients::OnListening()
+void CCVClients::OnListening()
 {
 	Start();
 }
 
-void CSKClients::OnShutdown()
+void CCVClients::OnShutdown()
 {
 }
 
-CSKClients* CSKClients::GetInstance()
+CCVClients* CCVClients::GetInstance()
 {
 	if(instance == NULL)
 	{
@@ -83,7 +83,7 @@ CSKClients* CSKClients::GetInstance()
 
 		if(instance == NULL)
 		{
-			instance = new CSKClients();
+			instance = new CCVClients();
 			FprintfStderrLog("CLIENTS_ONE", 0, 0);
 		}
 
@@ -93,7 +93,7 @@ CSKClients* CSKClients::GetInstance()
 	return instance;
 }
 
-void CSKClients::SetConfiguration(string& strListenPort, string& strHeartBeatTime, string& strEPIDNum, int& nService)
+void CCVClients::SetConfiguration(string& strListenPort, string& strHeartBeatTime, string& strEPIDNum, int& nService)
 {
 	m_strListenPort = strListenPort;
 	m_strHeartBeatTime = strHeartBeatTime;
@@ -102,7 +102,7 @@ void CSKClients::SetConfiguration(string& strListenPort, string& strHeartBeatTim
 
 	try
 	{
-		m_pServerSocket = new CSKServerSocket(this);
+		m_pServerSocket = new CCVServerSocket(this);
 		m_pServerSocket->Listen(m_strListenPort);
 	}
 	catch (exception& e)
@@ -112,12 +112,12 @@ void CSKClients::SetConfiguration(string& strListenPort, string& strHeartBeatTim
 }
 
 
-void CSKClients::CheckClientVector()
+void CCVClients::CheckClientVector()
 {
-	vector<shared_ptr<CSKClient> >::iterator iter = m_vClient.begin();
+	vector<shared_ptr<CCVClient> >::iterator iter = m_vClient.begin();
 	while(iter != m_vClient.end())
 	{
-		CSKClient* pClient = (*iter).get();
+		CCVClient* pClient = (*iter).get();
 		if(pClient->GetStatus() == csOffline && (*iter).unique())
 		{
 			ShutdownClient(pClient->GetClientSocket());
@@ -131,7 +131,7 @@ void CSKClients::CheckClientVector()
 	}
 }
 
-void CSKClients::PushBackClientToVector(shared_ptr<CSKClient>& shpClient)
+void CCVClients::PushBackClientToVector(shared_ptr<CCVClient>& shpClient)
 {
 	pthread_mutex_lock(&m_pmtxClientVectorLock);
 
@@ -140,7 +140,7 @@ void CSKClients::PushBackClientToVector(shared_ptr<CSKClient>& shpClient)
 	pthread_mutex_unlock(&m_pmtxClientVectorLock);
 }
 
-void CSKClients::EraseClientFromVector(vector<shared_ptr<CSKClient> >::iterator iter)
+void CCVClients::EraseClientFromVector(vector<shared_ptr<CCVClient> >::iterator iter)
 {
 	pthread_mutex_lock(&m_pmtxClientVectorLock);
 
@@ -149,13 +149,13 @@ void CSKClients::EraseClientFromVector(vector<shared_ptr<CSKClient> >::iterator 
 	pthread_mutex_unlock(&m_pmtxClientVectorLock);
 }
 
-void CSKClients::ShutdownClient(int nSocket)
+void CCVClients::ShutdownClient(int nSocket)
 {
 	if(m_pServerSocket)
 		m_pServerSocket->ShutdownClient(nSocket);
 }
 
-bool CSKClients::IsServiceRunning(enum TSKRequestMarket& rmRequestMarket)
+bool CCVClients::IsServiceRunning(enum TCVRequestMarket& rmRequestMarket)
 {
 	return (m_nService & 1<<rmRequestMarket) ? true : false;
 }

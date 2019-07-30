@@ -1,5 +1,5 @@
-#ifndef CSKCLIENTSOCKET_H_
-#define CSKCLIENTSOCKET_H_
+#ifndef CCVCLIENTSOCKET_H_
+#define CCVCLIENTSOCKET_H_
 
 #include <string>
 #include <sys/socket.h>
@@ -19,7 +19,7 @@ using websocketpp::lib::placeholders::_2;
 using websocketpp::lib::bind;
 using namespace std;
 
-enum TSKClientSocketStatus 
+enum TCVClientSocketStatus 
 {
 	cssNone,
 	cssConnecting,
@@ -27,17 +27,17 @@ enum TSKClientSocketStatus
 	cssDisconnect
 };
 
-class ISKClientSocketCallback;
+class ICVClientSocketCallback;
 
-class CSKClientSocket 
+class CCVClientSocket 
 {
 	private:
 
-		ISKClientSocketCallback* m_pClientSocketCallback;
+		ICVClientSocketCallback* m_pClientSocketCallback;
 
 		int m_nSocket;
 
-		TSKClientSocketStatus m_cssClientSocketStatus;
+		TCVClientSocketStatus m_cssClientSocketStatus;
 
 		struct addrinfo m_AddrInfo;
 		struct addrinfo* m_AddrRes;
@@ -47,9 +47,9 @@ class CSKClientSocket
 	public:
 		client m_cfd;
 		client::connection_ptr m_conn;
-		CSKClientSocket();
-		CSKClientSocket(ISKClientSocketCallback* pClientSocketCallback);
-		virtual ~CSKClientSocket();
+		CCVClientSocket();
+		CCVClientSocket(ICVClientSocketCallback* pClientSocketCallback);
+		virtual ~CCVClientSocket();
 
 		void Connect(string strHost, string strPort, string strName, int type);
 		void Disconnect();
@@ -59,6 +59,6 @@ class CSKClientSocket
 
 		int Recv();
 
-		TSKClientSocketStatus GetStatus();
+		TCVClientSocketStatus GetStatus();
 };
-#endif /* CSKSOCKET_H_ */
+#endif /* CCVSOCKET_H_ */

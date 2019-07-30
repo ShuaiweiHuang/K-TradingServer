@@ -1,7 +1,7 @@
-#ifndef INCLUDE_SKTFFORMAT_H_
-#define INCLUDE_SKTFFORMAT_H_
+#ifndef INCLUDE_CVTFFORMAT_H_
+#define INCLUDE_CVTFFORMAT_H_
 
-struct SK_TF_ORDER
+struct CV_TF_ORDER
 {
 	char trade_type[1];			/* 0:new, 1:cancel 2:redue amount 3:change price */ /* 20161222 add by A97585 */
 	//char head_broker[7];
@@ -38,9 +38,9 @@ struct SK_TF_ORDER
 	char user_def[128];  		//	X(128)	user define  TERM_ID+SEQ_NO  *key_1 /* 20171226 add by A98585 */
 };
 
-struct SK_TF_REPLY
+struct CV_TF_REPLY
 {
-	struct SK_TF_ORDER original;
+	struct CV_TF_ORDER original;
 
 	char reply_msg[80];
 	char error_code[2];

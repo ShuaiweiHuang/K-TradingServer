@@ -1,17 +1,17 @@
-#ifndef INCLUDE_SKORDER_H_
-#define INCLUDE_SKORDER_H_
+#ifndef INCLUDE_CVORDER_H_
+#define INCLUDE_CVORDER_H_
 
-#include "SKTSFormat.h"
-#include "SKTFFormat.h"
-#include "SKOFFormat.h"
-#include "SKOSFormat.h"
+#include "CVTSFormat.h"
+#include "CVTFFormat.h"
+#include "CVOFFormat.h"
+#include "CVOSFormat.h"
 
-union SK_ORDER
+union CV_ORDER
 {
-	struct SK_TS_ORDER sk_ts_order;
-	struct SK_TF_ORDER sk_tf_order;
-	struct SK_OF_ORDER sk_of_order;
-	struct SK_OS_ORDER sk_os_order;
+	struct CV_TS_ORDER sk_ts_order;
+	struct CV_TF_ORDER sk_tf_order;
+	struct CV_OF_ORDER sk_of_order;
+	struct CV_OS_ORDER sk_os_order;
 	char data[512];
 };
 

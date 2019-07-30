@@ -3,13 +3,13 @@
 
 using namespace std;
 
-CSKQueue::CSKQueue()
+CCVQueue::CCVQueue()
 {
 	m_nID = 0;
-	memset(&m_QueueMessage,0,sizeof(struct TSKQueueMessage));
+	memset(&m_QueueMessage,0,sizeof(struct TCVQueueMessage));
 }
 
-CSKQueue::~CSKQueue() 
+CCVQueue::~CCVQueue() 
 {
 	/*if (msgctl(m_nMsgid, IPC_RMID, 0) == -1) 
 	{
@@ -18,7 +18,7 @@ CSKQueue::~CSKQueue()
 	}*/
 }
 
-int CSKQueue::GetMessage(char* pBuf, long lType, int nFlag)
+int CCVQueue::GetMessage(char* pBuf, long lType, int nFlag)
 {
 	int nGetMessage= msgrcv(m_nID, (void *)&m_QueueMessage, BUFSIZE, lType, nFlag);
 
@@ -33,7 +33,7 @@ int CSKQueue::GetMessage(char* pBuf, long lType, int nFlag)
 	}
 }
 
-int CSKQueue::SendMessage(char* pBuf, int nSize, long lType, int nFlag)
+int CCVQueue::SendMessage(char* pBuf, int nSize, long lType, int nFlag)
 {
 	m_QueueMessage.lMessageType = lType;
 	memset(m_QueueMessage.uncaMessageBuf, 0, BUFSIZE);
@@ -42,7 +42,7 @@ int CSKQueue::SendMessage(char* pBuf, int nSize, long lType, int nFlag)
 	return msgsnd(m_nID, (void *)&m_QueueMessage, nSize, nFlag);
 }
 
-int CSKQueue::Remove()
+int CCVQueue::Remove()
 {
 	if (msgctl(m_nID, IPC_RMID, (struct msqid_ds *)0) == -1) 
 	{
@@ -52,7 +52,7 @@ int CSKQueue::Remove()
 	return 0;
 }
 
-int CSKQueue::Create(key_t kKey)
+int CCVQueue::Create(key_t kKey)
 {
     if( (m_nID = msgget(kKey,0666 | IPC_CREAT)) == -1 )
 	{

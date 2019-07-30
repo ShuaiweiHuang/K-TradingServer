@@ -1,7 +1,7 @@
-#ifndef SKINTERFACE_ISKREQUESTCALLBACK_H_
-#define SKINTERFACE_ISKREQUESTCALLBACK_H_
+#ifndef CVINTERFACE_ICVREQUESTCALLBACK_H_
+#define CVINTERFACE_ICVREQUESTCALLBACK_H_
 
-class ISKRequestCallback 
+class ICVRequestCallback 
 {
 	public:
 		//virtual void OnRequest(unsigned char* pRequestMessage, int nRequestMessageLength)=0;
@@ -9,7 +9,7 @@ class ISKRequestCallback
 
 		virtual void OnRequestError(int nData, const char* pErrorMessage)=0;
 
-		virtual ~ISKRequestCallback(){};
+		virtual ~ICVRequestCallback(){};
 };
 
 #endif

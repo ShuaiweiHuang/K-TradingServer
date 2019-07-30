@@ -18,12 +18,12 @@ extern void FprintfStderrLog(const char* pCause, int nError, int nData, const ch
                              unsigned char* pMessage1 = NULL, int nMessage1Length = 0, 
                              unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-void ReadConfigFile(string strConfigFileName, string strSection, struct TSKConfig &struConfig);
+void ReadConfigFile(string strConfigFileName, string strSection, struct TCVConfig &struConfig);
 void ReadClientConfigFile(string strConfigFileName, string& strListenPort, string& strHeartBeatTime, string &strEPIDNum);
 void ReadQueueDAOConfigFile(string strConfigFileName,string&, int&, key_t&, key_t&, key_t&, key_t&);
 #define DECLARE_CONFIG_DATA(CONFIG)\
-	struct TSKConfig stru##CONFIG;\
-	memset(&stru##CONFIG, 0, sizeof(struct TSKConfig));\
+	struct TCVConfig stru##CONFIG;\
+	memset(&stru##CONFIG, 0, sizeof(struct TCVConfig));\
 	;
 
 int main()
@@ -49,10 +49,10 @@ int main()
 	ReadConfigFile("../ini/CVQuote.ini", "EXCHANGE", struTSConfig);
 
 	//Web connection service.
-	CSKServers* pServers = NULL;
+	CCVServers* pServers = NULL;
 	try
 	{
-		pServers = CSKServers::GetInstance();
+		pServers = CCVServers::GetInstance();
 		if(pServers == NULL)
 			throw "GET_WEB_ERROR";
 
@@ -67,17 +67,17 @@ int main()
 	//Queue init.
         ReadQueueDAOConfigFile("../ini/CVQuote.ini", strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
 	//printf("%d, %d, %d, %d\n", kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
-        CSKQueueDAOs* pQueueDAOs = CSKQueueDAOs::GetInstance();
+        CCVQueueDAOs* pQueueDAOs = CCVQueueDAOs::GetInstance();
         assert(pQueueDAOs);
 
         pQueueDAOs->SetConfiguration(strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
         pQueueDAOs->StartUpDAOs();
 
 	//Server connection service.
-	CSKClients* pClients = NULL;
+	CCVClients* pClients = NULL;
 	try
 	{
-		pClients = CSKClients::GetInstance();
+		pClients = CCVClients::GetInstance();
 		if(pClients == NULL)
 			throw "GET_SERVER_MANAGEMENT_ERROR";
 
@@ -98,7 +98,7 @@ int main()
 	return 0;
 }
 
-void ReadConfigFile(string strConfigFileName, string strSection, struct TSKConfig &struConfig)
+void ReadConfigFile(string strConfigFileName, string strSection, struct TCVConfig &struConfig)
 {
 	GKeyFile *keyfile;
 	GKeyFileFlags flags;
@@ -124,7 +124,7 @@ void ReadConfigFile(string strConfigFileName, string strSection, struct TSKConfi
 		sprintf(caQstr, "QSTR%02d", i+1);
 		sprintf(caName, "NAME%02d", i+1);
 
-		struct TSKServerInfo* pstruServerInfo = new struct TSKServerInfo;//destruct
+		struct TCVServerInfo* pstruServerInfo = new struct TCVServerInfo;//destruct
 		pstruServerInfo->strWeb  = g_key_file_get_string(keyfile, strSection.c_str(), caWeb, NULL);
 		pstruServerInfo->strQstr = g_key_file_get_string(keyfile, strSection.c_str(), caQstr, NULL);
 		pstruServerInfo->strName = g_key_file_get_string(keyfile, strSection.c_str(), caName, NULL);

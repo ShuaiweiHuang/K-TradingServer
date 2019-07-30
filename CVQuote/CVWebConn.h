@@ -1,5 +1,5 @@
-#ifndef SKSERVER_H_
-#define SKSERVER_H_
+#ifndef CVSERVER_H_
+#define CVSERVER_H_
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -10,9 +10,9 @@
 #include <iostream>
 
 #include "CVCommon/CVThread.h"
-#include "CVCommon/ISKClientSocketCallback.h"
-#include "CVCommon/ISKHeartbeatCallback.h"
-#include "CVCommon/ISKRequestCallback.h"
+#include "CVCommon/ICVClientSocketCallback.h"
+#include "CVCommon/ICVHeartbeatCallback.h"
+#include "CVCommon/ICVRequestCallback.h"
 #include "CVCommon/CVClientSocket.h"
 #include "CVHeartbeat.h"
 #include "CVRequest.h"
@@ -20,9 +20,9 @@
 
 #define MAX_DATA_LENGTH 4096 
 
-class CSKClient;
+class CCVClient;
 
-enum TSKServerStatus
+enum TCVServerStatus
 {
 	ssNone,
 	ssFree,
@@ -34,21 +34,21 @@ enum TSKServerStatus
 
 using namespace std;
 
-class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHeartbeatCallback, public ISKRequestCallback
+class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHeartbeatCallback, public ICVRequestCallback
 {
 	private:
-		friend void CSKClient:: TriggerSendRequestEvent(CSKServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength);
+		friend void CCVClient:: TriggerSendRequestEvent(CCVServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength);
 
 		char m_caPthread_ID[21];
-		shared_ptr<CSKClient> m_shpClient;
+		shared_ptr<CCVClient> m_shpClient;
 
-		CSKClientSocket* m_pClientSocket;
-		CSKHeartbeat* m_pHeartbeat;
-		CSKRequest* m_pRequest;
+		CCVClientSocket* m_pClientSocket;
+		CCVHeartbeat* m_pHeartbeat;
+		CCVRequest* m_pRequest;
 
-		TSKServerStatus m_ssServerStatus;
+		TCVServerStatus m_ssServerStatus;
 
-		TSKRequestMarket m_rmRequestMarket;
+		TCVRequestMarket m_rmRequestMarket;
 		unsigned char m_uncaSecondByte;
 		int m_nReplyMessageLength;
 
@@ -85,14 +85,14 @@ class CSKServer: public CSKThread, public ISKClientSocketCallback, public ISKHea
 		void ReconnectSocket();
 
 	public:
-		CSKServer(string strHost, string strPort, string strName, TSKRequestMarket rmRequestMarket);
-		virtual ~CSKServer();
+		CCVServer(string strHost, string strPort, string strName, TCVRequestMarket rmRequestMarket);
+		virtual ~CCVServer();
 
-		void SetCallback(shared_ptr<CSKClient>& shpClient);
+		void SetCallback(shared_ptr<CCVClient>& shpClient);
 		void SetRequestMessage(unsigned char* pRequestMessage, int nRequestMessageLength);
 
-		void SetStatus(TSKServerStatus ssServerStatus);
-		TSKServerStatus GetStatus();
+		void SetStatus(TCVServerStatus ssServerStatus);
+		TCVServerStatus GetStatus();
 		string m_strWeb;
 		string m_strQstr;
 		string m_strName;

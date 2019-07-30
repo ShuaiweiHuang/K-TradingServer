@@ -1,5 +1,5 @@
-#ifndef CSKSERVERSOCKET_H_
-#define CSKSERVERSOCKET_H_
+#ifndef CCVSERVERSOCKET_H_
+#define CCVSERVERSOCKET_H_
 
 #include <string>
 #include <sys/socket.h>
@@ -9,7 +9,7 @@
 
 using namespace std;
 
-enum TSKServerSocketStatus 
+enum TCVServerSocketStatus 
 {
 	sssNone,
 	//ssStartListeningUp,
@@ -17,18 +17,18 @@ enum TSKServerSocketStatus
 	sssShutdown
 };
 
-class ISKSocketCallback;
+class ICVSocketCallback;
 
-class CSKServerSocket 
+class CCVServerSocket 
 {
 	private:
 
-		ISKSocketCallback* m_pSocketCallback;
+		ICVSocketCallback* m_pSocketCallback;
 
 		int m_nSocket;
 		socklen_t m_AddrSize;
 
-		TSKServerSocketStatus m_ServerSocketStatus;
+		TCVServerSocketStatus m_ServerSocketStatus;
 
 		struct addrinfo m_AddrInfo;
 		struct addrinfo* m_AddrRes;
@@ -37,9 +37,9 @@ class CSKServerSocket
 		void Close();
 
 	public:
-		CSKServerSocket();
-		CSKServerSocket( ISKSocketCallback* pSocketCallback);
-		virtual ~CSKServerSocket();
+		CCVServerSocket();
+		CCVServerSocket( ICVSocketCallback* pSocketCallback);
+		virtual ~CCVServerSocket();
 
 		void Listen(string strPort, int nBacklog = 20);
 		int Accept(struct sockaddr_storage* pClientAddr);
@@ -50,6 +50,6 @@ class CSKServerSocket
 		int Send(int nSocket, const unsigned char* pBuf, int nSize);
 		//int Recv( unsigned char* pBuf, int nSize);
 
-		TSKServerSocketStatus GetStatus();
+		TCVServerSocketStatus GetStatus();
 };
 #endif

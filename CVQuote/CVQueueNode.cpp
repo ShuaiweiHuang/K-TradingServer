@@ -13,23 +13,23 @@
 
 using namespace std;
 
-CSKQueueDAO::CSKQueueDAO(string strService, key_t kSendKey, key_t kRecvKey)
+CCVQueueDAO::CCVQueueDAO(string strService, key_t kSendKey, key_t kRecvKey)
 {
 	m_strService = strService;
 
 	m_kSendKey = kSendKey;
 	m_kRecvKey = kRecvKey;
 
-	m_pSendQueue = new CSKQueue;
+	m_pSendQueue = new CCVQueue;
 	m_pSendQueue->Create(m_kSendKey);
 
-	m_pRecvQueue = new CSKQueue;
+	m_pRecvQueue = new CCVQueue;
 	m_pRecvQueue->Create(m_kRecvKey);
 
 	Start();
 }
 
-CSKQueueDAO::~CSKQueueDAO() 
+CCVQueueDAO::~CCVQueueDAO() 
 {
 	if(m_pSendQueue != NULL) 
 	{
@@ -42,9 +42,9 @@ CSKQueueDAO::~CSKQueueDAO()
 	}
 }
 
-void* CSKQueueDAO::Run()
+void* CCVQueueDAO::Run()
 {
-	CSKClients* pClients = CSKClients::GetInstance();
+	CCVClients* pClients = CCVClients::GetInstance();
 	assert(pClients);
 
 	char uncaRecvBuf[BUFSIZE];
@@ -57,10 +57,10 @@ void* CSKQueueDAO::Run()
 #endif
 		if(nGetMessage > 0)
 		{
-			vector<shared_ptr<CSKClient> >::iterator iter = pClients->m_vClient.begin();
+			vector<shared_ptr<CCVClient> >::iterator iter = pClients->m_vClient.begin();
 			while(iter != pClients->m_vClient.end())
 			{
-				CSKClient* pClient = (*iter).get();
+				CCVClient* pClient = (*iter).get();
 				if(pClient->GetStatus() == csOffline && (*iter).unique()) {
 					iter++;
 					continue;
@@ -78,7 +78,7 @@ void* CSKQueueDAO::Run()
 	return NULL;
 }
 
-int CSKQueueDAO::SendData(char* pBuf, int nSize, long lType, int nFlag)
+int CCVQueueDAO::SendData(char* pBuf, int nSize, long lType, int nFlag)
 {
 	int nResult = -1;
 #ifdef DEBUG
@@ -96,12 +96,12 @@ int CSKQueueDAO::SendData(char* pBuf, int nSize, long lType, int nFlag)
 	return nResult;
 }
 
-key_t CSKQueueDAO::GetRecvKey()
+key_t CCVQueueDAO::GetRecvKey()
 {
 	return m_kRecvKey;
 }
 
-key_t CSKQueueDAO::GetSendKey()
+key_t CCVQueueDAO::GetSendKey()
 {
 	return m_kSendKey;
 }

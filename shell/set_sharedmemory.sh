@@ -28,13 +28,13 @@ cd $SCRIPTPATH
 #----------- Take the date of last code and plus on NUM.  -----------#
 DateCode=`date +%d`
 DateCode=$(($DateCode % 100))
-SHIFT_BIT=1000000000
+SHIFT_BIT=100000000
 if [[ $HOSTNAME == "pc-keanuhuang-211" ]]; then
-    NUM=$(( 1000000000000 + $[DateCode * SHIFT_BIT]))
+    NUM=$(( 2110000000000 + $[DateCode * SHIFT_BIT]))
 elif [[ $HOSTNAME == "pc-keanuhuang-119" ]]; then
-    NUM=$(( 1100000000000 + $[DateCode * SHIFT_BIT]))
+    NUM=$(( 1190000000000 + $[DateCode * SHIFT_BIT]))
 else
-    NUM=$(( 9000000000000 + $[DateCode * SHIFT_BIT]))
+    NUM=$(( 1270000000000 + $[DateCode * SHIFT_BIT]))
     echo -e "${COLOR_RED}Host Wrong!!${COLOR_REST}"
 fi
 
@@ -42,7 +42,7 @@ fi
 if [[ $SERVICE == "Trade" ]]; then
 	if [[ $MARKET == "BITMEX" ]]; then
 		SERIALKEY=11
-	elif [[ $MARKET == "CME" ]]; then
+	elif [[ $MARKET == "BINANCE" ]]; then
 		SERIALKEY=21
 	fi
 elif [[ $SERVICE == "Quote" ]]; then

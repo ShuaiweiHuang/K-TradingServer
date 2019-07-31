@@ -93,32 +93,40 @@ void CCVServers::StartUpServers()
 
 void CCVServers::RestartUpServers()
 {
-#if 0
 	vector<CCVServer*>::iterator iter = m_vServerPool.begin();
 	while(iter != m_vServerPool.end())
 	{
-		(*iter)~pServer();
+		(*iter)->m_ssServerStatus = ssBreakdown;
+		delete (*iter);
+		printf("close server: %s\n", (*iter)->m_strWeb.c_str());
+		iter++;
 	}
 	StartUpServers();
-#endif
 }
 
 CCVServer* CCVServers::GetServerByName(string name)
 {
 	vector<CCVServer*>::iterator iter = m_vServerPool.begin();
-	m_alive_check = 0;
 	while(iter != m_vServerPool.end())
 	{
 		if((*iter)->m_strName == name)
 			return *iter;
 		iter++;
-		m_alive_check++;
 	}
-
-	if(m_vServerConfig.at(0)->nServerCount != m_alive_check)
-		RestartUpServers();
-#ifdef DEBUG
-	cout <<"current alive web server = " << m_alive_check << endl;
-#endif
 	return NULL;
 }
+
+void CCVServers::CheckClientVector()
+{
+        vector<CCVServer*>::iterator iter = m_vServerPool.begin();
+        iter = m_vServerPool.begin();
+        while(iter != m_vServerPool.end())
+        {
+		if((*iter)->m_ssServerStatus == ssBreakdown) {
+			RestartUpServers();
+			break;
+		}
+		iter++;
+        }
+}
+

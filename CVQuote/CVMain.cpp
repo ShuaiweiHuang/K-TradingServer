@@ -87,6 +87,7 @@ int main()
 		while(1)
 		{
 			pClients->CheckClientVector();
+			pServers->CheckClientVector();
 			sleep(1);
 		}
 	}

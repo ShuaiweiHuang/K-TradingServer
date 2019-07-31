@@ -24,8 +24,10 @@ CCVHeartbeat::CCVHeartbeat(ICVHeartbeatCallback* pHeartbeatCallback)
 
 CCVHeartbeat::~CCVHeartbeat()
 {
+	TriggerTerminateEvent();
 	DestroyEvent(m_PEvent[0]);
 	DestroyEvent(m_PEvent[1]);
+
 }
 
 void* CCVHeartbeat::Run()

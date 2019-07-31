@@ -46,6 +46,7 @@ class CCVServers //public CCVThread
 		void SetConfiguration(struct TCVConfig* pstruConfig);
 		void StartUpServers();
 		void RestartUpServers();
+		void CheckClientVector();
 		CCVServer* GetServerByName(string name);
 };
 #endif

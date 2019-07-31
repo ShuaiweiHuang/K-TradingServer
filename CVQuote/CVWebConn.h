@@ -46,7 +46,6 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		CCVHeartbeat* m_pHeartbeat;
 		CCVRequest* m_pRequest;
 
-		TCVServerStatus m_ssServerStatus;
 
 		TCVRequestMarket m_rmRequestMarket;
 		unsigned char m_uncaSecondByte;
@@ -62,8 +61,8 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 
 		pthread_mutex_t m_pmtxServerStatusLock;
 		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
-		static void OnData_Bitmex(websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_Binance(websocketpp::connection_hdl, client::message_ptr msg);
+		static void OnData_Bitmex(client* c, websocketpp::connection_hdl, client::message_ptr msg);
+		static void OnData_Binance(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 
 	protected:
 		void* Run();
@@ -85,6 +84,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		void ReconnectSocket();
 
 	public:
+		TCVServerStatus m_ssServerStatus;
 		CCVServer(string strHost, string strPort, string strName, TCVRequestMarket rmRequestMarket);
 		virtual ~CCVServer();
 

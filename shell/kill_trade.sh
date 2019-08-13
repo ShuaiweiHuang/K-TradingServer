@@ -11,10 +11,9 @@ ABSPATH=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$ABSPATH")
 cd $SCRIPTPATH
 
+ps_name=CVTradeGW
 
-ps_name=CVTrade
-
-#----------- Kill Proxy -----------#
+#----------- Kill GW -----------#
 ps -ae|
 while read pid tty time cmd cmd1
 do
@@ -27,7 +26,34 @@ done
 
 
 #----------- Sleep -----------#
-sleep 3
+sleep 1
+
+ps -ae|
+while read pid tty time cmd cmd1
+do
+  if [ "$cmd" = "$ps_name" ]
+  then
+	 kill -9 $pid
+  fi
+done
+
+
+ps_name=CVServer
+
+#----------- Kill Server -----------#
+ps -ae|
+while read pid tty time cmd cmd1
+do
+  if [ "$cmd" = "$ps_name" ]
+  then
+	echo -e "${COLOR_RED}$ps_name $pid killed ${COLOR_REST}"
+	kill -15 $pid
+  fi
+done
+
+
+#----------- Sleep -----------#
+sleep 1
 
 ps -ae|
 while read pid tty time cmd cmd1

@@ -13,8 +13,8 @@ if [[ $SERVICE != "Trade" && $SERVICE != "Quote" ]]; then
 	echo -e "${COLOR_RED}Error!! Service Must Be Trade or Quote!${COLOR_REST}"
 	exit
 fi
-if [[ $MARKET != "BITMEX" && $MARKET != "CME" ]]; then
-	echo -e "${COLOR_RED}Error!! Market Must Be BITMEX or CME!${COLOR_REST}"
+if [[ $MARKET != "Bitcoin" && $MARKET != "CME" ]]; then
+	echo -e "${COLOR_RED}Error!! Market Must Be Bitcoin or CME!${COLOR_REST}"
 	exit
 fi
 
@@ -40,15 +40,15 @@ fi
 
 #----------- By Service & Market Set KEY -----------#
 if [[ $SERVICE == "Trade" ]]; then
-	if [[ $MARKET == "BITMEX" ]]; then
+	if [[ $MARKET == "Bitcoin" ]]; then
 		SERIALKEY=11
-	elif [[ $MARKET == "BINANCE" ]]; then
+	elif [[ $MARKET == "CME" ]]; then
 		SERIALKEY=21
 	fi
 elif [[ $SERVICE == "Quote" ]]; then
-	if [[ $MARKET == "BITMEX" ]]; then
+	if [[ $MARKET == "Bitcoin" ]]; then
 		SERIALKEY=51
-	elif [[ $MARKET == "BINANCE" ]]; then
+	elif [[ $MARKET == "CME" ]]; then
 		SERIALKEY=61
 	fi
 fi
@@ -56,4 +56,4 @@ fi
     BIN_DIR=../bin
 
 $BIN_DIR/CVSetTickNumber $SERIALKEY $NUM
-echo set tick number as $NUM
+echo set tick number as $NUM at key $SERIALKEY

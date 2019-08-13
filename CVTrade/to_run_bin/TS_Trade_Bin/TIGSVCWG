@@ -1,6 +1,0 @@
-CDPW_IPS6101        ,$CDPW           ,IPS6101-SERVER  ,分戶帳開戶          ,WG  
-PMPW_ECHO_WG        ,$PMPW           ,ECHO-SERVER     ,ECHO 測試           ,WG  
-TSMPW_GHS200        ,$TSMPW          ,GHS200          ,複委託下單          ,WG  
-TSPW_IPS6101        ,$TSPW           ,IPS6101-SERVER  ,分戶帳開戶          ,WG  
-TSPW_IPS6103        ,$TSPW           ,IPS6103-SERVER  ,指定出金帳戶審核    ,WG  
-TSPW_IPS6303        ,$TSPW           ,IPS6303-SERVER  ,分戶帳出金          ,WG  

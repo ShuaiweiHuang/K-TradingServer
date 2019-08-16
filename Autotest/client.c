@@ -29,7 +29,6 @@ struct CV_StructOrder
         char order_dayoff[1];
         char order_date[8];
         char order_time[8];
-        char order_type[1];
         char order_buysell[1];
         char order_bookno[36];
         char order_cond[1];
@@ -41,7 +40,7 @@ struct CV_StructOrder
         char qty_mark[1];
         char order_qty[9];
         char order_kind[2];
-        char reserved[90];
+        char reserved[91];
 } ts_order;
 
 
@@ -146,8 +145,8 @@ void* test_run(void *arg)
 
 			data[0] = 0x1b;
 			data[1] = 0x00;
-			memcpy(data+2,	cp_id, 10);
-			memcpy(data+12, cp_pass, 40);
+			memcpy(data+2,	cp_id, 20);
+			memcpy(data+22, cp_pass, 30);
 			memcpy(data+52, "MC", 2);
 			memcpy(data+54, "3.0.0.20", 8);
 
@@ -158,7 +157,7 @@ void* test_run(void *arg)
 				is_conn = 0;
 				break;
 			}
-			int packs=0, len;
+			int packs=1, len;
 
 			while(packs--)
 			{
@@ -180,15 +179,42 @@ void* test_run(void *arg)
 						printf("%.10s %.10s %.10s\n", data+2+i*30, data+12+i*30, data+22+i*30);
 				}
 				if(data[1] == 0x01)
-					printf("login: len=%d,%x,%x,%.4s,%.4s,%.512s\n", len, data[0], data[1], data+2, data+6, data+10);
+					printf("login: len=%d,%x,%x,%.2s,%.40s,%.4s,%.60s,%.60s\n", len, data[0], data[1], data+2, data+4, data+44, data+48, data+108);
 			}
-
+#if 0
+			data[0] = 0x1b;
+			data[1] = 0x06;
+			memcpy(data+2,	"HBRQ", 4);
+			if (write(server, data, 6) <= 0) 
+			{
+				perror("write to server error !");
+				ret = -1;
+				is_conn = 0;
+				break;
+			}
+			packs = 1;
+                        while(packs--)
+                        {
+                                if ((len=read(server, data, 6)) <= 0)
+                                {
+                                        perror ("read from aptrader_server error !");
+                                        ret = -1;
+                                        is_conn = 0;
+                                        break;
+                                }
+                                if(data[1] == 0x07)
+                                        printf("HTBT: len=%d,%x,%x,%.4s\n", len, data[0], data[1], data+2);
+				else
+                                        printf("HTBTERROR: len=%d,%x,%x,%.4s\n", len, data[0], data[1], data+2);
+					
+                        }
+#endif
 			if(!is_conn)
 				break;
 
 			memset(&ts_order, ' ', sizeof(ts_order));
 			ts_order.header_bit[0] = 0x1b;
-			ts_order.header_bit[1] = 0x80;
+			ts_order.header_bit[1] = 0x40;
 			memcpy(ts_order.order_id, cp_id, 10);
 			memcpy(ts_order.sub_acno_id, cp_account, 7);
 			memcpy(ts_order.strategy_name, "MACD1234", 8);
@@ -203,7 +229,6 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_dayoff, "N", 1);
 			memcpy(ts_order.order_date, "20190813", 8);
 			memcpy(ts_order.order_time, "17160301", 8);
-			memcpy(ts_order.order_type, "L", 1);
 			memcpy(ts_order.order_buysell, "B", 1);
 			memcpy(ts_order.order_cond, "0", 1);
 			memcpy(ts_order.order_mark, "4", 1);
@@ -215,7 +240,7 @@ void* test_run(void *arg)
 			memcpy(ts_order.qty_mark, "0", 1);
 			memcpy(ts_order.order_qty, "000000011", 9);
 			memcpy(ts_order.order_kind,"0", 1);
-			memset(&ts_order.reserved, ' ', 96);
+			memset(&ts_order.reserved, ' ', 91);
 
 			for(order_loop=0 ; order_loop<1 && is_conn ; order_loop++)
 			{

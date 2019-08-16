@@ -70,6 +70,7 @@ enum TCVClientStauts
 class CCVClient: public CCVThread
 {
 	private:
+		unsigned char m_uncaLogonID[10];
 		int m_nLengthOfLogonMessage;
 		int m_nLengthOfHeartbeatMessage;
 		int m_nLengthOfOrderMessage;
@@ -95,9 +96,9 @@ class CCVClient: public CCVThread
 		virtual ~CCVClient();
 		bool SendData(const unsigned char* pBuf, int nSize);
 		bool SendAll(const unsigned char* pBuf, int nSize);
+		bool RecvAll(unsigned char* pBuf, int nToRecv);
 		void SetStatus(TCVClientStauts csStatus);
 		void GetOriginalOrder(long nOrderNumber, int nOrderSize, union CV_ORDER_REPLY &cv_order_reply);
 		int GetClientSocket();
-		int IsMessageComplete(unsigned char* pBuf, int nRecvedSize);
 };
 #endif

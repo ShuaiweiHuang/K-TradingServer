@@ -71,6 +71,7 @@ void* CCVClient::Run()
 	unsigned char uncaOverheadMessageBuf[BUFSIZE];
 	unsigned char uncaOrder[BUFSIZE];
 	unsigned char uncaSendBuf[BUFSIZE];
+        unsigned char uncaEscapeBuf[2];
 	struct CV_StructHeartbeat HeartbeatRP;
 	struct CV_StructHeartbeat HeartbeatRQ;
 
@@ -87,17 +88,15 @@ void* CCVClient::Run()
 	HeartbeatRP.header_bit[0] = ESCAPE;
 	HeartbeatRP.header_bit[1] = HEARTBEATREP;
 	memcpy(HeartbeatRP.heartbeat_msg, "HBRP", 4);
-	
 
-	int nSizeOfRecvedMessage = 0;
-	int nSizeOfOverheadMessage = 0;
-	int nSizeOfRecvedCVMessage = 0;
-
+	int nSizeOfRecvedCVMessage = 0;	
 	int nSizeOfCVOrder = 0;
 	int nSizeOfTSOrder = 0;
 	int nSizeOfRecvSocket = 0;
 	int nSizeOfSendSocket = 0;
 	int nSizeOfErrorMessage = 0;
+	int nTimeIntervals = HEARTBEATVAL;
+	int nToRecv; 
 
 	FillTandemOrder fpFillTandemOrder = NULL;
 	union CV_ORDER cv_order;
@@ -115,151 +114,140 @@ void* CCVClient::Run()
 		nSizeOfTSOrder = sizeof(struct CV_StructTSOrder);
 		nSizeOfRecvSocket = sizeof(struct CV_StructOrder);
 		nSizeOfSendSocket = sizeof(struct CV_StructOrderReply);
-		nSizeOfErrorMessage = 78;
-		uncaSendBuf[1] = ORDERREP;//
+		nSizeOfErrorMessage = sizeof(struct CV_StructTSOrderReply);
+		uncaSendBuf[1] = ORDERREP;
 	}
 
-	int nTimeIntervals = HEARTBEATVAL;
 	m_pHeartbeat = new CCVHeartbeat(nTimeIntervals);
 	assert(m_pHeartbeat);
 	m_pHeartbeat->SetCallback(this);
 
-	if(m_bIsProxy == true)
-	{
-		SetStatus(csOnline);
-		m_pHeartbeat->Start();
-	}
-	else
-		SetStatus(csLogoning);
+	SetStatus(csLogoning);
 
 	while(m_ClientStatus != csOffline)
 	{
-		while(1)//get message
-		{
-			if(nSizeOfOverheadMessage > 0)
+			memset(uncaEscapeBuf, 0, sizeof(uncaEscapeBuf));
+
+			bool bRecvAll = RecvAll(uncaEscapeBuf, 2);
+
+			if(bRecvAll == false)
 			{
-				memset(uncaMessageBuf, 0, sizeof(uncaMessageBuf));
-				memcpy(uncaMessageBuf, uncaOverheadMessageBuf, nSizeOfOverheadMessage);
-				nSizeOfRecvedMessage = nSizeOfOverheadMessage;
-				nSizeOfOverheadMessage = 0;
+				FprintfStderrLog("RECV_ESC_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), uncaEscapeBuf, sizeof(uncaEscapeBuf));
+				continue;
 			}
 
-			int nIsMessageComplete = IsMessageComplete(uncaMessageBuf, nSizeOfRecvedMessage);
-
-			if(nIsMessageComplete == -1)//to recv again
+			if(uncaEscapeBuf[0] != ESCAPE)
 			{
-				memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
-				int nRecv = recv(m_ClientAddrInfo.nSocket, uncaRecvBuf, sizeof(uncaRecvBuf), 0);
-
-				if(nRecv > 0)
-				{
-					FprintfStderrLog("RECV_CV", 0, uncaRecvBuf, nRecv);
-					m_pHeartbeat->TriggerGetClientReplyEvent();
-					memcpy(uncaMessageBuf + nSizeOfRecvedMessage, uncaRecvBuf, nRecv);
-					nSizeOfRecvedMessage += nRecv;
-				}
-				else if(nRecv == 0)
-				{
-					FprintfStderrLog("RECV_CV_CLOSE", 0, reinterpret_cast<unsigned char*>(m_ClientAddrInfo.caIP), sizeof(m_ClientAddrInfo.caIP));
-					SetStatus(csOffline);
-					nSizeOfRecvedCVMessage = 0;
-					break;
-				}
-				else if(nRecv == -1)
-				{
-					FprintfStderrLog("RECV_CV_ERROR", -1, reinterpret_cast<unsigned char*>(m_ClientAddrInfo.caIP), sizeof(m_ClientAddrInfo.caIP));
-					perror("RECV_SOCKET_ERROR");
-					SetStatus(csOffline);
-					nSizeOfRecvedCVMessage = 0;
-					break;
-				}
-				else
-					FprintfStderrLog("RECV_CV_ELSE", -2, reinterpret_cast<unsigned char*>(m_ClientAddrInfo.caIP), sizeof(m_ClientAddrInfo.caIP));
+				FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
+				printf("Error byte = %x\n", uncaEscapeBuf[0]);
+				continue;
 			}
-			else if(nIsMessageComplete == 0)//success
+			else
 			{
-				nSizeOfRecvedCVMessage = nSizeOfRecvedMessage;
-				nSizeOfRecvedMessage = 0;
-				break;
-			}
-			else if(nIsMessageComplete > 0)//overhead
-			{
-				nSizeOfRecvedCVMessage = nIsMessageComplete;
-				nSizeOfOverheadMessage = nSizeOfRecvedMessage - nSizeOfRecvedCVMessage;
-
-				memset(uncaOverheadMessageBuf, 0, sizeof(uncaOverheadMessageBuf));
-				memcpy(uncaOverheadMessageBuf, uncaMessageBuf + nSizeOfRecvedCVMessage, nSizeOfOverheadMessage);
-				memset(uncaMessageBuf + nIsMessageComplete, 0, sizeof(uncaMessageBuf) - nIsMessageComplete);
-				nSizeOfRecvedMessage = 0;
-				break;
-			}
-			else if(nIsMessageComplete == -2)//wrong data
-			{
-				FprintfStderrLog("RECV_CV_WRONG", -2, reinterpret_cast<unsigned char*>(m_ClientAddrInfo.caIP), 
-						 sizeof(m_ClientAddrInfo.caIP), uncaMessageBuf, nSizeOfRecvedMessage);
-
-				bool bFindEscByte = false;
-
-				for(int i=0 ; i<nSizeOfRecvedMessage ; i++)
+				nToRecv = 0;
+				switch(uncaEscapeBuf[1])
 				{
-					if(uncaMessageBuf[i] == ESCAPE)
-					{
-						nSizeOfRecvedMessage -= i;
-						memcpy(uncaMessageBuf, uncaMessageBuf + i, nSizeOfRecvedMessage);
-
-						bFindEscByte = true;
+					case LOGREQ:
+						nToRecv = sizeof(struct CV_StructLogon)-2;
+				printf("login nToRecv = %d\n", nToRecv);
 						break;
-					}
+					case HEARTBEATREQ:
+						nToRecv = sizeof(struct CV_StructHeartbeat)-2;
+				printf("hbrq nToRecv = %d\n", nToRecv);
+						break;
+					case HEARTBEATREP:
+						nToRecv = sizeof(struct CV_StructHeartbeat)-2;
+				printf("hbrp nToRecv = %d\n", nToRecv);
+						break;
+					case ORDERREQ:
+						nToRecv = sizeof(struct CV_StructOrder)-2;
+				printf("order nToRecv = %d\n", nToRecv);
+						break;
+					case DISCONNMSG:
+						SetStatus(csOffline);
+				printf("disconnect nToRecv = %d\n", nToRecv);
+						break;
+					default:
+						FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
+						printf("Error byte = %x\n", uncaEscapeBuf[1]);
+						continue;
 				}
+				if(m_ClientStatus == csOffline)
+					break;
 
-				if(bFindEscByte == false)
+				memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
+				bRecvAll = RecvAll(uncaRecvBuf, nToRecv);
+				if(bRecvAll == false)
 				{
-					nSizeOfRecvedMessage = 0;
-					memset(uncaMessageBuf, 0, sizeof(uncaMessageBuf));
+					FprintfStderrLog("RECV_TRAIL_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), uncaRecvBuf, nToRecv);
+					continue;
 				}
 			}
-		}//recv tcp message
 
-		if(nSizeOfRecvedCVMessage > 0)
+		memcpy(uncaMessageBuf, uncaEscapeBuf, 2);
+		memcpy(uncaMessageBuf+2, uncaRecvBuf, nToRecv);
+		nSizeOfRecvedCVMessage = 2 + nToRecv;	
+		if(nToRecv > 0)
 		{
 			if(uncaMessageBuf[1] == LOGREQ)//logon message
 			{
 				unsigned char uncaSendLogonBuf[MAXDATA];
-				FprintfStderrLog("RECV_CV_LOGON", 0, uncaMessageBuf, 2 + sizeof(struct CV_StructLogon));
+				
+				FprintfStderrLog("RECV_CV_LOGON", 0, uncaMessageBuf, sizeof(struct CV_StructLogon));
 
 				if(m_ClientStatus == csLogoning)
 				{
 					struct CV_StructLogon logon_type;
 					bool bLogon;
 					memset(&logon_type, 0, sizeof(struct CV_StructLogon));
-					memcpy(&logon_type, uncaMessageBuf + 2, sizeof(struct CV_StructLogon));
+					memcpy(&logon_type, uncaMessageBuf, sizeof(struct CV_StructLogon));
 
 					struct CV_StructLogonReply logon_reply;
 					memset(&logon_reply, 0, sizeof(struct CV_StructLogonReply));
+					memset(m_uncaLogonID, 0, sizeof(m_uncaLogonID));
+					memcpy(m_uncaLogonID, logon_type.logon_id, sizeof(logon_type.logon_id));
 //DISABLE LOGON FUNCTION
 #if 0
 					bLogon = LogonAuth(logon_type.logon_id, logon_type.password, logon_reply);//logon & get logon reply data
 #else
+					printf("ID:%.20s\n", uncaMessageBuf+2);
+					if( (strcmp((char*)uncaMessageBuf+2, "P123069984") == 0 && strcmp((char*)uncaMessageBuf+22, "testtest") == 0 )
+					    || (strcmp((char*)uncaMessageBuf+2, "brianlee") == 0 && strcmp((char*)uncaMessageBuf+22, "ilovebrianlee") == 0))
+						bLogon = true;
+					else
+						bLogon = false;
 					bLogon = true;
+					printf("PW:%.30s\n", uncaMessageBuf+22);
+					printf("SA:%.2s\n", uncaMessageBuf+52);
+					printf("VS:%.10s\n", uncaMessageBuf+54);
 					printf("login success.\n");
 #endif
 					memset(uncaSendLogonBuf, 0, sizeof(uncaSendLogonBuf));
 
 					uncaSendLogonBuf[0] = ESCAPE;
 					uncaSendLogonBuf[1] = LOGREP;
-
-					memcpy(uncaSendLogonBuf + 2, &logon_reply, sizeof(struct CV_StructLogonReply));
-					bool bSendData = SendData(uncaSendLogonBuf, sizeof(struct CV_StructLogonReply) + 2);
+					if(bLogon) {
+						memcpy(uncaSendLogonBuf+2, "OK", 2);
+						memcpy(uncaSendLogonBuf+4, "192.168.101.209", 15);
+						memcpy(uncaSendLogonBuf+44, "0000", 4);
+						memcpy(uncaSendLogonBuf+108, "login success.", 14);
+					}
+					else {
+						memcpy(uncaSendLogonBuf+2, "NG", 2);
+						memcpy(uncaSendLogonBuf+4, "192.168.101.209", 15);
+						memcpy(uncaSendLogonBuf+44, "0001", 4);
+						memcpy(uncaSendLogonBuf+108, "login fail.", 11);
+					}
+					//memcpy(uncaSendLogonBuf + 2, &logon_reply, sizeof(struct CV_StructLogonReply));
+					bool bSendData = SendData(uncaSendLogonBuf, sizeof(struct CV_StructLogonReply));
 
 					if(bSendData == true)
 					{
-#if 0
-						FprintfStderrLog("SEND_LOGON_REPLY", 0, uncaSendLogonBuf, sizeof(struct CV_StructLogonReply) + 2);
-#endif
+						FprintfStderrLog("SEND_LOGON_REPLY", 0, uncaSendLogonBuf, sizeof(struct CV_StructLogonReply));
 					}
 					else
 					{
-						FprintfStderrLog("SEND_LOGON_REPLY_ERROR", -1, uncaSendLogonBuf, sizeof(struct CV_StructLogonReply) + 2);
+						FprintfStderrLog("SEND_LOGON_REPLY_ERROR", -1, uncaSendLogonBuf, sizeof(struct CV_StructLogonReply));
 						perror("SEND_SOCKET_ERROR");
 					}
 
@@ -270,76 +258,6 @@ void* CCVClient::Run()
 					{
 						SetStatus(csOnline);
 						m_pHeartbeat->Start();
-
-//DISABLE GET ACCOUNT
-#if 0
-						vector<struct AccountMessage> vAccountMessage;
-						unsigned char uncaSendAccountBuf[MAXDATA];
-						unsigned char uncaAccountMessageBuf[MAXDATA];//todo
-						memset(uncaSendAccountBuf, 0, sizeof(uncaSendAccountBuf));
-						memset(uncaAccountMessageBuf, 0, sizeof(uncaAccountMessageBuf));
-						uncaSendAccountBuf[0] = ESCAPE;
-						uncaSendAccountBuf[1] = ACCLISTREP;
-						GetAccount(logon_type.logon_id, logon_type.source, logon_type.Version, vAccountMessage);//to do > 1024
-
-						bytesint.value = vAccountMessage.size();
-
-						memcpy(uncaSendAccountBuf + 2, bytesint.uncaByte, 2);
-						bool bSendData = SendData(uncaSendAccountBuf, 4);
-
-						if(bSendData == true)
-						{
-							FprintfStderrLog("SEND_ACCOUNT_COUNT", 0, uncaSendAccountBuf, 4);
-						}
-						else
-						{
-							FprintfStderrLog("SEND_ACCOUNT_COUNT_ERROR", -1, uncaSendAccountBuf, 4);
-							perror("SEND_SOCKET_ERROR");
-						}
-
-						uncaSendAccountBuf[1] = 0x41;
-						int nCountOfSendAccountMessage = 0;
-						int nIndexOfSendBuf = 2;
-						memset(uncaSendAccountBuf + 2, 0, sizeof(uncaSendAccountBuf) - 2);
-						for(vector<struct AccountMessage>::iterator iter = vAccountMessage.begin(); iter != vAccountMessage.end(); iter++)
-						{
-							memcpy(uncaSendAccountBuf + nIndexOfSendBuf, iter->caMessage, 30);
-							nCountOfSendAccountMessage += 1;
-							nIndexOfSendBuf += 30;
-
-							if(nCountOfSendAccountMessage == 10)
-							{
-								bool bSendData = SendData(uncaSendAccountBuf, 300 + 2);
-								if(bSendData == true)
-								{
-									FprintfStderrLog("SEND_ACCOUNT_LIST_TAIL", 0, uncaSendAccountBuf, 300 + 2);
-								}
-								else
-								{
-									FprintfStderrLog("SEND_ACCOUNT_LIST_TAIL_ERROR", -1, uncaSendAccountBuf, 300 + 2);
-									perror("SEND_SOCKET_ERROR");
-								}
-								nCountOfSendAccountMessage = 0;
-								nIndexOfSendBuf = 2;
-								memset(uncaSendAccountBuf + 2, 0, sizeof(uncaSendAccountBuf) - 2);
-							}
-						}
-						if(nCountOfSendAccountMessage > 0 && nCountOfSendAccountMessage < 10)
-						{
-							bSendData = SendData(uncaSendAccountBuf, nCountOfSendAccountMessage* 30 + 2);
-							if(bSendData == true)
-							{
-								FprintfStderrLog("SEND_ACCOUNT_LIST_HEAD", 0, uncaSendAccountBuf, nCountOfSendAccountMessage*30+2);
-							}
-							else
-							{
-								FprintfStderrLog("SEND_ACCOUNT_LIST_HEAD_ERROR", -1, uncaSendAccountBuf, nCountOfSendAccountMessage*30+2);
-								perror("SEND_SOCKET_ERROR");
-							}
-						}
-						else
-						{}
-#endif
 					}
 					else//logon failed
 					{
@@ -348,7 +266,7 @@ void* CCVClient::Run()
 				}
 				else if(m_ClientStatus == csOnline)//repeat logon
 				{
-#if 0
+#if 1
 					struct CV_StructLogonReply logon_reply;
 					unsigned char uncaSendRelogBuf[MAXDATA];
 
@@ -379,7 +297,7 @@ void* CCVClient::Run()
 					//todo
 				}
 			}
-			else if(uncaMessageBuf[1] == HeartbeatRQ.header_bit[1])//heartbeat message
+			else if(uncaMessageBuf[1] == HEARTBEATREQ)//heartbeat message
 			{
 				if(memcmp(uncaMessageBuf + 2, HeartbeatRQ.heartbeat_msg, 4) == 0)
 				{
@@ -401,7 +319,7 @@ void* CCVClient::Run()
 					FprintfStderrLog("RECV_CV_HBRQ_ERROR", -1, uncaMessageBuf + 2, 4);
 				}
 			}
-			else if(uncaMessageBuf[1] == HeartbeatRP.header_bit[1])//heartbeat message
+			else if(uncaMessageBuf[1] == HEARTBEATREP)//heartbeat message
 			{
 				if(memcmp(uncaMessageBuf + 2, HeartbeatRP.heartbeat_msg, 4) == 0)
 				{
@@ -412,6 +330,8 @@ void* CCVClient::Run()
 					FprintfStderrLog("RECV_CV_HBRP_ERROR", -1, uncaMessageBuf + 2, 4);
 				}
 			}
+
+
 			else if(uncaMessageBuf[1] == DISCONNMSG)
 			{
 				SetStatus(csOffline);
@@ -526,7 +446,7 @@ void* CCVClient::Run()
 					FprintfStderrLog("GET_QDAO_ERROR", -1, uncaOrder, nSizeOfTSOrder);
 				}
 			}
-		}
+		}//recv tcp message
 	}
 	delete pErrorMessage;
 	m_pHeartbeat->Terminate();
@@ -568,6 +488,51 @@ bool CCVClient::SendAll(const unsigned char* pBuf, int nToSend)
 
 	return nSend == nToSend ? true : false;
 }
+
+bool CCVClient::RecvAll(unsigned char* pBuf, int nToRecv)
+{
+        int nRecv = 0;
+        int nRecved = 0;
+
+        do
+        {
+                nToRecv -= nRecv;
+                nRecv = recv(m_ClientAddrInfo.nSocket, pBuf + nRecved, nToRecv, 0);
+
+                if(nRecv > 0)
+                {
+                        if(m_pHeartbeat)
+                                m_pHeartbeat->TriggerGetClientReplyEvent();
+                        else
+                                FprintfStderrLog("HEARTBEAT_NULL_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
+
+                        FprintfStderrLog(NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), pBuf + nRecved, nRecv);
+                        nRecved += nRecv;
+                }
+                else if(nRecv == 0)
+                {
+                        SetStatus(csOffline);
+                        FprintfStderrLog("RECV_CV_CLOSE", 0, m_uncaLogonID, sizeof(m_uncaLogonID));
+                        break;
+                }
+                else if(nRecv == -1)
+                {
+                        SetStatus(csOffline);
+                        FprintfStderrLog("RECV_CV_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)strerror(errno), strlen(strerror(errno)));
+                        break;
+                }
+                else
+                {
+                        SetStatus(csOffline);
+                        FprintfStderrLog("RECV_CV_ELSE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)strerror(errno), strlen(strerror(errno)));
+                        break;
+                }
+        }
+        while(nRecv != nToRecv);
+
+        return nRecv == nToRecv ? true : false;
+}
+
 
 void CCVClient::SetStatus(TCVClientStauts csStatus)
 {
@@ -905,62 +870,4 @@ void CCVClient::GetAccount(char* pID, char* psource, char* pVersion, vector<stru
 int CCVClient::GetClientSocket()
 {
 	return m_ClientAddrInfo.nSocket;
-}
-
-// 0 -> complete, -1 -> incomplete, nLength -> overhead, -2 -> wrong data
-int CCVClient::IsMessageComplete(unsigned char* pBuf, int nRecvedSize)
-{
-	if(nRecvedSize == 0)
-		return -1;
-
-	//Logon
-	if(pBuf[1] == LOGREQ) {
-		if(nRecvedSize == m_nLengthOfLogonMessage)
-			return 0;
-		else if(nRecvedSize < m_nLengthOfLogonMessage)
-			return -1;
-		else if(nRecvedSize > m_nLengthOfLogonMessage)
-			return m_nLengthOfLogonMessage;
-	}
-	//Get Account Number
-	else if(pBuf[1] == ACCNUMREQ || pBuf[1] == ACCLISTREQ) {
-		if(nRecvedSize == m_nLengthOfAccountNum)
-			return 0;
-		else if(nRecvedSize < m_nLengthOfAccountNum)
-			return -1;
-		else if(nRecvedSize > m_nLengthOfAccountNum)
-			return m_nLengthOfAccountNum;
-	}
-	// Heart Beat
-	else if(pBuf[1] == HEARTBEATREQ || pBuf[1] == HEARTBEATREP) {
-		if(nRecvedSize == m_nLengthOfHeartbeatMessage)
-			return 0;
-		else if(nRecvedSize < m_nLengthOfHeartbeatMessage)
-			return -1;
-		else if(nRecvedSize > m_nLengthOfHeartbeatMessage)
-			return m_nLengthOfHeartbeatMessage;
-	}
-	//Order
-	else if(pBuf[1] == ORDERREQ) {
-		if(nRecvedSize == m_nLengthOfOrderMessage)
-			return 0;
-		else if(nRecvedSize < m_nLengthOfOrderMessage)
-			return -1;
-		else if(nRecvedSize > m_nLengthOfOrderMessage)
-			return m_nLengthOfOrderMessage;
-	}//DISCONNMSG
-	else if(pBuf[1] == DISCONNMSG) {
-		if(nRecvedSize == m_nLengthOfLogoutMessage)
-			return 0;
-		else if(nRecvedSize < m_nLengthOfLogoutMessage)
-			return -1;
-		else if(nRecvedSize > m_nLengthOfLogoutMessage)
-			return m_nLengthOfLogoutMessage;
-	}
-	else {
-		FprintfStderrLog("RECV_ERROR_HEADER", 0, pBuf+1, 1);
-		printf("Error header:%x\n", pBuf[1]);
-		exit(-1);
-		return -2;
-	}
 }

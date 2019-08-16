@@ -85,6 +85,12 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 	        sprintf(ucvts.cv_ts_order.apiSecret_order, "i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE");
 	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "O-E5T-a0KJDs6AMh5loISqu6");
 	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "4RFDBMdJb8425ZzP61aoT_3sEwF6Q9FqhTo26uXIR3RjBMOP");
+	}if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "0000002", 7))
+	{
+	        sprintf(ucvts.cv_ts_order.apiKey_order, "A9oHum-Pjl590hShf8eXH3Hl");
+	        sprintf(ucvts.cv_ts_order.apiSecret_order, "FSgJUpbK4RCUKl8OYUrH3mZnf5KPx9arVy1i89tdIoEa3VsL");
+	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "A9oHum-Pjl590hShf8eXH3Hl");
+	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "FSgJUpbK4RCUKl8OYUrH3mZnf5KPx9arVy1i89tdIoEa3VsL");
 	}
 	memcpy(ucvts.cv_ts_order.strategy_name, ucv.cv_order.strategy_name, 16);
 
@@ -127,7 +133,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 //Date & Time
 	memcpy(ucvts.cv_ts_order.order_date, ucv.cv_order.order_date,8);
 	memcpy(ucvts.cv_ts_order.order_time, ucv.cv_order.order_time,8);
-
+#if 0
 //Order Type
 	switch(ucv.cv_order.order_type[0])
 	{
@@ -139,7 +145,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 		default:
 			return OT_ERROR;
 	}
-
+#endif
 //Order Buy/sell
 	switch(ucv.cv_order.order_buysell[0])
 	{

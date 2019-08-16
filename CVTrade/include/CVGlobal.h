@@ -10,12 +10,12 @@
 #define ACCNUMREP	0x03
 #define ACCLISTREQ	0x04
 #define ACCLISTREP	0x05
-#define ORDERREQ	0x80
-#define ORDERREP	0x81
+#define HEARTBEATREQ	0x06
+#define HEARTBEATREP	0x07
+#define ORDERREQ	0x40
+#define ORDERREP	0x41
 #define CONTROLREQ	0xC0
 #define CONTROLREP	0xC1
-#define HEARTBEATREQ	0xF0
-#define HEARTBEATREP	0xF1
 #define DISCONNMSG	0xFF
 
 #define TT_ERROR	-1100
@@ -34,6 +34,7 @@
 #define OK_ERROR	-1113
 
 #define HEARTBEATVAL 	60
+
 union U_ByteSint
 {
    unsigned char uncaByte[16];

@@ -128,7 +128,7 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nToSend);
-#if 0
+#if 1
 	printf("ip = %.16s\n", cv_ts_order.client_ip);
 	printf("order id = %.10s\n", cv_ts_order.order_id);
 	printf("sub_acno_id = %.7s\n", cv_ts_order.sub_acno_id);
@@ -144,7 +144,6 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 	printf("order_dayoff = %.1s\n", cv_ts_order.order_dayoff);
 	printf("order_date = %.8s\n", cv_ts_order.order_date);
 	printf("order_time = %.8s\n", cv_ts_order.order_time);
-	printf("order_type = %.1s\n", cv_ts_order.order_type);
 	printf("order_buysell = %.1s\n", cv_ts_order.order_buysell);
 	printf("order_bookno = %.36s\n", cv_ts_order.order_bookno);
 	printf("order_cond = %.1s\n", cv_ts_order.order_cond);

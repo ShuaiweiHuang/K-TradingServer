@@ -1,8 +1,8 @@
 struct CV_StructLogon
 {
 	char header_bit[2];
-	char logon_id[10];
-	char password[40];
+	char logon_id[20];
+	char password[30];
 	char source[2];
 	char Version[10];
 };
@@ -62,7 +62,6 @@ struct CV_StructOrder
 	char order_dayoff[1];
 	char order_date[8];
 	char order_time[8];
-	char order_type[1];
 	char order_buysell[1];
 	char order_bookno[36];
 	char order_cond[1];
@@ -74,7 +73,7 @@ struct CV_StructOrder
 	char qty_mark[1];
 	char order_qty[9];
 	char order_kind[2];
-	char reserved[90];
+	char reserved[91];
 };
 
 struct CV_StructOrderReply
@@ -128,7 +127,6 @@ struct CV_StructTSOrder
 	char order_dayoff[1];
 	char order_date[8];
 	char order_time[8];
-	char order_type[1];
 	char order_buysell[1];
 	char order_bookno[36];
 	char order_cond[1];

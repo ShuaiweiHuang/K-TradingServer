@@ -7,6 +7,7 @@
 #include "CVHeartbeat.h"
 #include "CVClient.h"
 #include "CVClients.h"
+#include "../include/CVGlobal.h"
 #include <iostream>
 
 using namespace std;
@@ -37,7 +38,7 @@ void* CCVHeartbeat::Run()
 	memset(uncaSendBuf, 0, 7);
 
 	uncaSendBuf[0] = 0x1b;
-	uncaSendBuf[1] = 0xF0;
+	uncaSendBuf[1] = HEARTBEATREQ;
 	memcpy(uncaSendBuf + 2, "HBRQ", 4);
 
 	if(m_pClient)

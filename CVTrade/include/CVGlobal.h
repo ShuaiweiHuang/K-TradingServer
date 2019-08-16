@@ -14,9 +14,9 @@
 #define HEARTBEATREP	0x07
 #define ORDERREQ	0x40
 #define ORDERREP	0x41
-#define CONTROLREQ	0xC0
-#define CONTROLREP	0xC1
-#define DISCONNMSG	0xFF
+#define CONTROLREQ	0x60
+#define CONTROLREP	0x61
+#define DISCONNMSG	0x7F
 
 #define TT_ERROR	-1100
 #define AG_ERROR	-1101

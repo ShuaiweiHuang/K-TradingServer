@@ -276,7 +276,7 @@ void* test_run(void *arg)
 		}// end login
 #if 1
 		data1[0] = 0x1b;
-		data1[1] = 0xFF;
+		data1[1] = 0x7F;
 		write(server, data1, 2);
 #endif
 		pthread_mutex_lock(&conn_mutex);

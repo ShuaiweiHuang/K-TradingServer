@@ -16,6 +16,7 @@ CCVErrorMessage::CCVErrorMessage()
 	string str1111 = "quantity mark error";
 	string str1112 = "quantity error";
 	string str1113 = "order kind error";
+	string str1114 = "please login first";
 
 	m_mErrorMessage.insert(std::pair<int, string>(1100, str1100));
 	m_mErrorMessage.insert(std::pair<int, string>(1101, str1101));
@@ -31,6 +32,7 @@ CCVErrorMessage::CCVErrorMessage()
 	m_mErrorMessage.insert(std::pair<int, string>(1111, str1111));
 	m_mErrorMessage.insert(std::pair<int, string>(1112, str1112));
 	m_mErrorMessage.insert(std::pair<int, string>(1113, str1113));
+	m_mErrorMessage.insert(std::pair<int, string>(1114, str1114));
 }
 
 CCVErrorMessage::~CCVErrorMessage()

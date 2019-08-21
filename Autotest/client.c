@@ -15,13 +15,13 @@
 struct CV_StructOrder
 {
         char header_bit[2];
-        char order_id[10];
         char sub_acno_id[7];
-        char strategy_name[16];
+        char strategy_name[7];
         char agent_id[2];
         char broker_id[4];
         char exchange_id[10];
         char seq_id[13];
+        char key_id[13];
         char symbol_name[10];
         char symbol_type[1];
         char symbol_mark[1];
@@ -40,7 +40,7 @@ struct CV_StructOrder
         char qty_mark[1];
         char order_qty[9];
         char order_kind[2];
-        char reserved[91];
+        char reserved[97];
 } ts_order;
 
 
@@ -142,7 +142,7 @@ void* test_run(void *arg)
 		conn_retry = CONNRETRY;
 
 		if(is_login && is_conn) {
-
+#if 1
 			data[0] = 0x1b;
 			data[1] = 0x00;
 			memcpy(data+2,	cp_id, 20);
@@ -179,8 +179,9 @@ void* test_run(void *arg)
 						printf("%.10s %.10s %.10s\n", data+2+i*30, data+12+i*30, data+22+i*30);
 				}
 				if(data[1] == 0x01)
-					printf("login: len=%d,%x,%x,%.2s,%.40s,%.4s,%.60s,%.60s\n", len, data[0], data[1], data+2, data+4, data+44, data+48, data+108);
+					printf("login: len=%d,%x,%x,%.2s,%.40s,%.2s,%.82s\n", len, data[0], data[1], data+2, data+4, data+44, data+46);
 			}
+#endif
 #if 0
 			data[0] = 0x1b;
 			data[1] = 0x06;
@@ -215,25 +216,25 @@ void* test_run(void *arg)
 			memset(&ts_order, ' ', sizeof(ts_order));
 			ts_order.header_bit[0] = 0x1b;
 			ts_order.header_bit[1] = 0x40;
-			memcpy(ts_order.order_id, cp_id, 10);
 			memcpy(ts_order.sub_acno_id, cp_account, 7);
-			memcpy(ts_order.strategy_name, "MACD1234", 8);
+			memcpy(ts_order.strategy_name, "MACD123", 7);
 			memcpy(ts_order.agent_id, "MC", 2);
 			memcpy(ts_order.broker_id, "9801", 4);
-			memcpy(ts_order.exchange_id, "BITMEX    ", 10);
+			memcpy(ts_order.exchange_id, "BITMEX\0", 6);
+			memcpy(ts_order.seq_id, "0000000001111", 13);
 			memcpy(ts_order.seq_id, "0000000000000", 13);
 			memcpy(ts_order.symbol_name, "XBTUSD", 6);
 			memcpy(ts_order.symbol_type, "F", 1);
 			memcpy(ts_order.symbol_mark, "0", 1);
 			memcpy(ts_order.order_offset, "0", 1);
 			memcpy(ts_order.order_dayoff, "N", 1);
-			memcpy(ts_order.order_date, "20190813", 8);
+			memcpy(ts_order.order_date, "20190821", 8);
 			memcpy(ts_order.order_time, "17160301", 8);
 			memcpy(ts_order.order_buysell, "B", 1);
-			memcpy(ts_order.order_cond, "0", 1);
-			memcpy(ts_order.order_mark, "4", 1);
-			memcpy(ts_order.trade_type, "0", 1);
-			memcpy(ts_order.order_bookno, "f03d60f0-5e39-8617-63b2-8f8db1e0ec8c", 36);
+			memcpy(ts_order.order_cond, "0", 1);//0:ROD
+			memcpy(ts_order.order_mark, "0", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
+			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
+			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
 			memcpy(ts_order.order_price, "105005000", 9);
 			memcpy(ts_order.touch_price, "106000000", 9);
@@ -241,7 +242,6 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_qty, "000000011", 9);
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
-
 			for(order_loop=0 ; order_loop<1 && is_conn ; order_loop++)
 			{
 				if (write(server, (&ts_order.header_bit[0]), 256) <= 0) {
@@ -252,25 +252,19 @@ void* test_run(void *arg)
 				}
 
 				printf("testing in order %d\n", order_loop);
-#if 0
-				int len, ntoread = ORDER_LENGTH, nread = 0;
+#if 1
+				int len;
 
-				while(ntoread){
-					len = read(server, data1, ntoread);
-					if (len < 0) 
-					{
-						perror ("read from server error !");
-						is_conn = 0;
-						ret = -1;
-						break;
-					}
-					ntoread -= len;
-					nread += len;
+				len = read(server, data1, 1024);
+				if (len < 0) 
+				{
+					perror ("read from server error !");
+					is_conn = 0;
+					ret = -1;
+					break;
 				}
-				printf("byte = %d\n", nread);
+				printf("read byte = %d,%x,%x,%.4s,%.250s\n", len, data1[0], data1[1], data1+258, data1+262);
 
-				if(data1[1] == 0x01)
-					printf("order data len=%d, %x, %x, %.318s,\n%.78s\nstatus:%.2c\n", nread, data1[0], data1[1], data1+2, data1+320, data1+398);
 #endif
 			}//end loop for order
 		}// end login

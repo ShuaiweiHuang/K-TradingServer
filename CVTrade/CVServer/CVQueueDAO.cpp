@@ -84,7 +84,7 @@ void* CCVQueueDAO::Run()
 	}
 	else
 	{
-		//todo
+		FprintfStderrLog("SERVICE NAME ERROR", -1, 0, 0);
 	}
 
 	while(m_pRecvQueue)
@@ -174,9 +174,9 @@ int CCVQueueDAO::SendData(const unsigned char* pBuf, int nSize, long lType, int 
 	int nResult = -1;
 	if(m_pSendQueue)
 	{
-		printf("Key = %d\n", m_kSendKey);
+		//printf("Key = %d\n", m_kSendKey);
 		nResult= m_pSendQueue->SendMessage(pBuf, nSize, lType, nFlag);
-		printf("return nResult = %d\n", nResult);
+		//printf("return nResult = %d\n", nResult);
 	}
 	else
 	{

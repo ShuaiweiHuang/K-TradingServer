@@ -70,11 +70,12 @@ enum TCVClientStauts
 class CCVClient: public CCVThread
 {
 	private:
-		unsigned char m_uncaLogonID[10];
+		unsigned char m_uncaLogonID[20];
 		int m_nLengthOfLogonMessage;
 		int m_nLengthOfHeartbeatMessage;
 		int m_nLengthOfOrderMessage;
 		int m_nLengthOfLogoutMessage;
+		int m_nLengthOfLogonReplyMessage;
 		int m_nLengthOfAccountNum;
 		bool m_bIsProxy;
 		friend class CCVHeartbeat;

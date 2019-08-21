@@ -32,6 +32,7 @@
 #define QM_ERROR	-1111
 #define QT_ERROR	-1112
 #define OK_ERROR	-1113
+#define LG_ERROR	-1114
 
 #define HEARTBEATVAL 	60
 

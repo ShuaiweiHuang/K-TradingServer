@@ -38,37 +38,17 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 	CCVClients* pClients = CCVClients::GetInstance();
 	assert(pClients);
 
-#if 0 //check number of account list.
-	if(bIsProxy == false)
-	{
-		char caBranchAccount[4+7+7+1];
-
-		memset(caBranchAccount, 0, sizeof(caBranchAccount));
-
-		memcpy(caBranchAccount, ucv.cv_order.broker, 4);
-		memcpy(caBranchAccount + 4, ucv.cv_order.acno, 7);
-		memcpy(caBranchAccount + 4 + 7, ucv.cv_order.sub_acno, 7);
-
-		string strBranchAccount(caBranchAccount);
-		string strMarketBranchAccount = strService + strBranchAccount;
-
-
-		if(mBranchAccount.count(strMarketBranchAccount) <= 0)
-			return -1124;
-	}
-#endif
 	memcpy(ucvts.cv_ts_order.client_ip, pIP, IPLEN);
-//Order id & Sequence id
-	memcpy(ucvts.cv_ts_order.order_id, ucv.cv_order.order_id, 10);
-
+	memcpy(ucv.cv_order.seq_id, ucvts.cv_ts_order.seq_id, 13); 
+//key id
 	if(ucv.cv_order.trade_type[0] == '0') {
-		pClients->GetSerialNumber(ucvts.cv_ts_order.seq_id);
-		memcpy(ucv.cv_order.seq_id, ucvts.cv_ts_order.seq_id, 13); 
+		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
+		memcpy(ucv.cv_order.key_id, ucvts.cv_ts_order.key_id, 13); 
 		memcpy(ucvts.cv_ts_order.trade_type, ucv.cv_order.trade_type, 1);
 	}
 	else if(ucv.cv_order.trade_type[0] >= '1' && ucv.cv_order.trade_type[0] <= '3') {
-		//todo : check seq id valid
-		memcpy(ucvts.cv_ts_order.seq_id, ucv.cv_order.seq_id, 13);
+		//todo : check key id valid
+		memcpy(ucvts.cv_ts_order.key_id, ucv.cv_order.key_id, 13);
 		memcpy(ucvts.cv_ts_order.trade_type, ucv.cv_order.trade_type, 1);
 		memcpy(ucvts.cv_ts_order.order_bookno, ucv.cv_order.order_bookno, 36);
 	}
@@ -92,7 +72,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "A9oHum-Pjl590hShf8eXH3Hl");
 	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "FSgJUpbK4RCUKl8OYUrH3mZnf5KPx9arVy1i89tdIoEa3VsL");
 	}
-	memcpy(ucvts.cv_ts_order.strategy_name, ucv.cv_order.strategy_name, 16);
+	memcpy(ucvts.cv_ts_order.strategy_name, ucv.cv_order.strategy_name, 7);
 
 //Agent ID
 	if(strcmp(ucvts.cv_ts_order.agent_id, "MC") != 0 &&
@@ -247,6 +227,6 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 
 	char caSeqno[14];
 	memset(caSeqno, 0, sizeof(caSeqno));
-	memcpy(caSeqno, ucvts.cv_ts_order.seq_id, 13);
+	memcpy(caSeqno, ucvts.cv_ts_order.key_id, 13);
 	return atol(caSeqno);
 }

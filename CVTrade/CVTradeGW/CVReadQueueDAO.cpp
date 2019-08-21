@@ -91,7 +91,7 @@ void* CSKReadQueueDAO::Run()
 
 		struct CV_StructTSOrderReply tig_ts_order;
 
-		nPositionOfSeqnoNumber = tig_ts_order.seq_id - (char*)&tig_ts_order;
+		nPositionOfSeqnoNumber = tig_ts_order.key_id - (char*)&tig_ts_order;
 
 		memcpy(TIGMessage.caServiceId, 	"IPVHS331-F1         ", 20);
 	}

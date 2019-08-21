@@ -32,6 +32,7 @@ CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService
 	pthread_mutex_init(&m_MutexLockOnClientStatus, NULL);
 	m_nLengthOfAccountNum = sizeof(struct CV_StructAccnum);
 	m_nLengthOfLogonMessage = sizeof(struct CV_StructLogon);
+	m_nLengthOfLogonReplyMessage = sizeof(struct CV_StructLogonReply);
 	m_nLengthOfHeartbeatMessage = sizeof(struct CV_StructHeartbeat);
 	m_nLengthOfLogoutMessage = sizeof(struct CV_StructLogout);
 
@@ -149,27 +150,27 @@ void* CCVClient::Run()
 				{
 					case LOGREQ:
 						nToRecv = sizeof(struct CV_StructLogon)-2;
-				printf("login nToRecv = %d\n", nToRecv);
+				printf("\nlogin nToRecv = %d\n", nToRecv);
 						break;
 					case HEARTBEATREQ:
 						nToRecv = sizeof(struct CV_StructHeartbeat)-2;
-				printf("hbrq nToRecv = %d\n", nToRecv);
+				printf("\nhbrq nToRecv = %d\n", nToRecv);
 						break;
 					case HEARTBEATREP:
 						nToRecv = sizeof(struct CV_StructHeartbeat)-2;
-				printf("hbrp nToRecv = %d\n", nToRecv);
+				printf("\nhbrp nToRecv = %d\n", nToRecv);
 						break;
 					case ORDERREQ:
 						nToRecv = sizeof(struct CV_StructOrder)-2;
-				printf("order nToRecv = %d\n", nToRecv);
+				printf("\norder nToRecv = %d\n", nToRecv);
 						break;
 					case DISCONNMSG:
 						SetStatus(csOffline);
-				printf("disconnect nToRecv = %d\n", nToRecv);
+				printf("\ndisconnect nToRecv = %d\n", nToRecv);
 						break;
 					default:
 						FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
-						printf("Error byte = %x\n", uncaEscapeBuf[1]);
+						printf("\nError byte = %x\n", uncaEscapeBuf[1]);
 						continue;
 				}
 				if(m_ClientStatus == csOffline)
@@ -203,10 +204,9 @@ void* CCVClient::Run()
 					memcpy(&logon_type, uncaMessageBuf, sizeof(struct CV_StructLogon));
 
 					struct CV_StructLogonReply logon_reply;
-					memset(&logon_reply, 0, sizeof(struct CV_StructLogonReply));
+					memset(&logon_reply, 0, m_nLengthOfLogonReplyMessage);
 					memset(m_uncaLogonID, 0, sizeof(m_uncaLogonID));
 					memcpy(m_uncaLogonID, logon_type.logon_id, sizeof(logon_type.logon_id));
-//DISABLE LOGON FUNCTION
 #if 0
 					bLogon = LogonAuth(logon_type.logon_id, logon_type.password, logon_reply);//logon & get logon reply data
 #else
@@ -216,6 +216,7 @@ void* CCVClient::Run()
 						bLogon = true;
 					else
 						bLogon = false;
+					
 					bLogon = true;
 					printf("PW:%.30s\n", uncaMessageBuf+22);
 					printf("SA:%.2s\n", uncaMessageBuf+52);
@@ -223,31 +224,33 @@ void* CCVClient::Run()
 					printf("login success.\n");
 #endif
 					memset(uncaSendLogonBuf, 0, sizeof(uncaSendLogonBuf));
-
+					logon_reply.header_bit[0] = ESCAPE;
+					logon_reply.header_bit[1] = LOGREP;
 					uncaSendLogonBuf[0] = ESCAPE;
 					uncaSendLogonBuf[1] = LOGREP;
+
 					if(bLogon) {
-						memcpy(uncaSendLogonBuf+2, "OK", 2);
-						memcpy(uncaSendLogonBuf+4, "192.168.101.209", 15);
-						memcpy(uncaSendLogonBuf+44, "0000", 4);
-						memcpy(uncaSendLogonBuf+108, "login success.", 14);
+						memcpy(logon_reply.status_code, "OK", 2);//to do
+						memcpy(logon_reply.backup_ip, "192.168.101.211", 15);
+						memcpy(logon_reply.error_code, "00", 4);//to do
+						sprintf(logon_reply.error_message, "login success.");
 					}
 					else {
-						memcpy(uncaSendLogonBuf+2, "NG", 2);
-						memcpy(uncaSendLogonBuf+4, "192.168.101.209", 15);
-						memcpy(uncaSendLogonBuf+44, "0001", 4);
-						memcpy(uncaSendLogonBuf+108, "login fail.", 11);
+						memcpy(logon_reply.status_code, "NG", 2);//to do
+						memcpy(logon_reply.backup_ip, "192.168.101.211", 15);
+						memcpy(logon_reply.error_code, "01", 4);//to do
+						sprintf(logon_reply.error_message, "login fail.");
 					}
-					//memcpy(uncaSendLogonBuf + 2, &logon_reply, sizeof(struct CV_StructLogonReply));
-					bool bSendData = SendData(uncaSendLogonBuf, sizeof(struct CV_StructLogonReply));
+					memcpy(uncaSendLogonBuf, &logon_reply.header_bit[0], m_nLengthOfLogonReplyMessage);
+					bool bSendData = SendData(uncaSendLogonBuf, m_nLengthOfLogonReplyMessage);
 
 					if(bSendData == true)
 					{
-						FprintfStderrLog("SEND_LOGON_REPLY", 0, uncaSendLogonBuf, sizeof(struct CV_StructLogonReply));
+						FprintfStderrLog("SEND_LOGON_REPLY", 0, uncaSendLogonBuf, m_nLengthOfLogonReplyMessage);
 					}
 					else
 					{
-						FprintfStderrLog("SEND_LOGON_REPLY_ERROR", -1, uncaSendLogonBuf, sizeof(struct CV_StructLogonReply));
+						FprintfStderrLog("SEND_LOGON_REPLY_ERROR", -1, uncaSendLogonBuf, m_nLengthOfLogonReplyMessage);
 						perror("SEND_SOCKET_ERROR");
 					}
 
@@ -266,35 +269,33 @@ void* CCVClient::Run()
 				}
 				else if(m_ClientStatus == csOnline)//repeat logon
 				{
-#if 1
 					struct CV_StructLogonReply logon_reply;
 					unsigned char uncaSendRelogBuf[MAXDATA];
 
-					memset(&logon_reply, 0, sizeof(struct CV_StructLogonReply));
+					memset(&logon_reply, 0, m_nLengthOfLogonReplyMessage);
 					memset(uncaSendRelogBuf, 0, MAXDATA);
-					uncaSendRelogBuf[0] = ESCAPE;
-					uncaSendRelogBuf[1] = 0x01;
+					logon_reply.header_bit[0] = ESCAPE;
+					logon_reply.header_bit[1] = 0x01;
+					memcpy(logon_reply.status_code, "NG", 2);//to do
+					memcpy(logon_reply.backup_ip, "192.168.101.211", 15);
+					memcpy(logon_reply.error_code, "02", 4);//to do
+					sprintf(logon_reply.error_message, "Account has logon.");
+					memcpy(uncaSendRelogBuf, &logon_reply.header_bit[0], m_nLengthOfLogonReplyMessage);
 
-					memcpy(logon_reply.status_code, "7160", 4);//to do
-					memcpy(logon_reply.error_code, "M716", 4);//to do
-					sprintf(logon_reply.error_message_eng, "Account has logon.");
-					memcpy(uncaSendRelogBuf + 2, &logon_reply, sizeof(struct CV_StructLogonReply));
-
-					bool bSendData = SendData(uncaSendRelogBuf, sizeof(struct CV_StructLogonReply) + 2);
+					bool bSendData = SendData(uncaSendRelogBuf, m_nLengthOfLogonReplyMessage);
 					if(bSendData == true)
 					{
-						FprintfStderrLog("SEND_REPEAT_LOGON", 0, uncaSendRelogBuf, sizeof(struct CV_StructLogonReply) + 2);
+						FprintfStderrLog("SEND_REPEAT_LOGON", 0, uncaSendRelogBuf, m_nLengthOfLogonReplyMessage);
 					}
 					else
 					{
-						FprintfStderrLog("SEND_REPEAT_LOGON_ERROR", -1, uncaSendRelogBuf, sizeof(struct CV_StructLogonReply) + 2);
+						FprintfStderrLog("SEND_REPEAT_LOGON_ERROR", -1, uncaSendRelogBuf, m_nLengthOfLogonReplyMessage);
 						perror("SEND_SOCKET_ERROR");
 					}
-#endif
 				}
 				else
 				{
-					//todo
+					break;
 				}
 			}
 			else if(uncaMessageBuf[1] == HEARTBEATREQ)//heartbeat message
@@ -346,23 +347,27 @@ void* CCVClient::Run()
 
 				if(m_ClientStatus == csLogoning)
 				{
-					U_ByteSint bytesint;
-					char caErrorMessage[] = "caErrorMessage";
-					memset(uncaSendBuf + 2, 0, sizeof(uncaSendBuf) - 2);
-					memcpy(uncaSendBuf + 2 ,&cv_order, nSizeOfRecvedCVMessage - 2);
-					memcpy(uncaSendBuf + 2 + nSizeOfRecvedCVMessage - 2, caErrorMessage, strlen(caErrorMessage));
-					memset(&bytesint,0,16);
-					bytesint.value = 1099;
-					memcpy(uncaSendBuf + 2 + nSizeOfRecvedCVMessage - 2 + nSizeOfErrorMessage, bytesint.uncaByte, 2);
-					bool bSendData = SendData(uncaSendBuf, 2 + nSizeOfRecvedCVMessage - 2 + nSizeOfErrorMessage + 2);
+					struct CV_StructOrderReply replymsg;
+                                        int errorcode = -LG_ERROR;
+                                        memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
+                                        replymsg.header_bit[0] = 0x1b;
+                                        replymsg.header_bit[1] = ORDERREP;
 
-					if(bSendData == true)
+                                        memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
+                                        sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
+
+                                        memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(LG_ERROR),
+                                                strlen(pErrorMessage->GetErrorMessage(LG_ERROR)));
+
+					int nSendData = SendData((unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
+
+					if(nSendData)
 					{
-						FprintfStderrLog("SEND_LOGON_FIRST", 0, uncaMessageBuf, 2 + nSizeOfRecvedCVMessage - 2 + nSizeOfErrorMessage + 2);
+						FprintfStderrLog("SEND_LOGON_FIRST", 0, (unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
 					}
 					else
 					{
-						FprintfStderrLog("SEND_LOGON_FIRST_ERROR", -1, uncaMessageBuf, 2 + nSizeOfRecvedCVMessage - 2 + nSizeOfErrorMessage + 2);
+						FprintfStderrLog("SEND_LOGON_FIRST_ERROR", -1, (unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
 						perror("SEND_SOCKET_ERROR");
 					}
 					continue;
@@ -378,28 +383,30 @@ void* CCVClient::Run()
 					long lOrderNumber = 0;
 					lOrderNumber = fpFillTandemOrder(m_strService, m_ClientAddrInfo.caIP,
 									m_mBranchAccount, cv_order, cv_ts_order, m_bIsProxy ? true : false);
-					printf("OrderNumber = %d\n" ,lOrderNumber);
 
 					if(lOrderNumber < 0)//error
 					{
-						U_ByteSint bytesint;
-						memset(&bytesint,0,16);
-						memset(uncaSendBuf , 0, sizeof(uncaSendBuf) );
-						memcpy(uncaSendBuf ,&cv_order, nSizeOfRecvedCVMessage);
-						memcpy(uncaSendBuf + nSizeOfRecvedCVMessage, pErrorMessage->GetErrorMessage(lOrderNumber),
+						int errorcode = -lOrderNumber;
+						struct CV_StructOrderReply replymsg;
+
+						memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
+						replymsg.header_bit[0] = 0x1b;
+						replymsg.header_bit[1] = ORDERREP;
+
+						memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
+						sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
+
+						memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(lOrderNumber),
 							strlen(pErrorMessage->GetErrorMessage(lOrderNumber)));
-						bytesint.value = -lOrderNumber;
-						memcpy(uncaSendBuf + nSizeOfRecvedCVMessage + nSizeOfErrorMessage, bytesint.uncaByte, 2);
 
-						int nSendData = SendData(uncaSendBuf, nSizeOfRecvedCVMessage + nSizeOfErrorMessage);
-
+						int nSendData = SendData((unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
 						if(nSendData)
 						{
-							FprintfStderrLog("SEND_FILL_TANDEM_ORDER_CODE", -lOrderNumber, uncaSendBuf, nSizeOfRecvedCVMessage + nSizeOfErrorMessage + 2);
+							FprintfStderrLog("SEND_FILL_TANDEM_ORDER_CODE", -lOrderNumber, (unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
 						}
 						else
 						{
-							FprintfStderrLog("SEND_FILL_TANDEM_ORDER_CODE_ERROR", lOrderNumber, uncaSendBuf, nSizeOfRecvedCVMessage + nSizeOfErrorMessage + 2);
+							FprintfStderrLog("SEND_FILL_TANDEM_ORDER_CODE_ERROR", lOrderNumber, (unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
 							perror("SEND_SOCKET_ERROR");
 						}
 						continue;
@@ -611,7 +618,7 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 	if(pFirstToken == NULL)
 	{
 		memcpy(logon_reply.error_code, "M999", 4);
-		sprintf(logon_reply.error_message_eng, "Check PASS return error#");
+		sprintf(logon_reply.error_message, "Check PASS return error#");
 		return false;
 	}
 
@@ -651,28 +658,28 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M000", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return true;
 		}
 		else if (strncmp(castatus_code, "7997", 4) == 0)
 		{ /* first login */ 
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M151", 4);
-			sprintf(logon_reply.error_message_eng, "±K½X¿ù»~#");
+			sprintf(logon_reply.error_message, "±K½X¿ù»~#");
 			return false;
 		}
 		else if (strncmp(castatus_code, "7996", 4) == 0)
 		{ /* first login */
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M155", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return false;
 		}
 		else if(strncmp(castatus_code, "7993", 4) == 0)
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M156", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			//SetStatus(csOnline);
 			return true;
 		}
@@ -680,7 +687,7 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M156", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			//SetStatus(csOnline);
 			return true;
 		}
@@ -688,63 +695,63 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M152", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return false;
 		}
 		else if (strncmp(castatus_code, "1999", 4) == 0)
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M999", 4);
-			sprintf(logon_reply.error_message_eng, "M999 pass server busy#");
+			sprintf(logon_reply.error_message, "M999 pass server busy#");
 			return false;
 		}
 		else if (strncmp(castatus_code, "8992", 4) == 0)
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return false;
 		}
 		else if (strncmp(castatus_code, "8994", 4) == 0)
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return false;
 		}
 		else if (strncmp(castatus_code, "8995", 4) == 0)
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return false;
 		}
 		else if (strncmp(castatus_code, "8996", 4) == 0)
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return false;
 		}
 		else if (strncmp(castatus_code, "8997", 4) == 0)
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return false;
 		}
 		else if (strncmp(castatus_code, "8998", 4)==0)
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return false;
 		}
 		else
 		{
 			memcpy(logon_reply.status_code, castatus_code, 4);
 			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message_eng, caHttpMessage, sizeof(logon_reply.error_message_eng));
+			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
 			return false;
 		}
 	}

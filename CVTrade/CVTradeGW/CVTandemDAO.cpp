@@ -24,7 +24,7 @@ using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length) {
+int CSKTandemDAO::HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length) {
 	const EVP_MD * engine = EVP_sha256();
 	output = (unsigned char*)malloc(EVP_MAX_MD_SIZE);
 	HMAC_CTX ctx;
@@ -122,21 +122,39 @@ bool CSKTandemDAO::SendData(const unsigned char* pBuf, int nSize)
 	return SendAll(pBuf, nSize);
 }
 
+size_t getResponse(void *buffer, size_t size, size_t nmemb, void *userp) 
+{
+	printf("%s", buffer);  
+}  
+
+size_t parseHeader(void *ptr, size_t size, size_t nmemb, string *userdata)
+{
+    if ( strncmp((char *)ptr, "X-Auth-Token:", 13) == 0 ) { // get Token
+        strtok((char *)ptr, " ");
+        *userdata = string(strtok(NULL, " \n"));        // token will be stored in userdata
+    }
+    else if ( strncmp((char *)ptr, "HTTP/1.1", 8) == 0 ) {  // get http response code
+        strtok((char *)ptr, " ");
+        *userdata = string(strtok(NULL, " \n"));        // http response code
+    }
+    return nmemb;
+}
+
 bool CSKTandemDAO::SendAll(const unsigned char* pBuf, int nToSend)
 {
 printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nToSend);
-#if 1
+#if 0
 	printf("ip = %.16s\n", cv_ts_order.client_ip);
-	printf("order id = %.10s\n", cv_ts_order.order_id);
 	printf("sub_acno_id = %.7s\n", cv_ts_order.sub_acno_id);
 	printf("strategy_name = %.10s\n", cv_ts_order.strategy_name);
 	printf("agent_id = %.2s\n", cv_ts_order.agent_id);
 	printf("broker_id = %.4s\n", cv_ts_order.broker_id);
 	printf("exchange_id = %10.s\n", cv_ts_order.exchange_id);
 	printf("seq_id = %.13s\n", cv_ts_order.seq_id);
+	printf("key_id = %.13s\n", cv_ts_order.key_id);
 	printf("symbol_name = %.10s\n", cv_ts_order.symbol_name);
 	printf("symbol_type = %.1s\n", cv_ts_order.symbol_type);
 	printf("symbol_mark = %.1s\n", cv_ts_order.symbol_mark);
@@ -155,12 +173,6 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 	printf("qty_mark = %.1s\n", cv_ts_order.qty_mark);
 	printf("order_qty = %.9s\n", cv_ts_order.order_qty);
 	printf("order_kind = %.2s\n", cv_ts_order.order_kind);
-#endif
-#if 0
-	char apikey_order[24];
-	char apikey_cancel[24];
-        char secretkey_order[48];
-        char secretkey_cancel[48];
 #endif
 	CURL *curl;
 	CURLcode res;
@@ -241,23 +253,27 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 			switch(cv_ts_order.order_mark[0])
 			{
 				case '0'://Market
-					sprintf(commandstr, "symbol=XBTUSD&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel", buysell_str.c_str(), atoi(qty));
+					sprintf(commandstr, "clOrdID=%.13s&symbol=XBTUSD&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel",
+						cv_ts_order.key_id, buysell_str.c_str(), atoi(qty));
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel", buysell_str.c_str(), atoi(qty), doprice);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel",
+						cv_ts_order.key_id, buysell_str.c_str(), atoi(qty), doprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '2'://Protect
-					printf("Error order type.\n");
+					printf("Protected price didn't support.\n");
+					return true;
 					break;
 				case '3'://stop market
-					sprintf(commandstr, "symbol=XBTUSD&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop", buysell_str.c_str(), atoi(qty), dtprice);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=XBTUSD&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop",
+						cv_ts_order.key_id, buysell_str.c_str(), atoi(qty), dtprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '4'://stop limit
-					sprintf(commandstr, "symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit", 
-						buysell_str.c_str(), atoi(qty), doprice, dtprice);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit", 
+						cv_ts_order.key_id, buysell_str.c_str(), atoi(qty), doprice, dtprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				default:
@@ -288,48 +304,48 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 		case '4'://change price
 			break;
 	}
-	printf("Command str = %s\n", commandstr);
-
-	if(0 == ret) {
-		cout << "Algorithm HMAC encode succeeded!" << endl;
-	}
-	else {
-		cout << "Algorithm HMAC encode failed!" << endl;
-		return -1;
-	}
 
 	for(int i = 0; i < mac_length; i++) {
 		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
 	}
-	cout << endl;
 
+	string rescode, response;//200 if pass
 	if(curl) {
-		printf("apikey_str = %s\n", apikey_str);
-		struct curl_slist *chunk = curl_slist_append(chunk, "Content-Type: application/x-www-form-urlencoded");
-		chunk = curl_slist_append(chunk, "Accept: application/json");
-		chunk = curl_slist_append(chunk, "X-Requested-With: XMLHttpRequest");
-		chunk = curl_slist_append(chunk, apikey_str);
+		struct curl_slist *http_header;
+		http_header = curl_slist_append(http_header, "Content-Type: application/x-www-form-urlencoded");
+		http_header = curl_slist_append(http_header, "Accept: application/json");
+		http_header = curl_slist_append(http_header, "X-Requested-With: XMLHttpRequest");
+		http_header = curl_slist_append(http_header, apikey_str);
 		sprintf(post_str, "api-signature: %s", macoutput);
-		chunk = curl_slist_append(chunk, post_str);
+		http_header = curl_slist_append(http_header, post_str);
 		sprintf(post_str, "api-expires: %d", expires);
-		chunk = curl_slist_append(chunk, post_str);
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+		http_header = curl_slist_append(http_header, post_str);
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_header);
 		curl_easy_setopt(curl, CURLOPT_HEADER, true);
 		sprintf(post_str, "%s", commandstr);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_str));
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_str);
 
+		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, parseHeader);
+		curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &rescode);
+
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
 		res = curl_easy_perform(curl);
+
 		if(res != CURLE_OK)
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",
 		curl_easy_strerror(res));
+		curl_slist_free_all(http_header);
 		curl_easy_cleanup(curl);
 	}
+	printf("\n\n\nKeanu rescode = %s\n\n\n", rescode.c_str());
+	printf("\n\n\nKeanu response = %s\n\n\n", response.c_str());
+
 	if(mac) {
 		free(mac);
 	}
-
-
 	curl_global_cleanup();
 
 	return true;

@@ -60,6 +60,7 @@ protected:
 public:
 	CSKTandemDAO();
 	CSKTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
+	int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);
 	virtual ~CSKTandemDAO();
 
 	bool SendData(const unsigned char* pBuf, int nSize);

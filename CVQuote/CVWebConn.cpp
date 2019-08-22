@@ -310,7 +310,6 @@ void CCVServer::OnHeartbeatLost()
 
 void CCVServer::OnHeartbeatRequest()
 {
-	exit(-1);
 	if(m_strName == "BITMEX") {
 		if(m_heartbeat_count <= HTBT_COUNT_LIMIT) {
 			auto msg = m_pClientSocket->m_conn->send("ping");

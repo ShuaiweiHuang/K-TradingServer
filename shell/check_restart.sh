@@ -9,3 +9,21 @@ echo "$service is running!!!"
 else
 sh $BASEDIR/restart_quote.sh; 
 fi
+
+service=CVServer
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_trade.sh; 
+fi
+
+service=CVTradeGW
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_trade.sh; 
+fi

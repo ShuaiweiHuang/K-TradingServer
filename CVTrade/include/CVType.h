@@ -48,7 +48,7 @@ struct CV_StructOrder
 {
 	char header_bit[2];
 	char sub_acno_id[7];
-	char strategy_name[7];
+	char strategy_name[16];
 	char agent_id[2];
 	char broker_id[4];
 	char exchange_id[10];
@@ -72,7 +72,7 @@ struct CV_StructOrder
 	char qty_mark[1];
 	char order_qty[9];
 	char order_kind[2];
-	char reserved[97];
+	char reserved[88];
 };
 
 struct CV_StructOrderReply

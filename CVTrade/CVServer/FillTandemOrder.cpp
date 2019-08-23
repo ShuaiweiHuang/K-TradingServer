@@ -111,8 +111,8 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
         }
 
 //Date & Time
-	memcpy(ucvts.cv_ts_order.order_date, ucv.cv_order.order_date,8);
-	memcpy(ucvts.cv_ts_order.order_time, ucv.cv_order.order_time,8);
+	memcpy(ucvts.cv_ts_order.order_date, ucv.cv_order.order_date, 8);
+	memcpy(ucvts.cv_ts_order.order_time, ucv.cv_order.order_time, 8);
 #if 0
 //Order Type
 	switch(ucv.cv_order.order_type[0])

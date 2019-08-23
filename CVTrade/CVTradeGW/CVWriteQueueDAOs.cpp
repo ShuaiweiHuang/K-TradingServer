@@ -76,7 +76,6 @@ void* CSKWriteQueueDAOs::Run()
 	while(IsTerminated())
 	{
 		int nResult = WaitForEvent(m_PEvent, 500);
-
 		if(nResult == WAIT_TIMEOUT)
 		{
 			for(vector<CSKWriteQueueDAO*>::iterator iter = m_vWriteQueueDAO.begin(); iter != m_vWriteQueueDAO.end(); iter++)
@@ -141,9 +140,7 @@ void* CSKWriteQueueDAOs::Run()
 CSKWriteQueueDAO* CSKWriteQueueDAOs::GetAvailableDAO()
 {
 	CSKWriteQueueDAO* pWriteQueueDAO = NULL;
-
-	pthread_mutex_lock(&m_MutexLockOnWriteQueueDAO);//lock
-
+	pthread_mutex_lock(&m_MutexLockOnWriteQueueDAO);
 	for(int nCount = 0; nCount < m_vWriteQueueDAO.size(); nCount++)
 	{
 		m_nWriteQueueDAORoundRobinIndex ++;
@@ -152,7 +149,7 @@ CSKWriteQueueDAO* CSKWriteQueueDAOs::GetAvailableDAO()
 		if(m_vWriteQueueDAO[m_nWriteQueueDAORoundRobinIndex])
 		{
 			if(m_vWriteQueueDAO[m_nWriteQueueDAORoundRobinIndex]->GetStatus() == wsReadyForLooping 	||
-			   m_vWriteQueueDAO[m_nWriteQueueDAORoundRobinIndex]->GetStatus() == wsSendQFailed 		||
+			   m_vWriteQueueDAO[m_nWriteQueueDAORoundRobinIndex]->GetStatus() == wsSendQFailed 	||
 			   m_vWriteQueueDAO[m_nWriteQueueDAORoundRobinIndex]->GetStatus() == wsSendQSuccessful)
 			{
 				pWriteQueueDAO = m_vWriteQueueDAO[m_nWriteQueueDAORoundRobinIndex];

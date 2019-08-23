@@ -13,8 +13,6 @@
 #include <algorithm>
 #include <openssl/hmac.h>
 
-#include "../include/CVType.h"
-#include "../include/CVGlobal.h"
 #include "CVTandemDAO.h"
 #include "CVReadQueueDAOs.h"
 #include "CVTandemDAOs.h"
@@ -44,7 +42,6 @@ CSKTandemDAO::CSKTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t k
 	m_pHeartbeat = NULL;
 	m_TandemDAOStatus = tsNone;
 	m_bInuse = false;
-
 	m_pWriteQueueDAOs = CSKWriteQueueDAOs::GetInstance();
 
 	if(m_pWriteQueueDAOs == NULL)
@@ -65,9 +62,9 @@ CSKTandemDAO::CSKTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t k
 	}
 
 	m_nTandemNodeIndex = nTandemDAOID;
-
 	pthread_mutex_init(&m_MutexLockOnSetStatus, NULL);
 	sprintf(m_caTandemDAOID, "%03d", nTandemDAOID);
+	Start();
 }
 
 CSKTandemDAO::~CSKTandemDAO()
@@ -97,7 +94,40 @@ CSKTandemDAO::~CSKTandemDAO()
 
 void* CSKTandemDAO::Run()
 {
+	SetStatus(tsServiceOn);
+	while(IsTerminated())
+	{
+		if(GetStatus() == tsMsgReady)
+		{
+			CSKWriteQueueDAO* pWriteQueueDAO = NULL;
+			while(pWriteQueueDAO == NULL)
+			{
+				printf("m_pWriteQueueDAOs=%x\n", m_pWriteQueueDAOs);
+				if(m_pWriteQueueDAOs)
+					pWriteQueueDAO = m_pWriteQueueDAOs->GetAvailableDAO();
+
+				if(pWriteQueueDAO)
+				{
+					FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandemreply ,sizeof(m_tandemreply));
+					pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandemreply, sizeof(m_tandemreply));
+					pWriteQueueDAO->TriggerWakeUpEvent();
+					SetStatus(tsServiceOn);
+				}
+				else
+				{
+					FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
+					sleep(1);
+				}
+			}
+		}
+		else
+			usleep(500);
+	}
 	return NULL;
+}
+TSKTandemDAOStatus CSKTandemDAO::GetStatus()
+{
+	return m_TandemDAOStatus;
 }
 
 void CSKTandemDAO::SetStatus(TSKTandemDAOStatus tsStatus)
@@ -138,11 +168,6 @@ size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp)
     return size * nmemb;
 }
 
-struct HEADRESP
-{
-	string limit;
-	string epoch;
-};
 size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userdata)
 {
     if ( strncmp((char *)ptr, "X-RateLimit-Remaining:", 22) == 0 ) { // get Token
@@ -167,19 +192,21 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
 	int expires = (int)time(NULL)+1000, ret;
-	char encrystr[MAXDATA], commandstr[MAXDATA], macoutput[64], post_str[MAXDATA], apikey_str[MAXDATA];
+	char encrystr[150], commandstr[150], macoutput[64], post_str[100], apikey_str[150];
 	char qty[10], oprice[10], tprice[10];
 	double doprice = 0, dtprice = 0, dqty = 0;
+	struct HEADRESP headresponse;
+	string response;
+	json jtable;
 
 	memset(commandstr, 0, sizeof(commandstr));
 	memset(qty, 0, sizeof(qty));
 	memset(oprice, 0, sizeof(oprice));
 	memset(tprice, 0, sizeof(tprice));
-	memset(&m_tandemreply, 0 , sizeof(m_tandemreply));
+	memset((void*) &m_tandemreply, 0 , sizeof(m_tandemreply));
 	memcpy(qty, cv_ts_order.order_qty, 9);
 	memcpy(oprice, cv_ts_order.order_price, 9);
 	memcpy(tprice, cv_ts_order.touch_price, 9);
-
 	if(cv_ts_order.order_buysell[0] == 'B')
 		buysell_str = "Buy";
 	if(cv_ts_order.order_buysell[0] == 'S')
@@ -278,14 +305,10 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 		case '4'://change price
 			break;
 	}
-
 	for(int i = 0; i < mac_length; i++) {
 		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
 	}
 
-	struct HEADRESP headresponse;
-	string response;
-	json jtable;
 
 	if(curl) {
 		struct curl_slist *http_header;

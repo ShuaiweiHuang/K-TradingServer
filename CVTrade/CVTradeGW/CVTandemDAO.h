@@ -14,9 +14,17 @@
 #include "CVInterface/ICVSocketCallback.h"
 #include "CVHeartbeat.h"
 #include "CVWriteQueueDAOs.h"
+#include "../include/CVType.h"
+#include "../include/CVGlobal.h"
 
 class CSKHeartbeat;
 class CSKTandem;
+
+struct HEADRESP
+{
+        string limit;
+        string epoch;
+};
 
 enum TSKTandemDAOStatus
 {
@@ -42,7 +50,6 @@ private:
 	string m_requestlimit;
 	string m_timelimit;
 	struct CV_StructTSOrderReply m_tandemreply;
-
 	TSKTandemDAOStatus m_TandemDAOStatus;
 	bool m_bInuse;
 
@@ -54,7 +61,6 @@ private:
 	pthread_mutex_t m_MutexLockOnSetStatus;
 
 	char m_caTandemDAOID[4];
-
 private:
 	char* GetReplyMsgOffsetPointer(const unsigned char *pMessageBuf);
 

@@ -101,7 +101,6 @@ void CSKWriteQueueDAO::SetReplyMessage(unsigned char* pReplyMessage, int nReplyM
 {
 	memset(m_uncaReplyMessage, 0, sizeof(m_uncaReplyMessage));
 	memcpy(m_uncaReplyMessage, pReplyMessage, nReplyMessageSize);
-
 	m_nReplyMessageSize = nReplyMessageSize;	
 }
 

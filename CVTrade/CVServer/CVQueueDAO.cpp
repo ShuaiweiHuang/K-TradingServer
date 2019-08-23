@@ -96,9 +96,8 @@ void* CCVQueueDAO::Run()
 			FprintfStderrLog("RECV_Q", 0, uncaRecvBuf, nGetMessage);
 
 			memset(caOrderNumber, 0, sizeof(caOrderNumber));
-			memcpy(caOrderNumber, uncaRecvBuf, 13);
+			memcpy(caOrderNumber, uncaRecvBuf+4, 13);
 			long lOrderNumber = atol(caOrderNumber);
-
 
 			try
 			{
@@ -110,7 +109,7 @@ void* CCVQueueDAO::Run()
 				{
 					pClient = pClients->GetClientFromHash(lOrderNumber);
 
-					if(pClient->GetStatus() == csOnline)//weird if(pClient) not working
+					if(pClient->GetStatus() == csOnline)
 					{
 						memset(&cv_order_reply, 0, sizeof(union CV_ORDER_REPLY));
 						pClient->GetOriginalOrder(lOrderNumber, nSizeOfOriginalOrder, cv_order_reply);
@@ -122,12 +121,10 @@ void* CCVQueueDAO::Run()
 						continue;
 					}
 					memset(&tig_reply, 0, sizeof(union CV_TS_ORDER_REPLY));
-					memcpy(&tig_reply, uncaRecvBuf + 13, nSizeOfTIGReply);
+					memcpy(&tig_reply, uncaRecvBuf, nSizeOfTIGReply);
 
 					fpFillCVReply(cv_order_reply, tig_reply);
-
-					memset(uncaSendBuf + 2, 0, sizeof(uncaSendBuf) - 2);
-					memcpy(uncaSendBuf + 2, &cv_order_reply, sizeof(union CV_ORDER_REPLY));
+					memcpy(uncaSendBuf , &cv_order_reply, sizeof(union CV_ORDER_REPLY));
 
 					bool bSendData = false;
 

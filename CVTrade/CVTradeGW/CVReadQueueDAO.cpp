@@ -13,7 +13,6 @@
 #include "CVReadQueueDAOs.h"
 #include "CVTIG/CVTandems.h"
 #include "../include/CVTIGMessage.h"
-#include "../include/CVType.h"
 
 using namespace std;
 

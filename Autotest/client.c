@@ -255,19 +255,22 @@ void* test_run(void *arg)
 #if 1
 				int len;
 
-				len = read(server, data1, 1024);
+				len = read(server, data1, 512);
 				if (len < 0) 
 				{
+					printf("keanu read error\n");
 					perror ("read from server error !");
 					is_conn = 0;
 					ret = -1;
 					break;
 				}
-				printf("read byte = %d,%x,%x,%.4s,%.250s\n", len, data1[0], data1[1], data1+258, data1+262);
+				printf("keanu read success\n");
+				printf("read byte = %d,%x,%x,%.256s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1+2, data1+258, data1+262);
 
 #endif
 			}//end loop for order
 		}// end login
+		while(1);
 #if 1
 		data1[0] = 0x1b;
 		data1[1] = 0x7F;

@@ -145,9 +145,7 @@ struct CV_StructTSOrder
 
 struct CV_StructTSOrderReply
 {
-	char reply_code[4];
 	char status_code[4];
-	char date[8];
 	char key_id[13];
 	char bookno[36];
 	struct CV_StructTSOrder original;

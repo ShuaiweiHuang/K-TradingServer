@@ -19,7 +19,10 @@
 #include "CVReadQueueDAOs.h"
 #include "CVTandemDAOs.h"
 #include "CVTIG/CVTandems.h"
+#include <nlohmann/json.hpp>
+#include <iomanip>
 
+using json = nlohmann::json;
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
@@ -116,97 +119,71 @@ bool CSKTandemDAO::IsInuse()
 	return m_bInuse;
 }
 
-
-bool CSKTandemDAO::SendData(const unsigned char* pBuf, int nSize)
+bool CSKTandemDAO::RiskControl()
 {
-	return SendAll(pBuf, nSize);
+	return false;
 }
 
-size_t getResponse(void *buffer, size_t size, size_t nmemb, void *userp) 
+bool CSKTandemDAO::SendOrder(const unsigned char* pBuf, int nSize)
 {
-	printf("%s", buffer);  
-}  
+	if(RiskControl())
+		return FillRiskMsg(pBuf, nSize);
+	else
+		return OrderSubmit(pBuf, nSize);
+}
 
-size_t parseHeader(void *ptr, size_t size, size_t nmemb, string *userdata)
+size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp)
 {
-    if ( strncmp((char *)ptr, "X-Auth-Token:", 13) == 0 ) { // get Token
-        strtok((char *)ptr, " ");
-        *userdata = string(strtok(NULL, " \n"));        // token will be stored in userdata
+    ((std::string*)userp)->append((char*)contents, size * nmemb);
+    return size * nmemb;
+}
+
+struct HEADRESP
+{
+	string limit;
+	string epoch;
+};
+size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userdata)
+{
+    if ( strncmp((char *)ptr, "X-RateLimit-Remaining:", 22) == 0 ) { // get Token
+	strtok((char *)ptr, " ");
+	(*userdata).limit = (string(strtok(NULL, " \n")));	// token will be stored in userdata
     }
-    else if ( strncmp((char *)ptr, "HTTP/1.1", 8) == 0 ) {  // get http response code
-        strtok((char *)ptr, " ");
-        *userdata = string(strtok(NULL, " \n"));        // http response code
+    else if ( strncmp((char *)ptr, "X-RateLimit-Reset", 17) == 0 ) {  // get http response code
+	strtok((char *)ptr, " ");
+	(*userdata).epoch = (string(strtok(NULL, " \n")));	// http response code
     }
     return nmemb;
 }
 
-bool CSKTandemDAO::SendAll(const unsigned char* pBuf, int nToSend)
-{
-printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 
+bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
+{
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nToSend);
-#if 0
-	printf("ip = %.16s\n", cv_ts_order.client_ip);
-	printf("sub_acno_id = %.7s\n", cv_ts_order.sub_acno_id);
-	printf("strategy_name = %.10s\n", cv_ts_order.strategy_name);
-	printf("agent_id = %.2s\n", cv_ts_order.agent_id);
-	printf("broker_id = %.4s\n", cv_ts_order.broker_id);
-	printf("exchange_id = %10.s\n", cv_ts_order.exchange_id);
-	printf("seq_id = %.13s\n", cv_ts_order.seq_id);
-	printf("key_id = %.13s\n", cv_ts_order.key_id);
-	printf("symbol_name = %.10s\n", cv_ts_order.symbol_name);
-	printf("symbol_type = %.1s\n", cv_ts_order.symbol_type);
-	printf("symbol_mark = %.1s\n", cv_ts_order.symbol_mark);
-	printf("order_offset = %.1s\n", cv_ts_order.order_offset);
-	printf("order_dayoff = %.1s\n", cv_ts_order.order_dayoff);
-	printf("order_date = %.8s\n", cv_ts_order.order_date);
-	printf("order_time = %.8s\n", cv_ts_order.order_time);
-	printf("order_buysell = %.1s\n", cv_ts_order.order_buysell);
-	printf("order_bookno = %.36s\n", cv_ts_order.order_bookno);
-	printf("order_cond = %.1s\n", cv_ts_order.order_cond);
-	printf("order_mark = %.1s\n", cv_ts_order.order_mark);
-	printf("trade_type = %.1s\n", cv_ts_order.trade_type);
-	printf("price_mark = %.1s\n", cv_ts_order.price_mark);
-	printf("order_price = %.9s\n", cv_ts_order.order_price);
-	printf("touch_price = %.9s\n", cv_ts_order.touch_price);
-	printf("qty_mark = %.1s\n", cv_ts_order.qty_mark);
-	printf("order_qty = %.9s\n", cv_ts_order.order_qty);
-	printf("order_kind = %.2s\n", cv_ts_order.order_kind);
-#endif
 	CURL *curl;
 	CURLcode res;
 	string buysell_str;
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
-	int expires = (int)time(NULL)+1000;
-	char encrystr[1024];
-	char commandstr[1024];
-	char macoutput[64];
-	char post_str[1024];
-	char apikey_str[1024];
-	char qty[10];
-	char oprice[10];
-	char tprice[10];
-	double doprice = 0;
-	double dtprice = 0;
-	double dqty = 0;
-	int ret;
+	int expires = (int)time(NULL)+1000, ret;
+	char encrystr[MAXDATA], commandstr[MAXDATA], macoutput[64], post_str[MAXDATA], apikey_str[MAXDATA];
+	char qty[10], oprice[10], tprice[10];
+	double doprice = 0, dtprice = 0, dqty = 0;
 
 	memset(commandstr, 0, sizeof(commandstr));
 	memset(qty, 0, sizeof(qty));
 	memset(oprice, 0, sizeof(oprice));
 	memset(tprice, 0, sizeof(tprice));
+	memset(&m_tandemreply, 0 , sizeof(m_tandemreply));
 	memcpy(qty, cv_ts_order.order_qty, 9);
 	memcpy(oprice, cv_ts_order.order_price, 9);
 	memcpy(tprice, cv_ts_order.touch_price, 9);
 
 	if(cv_ts_order.order_buysell[0] == 'B')
 		buysell_str = "Buy";
-	else if(cv_ts_order.order_buysell[0] == 'S')
+	if(cv_ts_order.order_buysell[0] == 'S')
 		buysell_str = "Sell";
-	else
-		printf("Error buy/sell notation.\n");
 
 	switch(cv_ts_order.price_mark[0])
 	{
@@ -262,10 +239,6 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 						cv_ts_order.key_id, buysell_str.c_str(), atoi(qty), doprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
-				case '2'://Protect
-					printf("Protected price didn't support.\n");
-					return true;
-					break;
 				case '3'://stop market
 					sprintf(commandstr, "clOrdID=%.13s&symbol=XBTUSD&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop",
 						cv_ts_order.key_id, buysell_str.c_str(), atoi(qty), dtprice);
@@ -276,6 +249,7 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 						cv_ts_order.key_id, buysell_str.c_str(), atoi(qty), doprice, dtprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
+				case '2'://Protect
 				default:
 					printf("Error order type.\n");
 					break;
@@ -309,7 +283,10 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
 	}
 
-	string rescode, response;//200 if pass
+	struct HEADRESP headresponse;
+	string response;
+	json jtable;
+
 	if(curl) {
 		struct curl_slist *http_header;
 		http_header = curl_slist_append(http_header, "Content-Type: application/x-www-form-urlencoded");
@@ -325,14 +302,12 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 		sprintf(post_str, "%s", commandstr);
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_str));
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_str);
-
 		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, parseHeader);
-		curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &rescode);
-
+		curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &headresponse);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
 		res = curl_easy_perform(curl);
+		printf("\n===================\n%s\n===================\n", response.c_str());
 
 		if(res != CURLE_OK)
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",
@@ -340,13 +315,42 @@ printf("size of CVTS = %d\n", sizeof(struct CV_StructTSOrder));
 		curl_slist_free_all(http_header);
 		curl_easy_cleanup(curl);
 	}
-	printf("\n\n\nKeanu rescode = %s\n\n\n", rescode.c_str());
-	printf("\n\n\nKeanu response = %s\n\n\n", response.c_str());
 
 	if(mac) {
 		free(mac);
 	}
 	curl_global_cleanup();
+
+	m_requestlimit = headresponse.limit;
+	m_timelimit = headresponse.epoch;
+
+	for(int i=0 ; i<response.length() ; i++)
+	{
+		if(response[i] == '{') {
+			jtable = json::parse(&(response[i]));
+			break;
+		}
+	}
+
+	string text = to_string(jtable["error"]["message"]);
+	if(text != "null")
+	{
+		memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
+		memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
+		memcpy(m_tandemreply.status_code, "1001", 4);
+		sprintf(m_tandemreply.reply_msg, "submit fail, error message:%s", text.c_str());
+		SetStatus(tsMsgReady);
+	}
+	else
+	{
+		memcpy(m_tandemreply.status_code, "1000", 4);
+		string orderbookNo = to_string(jtable["orderID"]);
+		memcpy(m_tandemreply.bookno, orderbookNo.c_str(), 36);
+		memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
+		memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
+		sprintf(m_tandemreply.reply_msg, "submit success, orderID(BookNo):%s", m_tandemreply.bookno);
+		SetStatus(tsMsgReady);
+	}
 
 	return true;
 }

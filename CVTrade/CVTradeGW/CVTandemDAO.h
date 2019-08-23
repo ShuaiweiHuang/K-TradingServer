@@ -24,7 +24,8 @@ enum TSKTandemDAOStatus
 	tsServiceOff,
 	tsServiceOn,
 	tsBreakdown,
-	tsReconnecting
+	tsReconnecting,
+	tsMsgReady,
 };
 
 class CSKTandemDAO : public CSKThread
@@ -38,6 +39,9 @@ private:
 
 	string m_strHost;
 	string m_strPort;
+	string m_requestlimit;
+	string m_timelimit;
+	struct CV_StructTSOrderReply m_tandemreply;
 
 	TSKTandemDAOStatus m_TandemDAOStatus;
 	bool m_bInuse;
@@ -63,8 +67,10 @@ public:
 	int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);
 	virtual ~CSKTandemDAO();
 
-	bool SendData(const unsigned char* pBuf, int nSize);
-	bool SendAll(const unsigned char* pBuf, int nSize);
+	bool SendOrder(const unsigned char* pBuf, int nSize);
+	bool OrderSubmit(const unsigned char* pBuf, int nSize);
+	bool RiskControl();
+	bool FillRiskMsg(const unsigned char* pBuf, int nSize);
 
 	TSKTandemDAOStatus GetStatus();
 	void SetStatus(TSKTandemDAOStatus tsStatus);

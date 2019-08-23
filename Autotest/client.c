@@ -16,7 +16,7 @@ struct CV_StructOrder
 {
         char header_bit[2];
         char sub_acno_id[7];
-        char strategy_name[7];
+        char strategy_name[16];
         char agent_id[2];
         char broker_id[4];
         char exchange_id[10];
@@ -239,7 +239,7 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_price, "105005000", 9);
 			memcpy(ts_order.touch_price, "106000000", 9);
 			memcpy(ts_order.qty_mark, "0", 1);
-			memcpy(ts_order.order_qty, "000000011", 9);
+			memcpy(ts_order.order_qty, "000000012", 9);
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
 			for(order_loop=0 ; order_loop<1 && is_conn ; order_loop++)

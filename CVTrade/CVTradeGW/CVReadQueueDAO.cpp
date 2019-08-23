@@ -11,9 +11,9 @@
 #include "CVReadQueueDAO.h"
 #include "CVTandemDAOs.h"
 #include "CVReadQueueDAOs.h"
+#include "CVTIG/CVTandems.h"
 #include "../include/CVTIGMessage.h"
 #include "../include/CVType.h"
-#include "CVTIG/CVTandems.h"
 
 using namespace std;
 
@@ -28,30 +28,6 @@ CSKReadQueueDAO::CSKReadQueueDAO(key_t key, string strService, string strOTSID)
 
 	m_strService = strService;
 	m_strOTSID = strOTSID;
-
-#if 0
-	memset(m_caTandemService, 0, sizeof(m_caTandemService));
-	m_pTandem = NULL;
-	CSKTandemDAOs* pTandemDAOs = CSKTandemDAOs::GetInstance();
-	assert(pTandemDAOs);
-	if(pTandemDAOs->GetService().compare("TS") == 0)
-	{
-		m_pTandem = CSKTandems::GetInstance()->GetTandemTaiwanStock();
-
-#ifdef IPVH_331
-		memcpy(m_caTandemService, "IPVHS331-F1", 11);
-#else
-		memcpy(m_caTandemService, "IPVHS330", 8);
-#endif
-
-	}
-	else
-	{}
-	srand((unsigned)time(NULL));
-
-	m_nTandemServiceIndex = rand()%11;
-
-#endif
 	Start();
 }
 
@@ -92,8 +68,6 @@ void* CSKReadQueueDAO::Run()
 		struct CV_StructTSOrderReply tig_ts_order;
 
 		nPositionOfSeqnoNumber = tig_ts_order.key_id - (char*)&tig_ts_order;
-
-		memcpy(TIGMessage.caServiceId, 	"IPVHS331-F1         ", 20);
 	}
 	else
 	{
@@ -103,14 +77,6 @@ void* CSKReadQueueDAO::Run()
 	char caLength[5];
 	memset(caLength, 0, sizeof(caLength));
 	sprintf(caLength, "%04d", sizeof(struct TSKTIGMessage) + nUserDataSize);
-	memcpy(TIGMessage.caLength, caLength, 4);
-
-	memcpy(TIGMessage.caType, "DARQ", 4);
-
-	memcpy(TIGMessage.caOTSId, m_strOTSID.c_str(), strlen(m_strOTSID.c_str()));//not greater than 12
-	memset(TIGMessage.caOTSId + strlen(m_strOTSID.c_str()), 32, 12 - strlen(m_strOTSID.c_str()));//set space
-
-	memcpy(TIGMessage.caError, "00000000", 8);
 
 	while(m_pReadQueue)
 	{
@@ -124,7 +90,8 @@ void* CSKReadQueueDAO::Run()
 			FprintfStderrLog("RECV_Q", 0, uncaRecvBuf, nGetMessage);
 			memcpy(&cv_ts_order, uncaRecvBuf, nGetMessage);
 			memset(uncaOrderNumber, 0, sizeof(uncaOrderNumber));
-			memcpy(uncaOrderNumber, uncaRecvBuf + nPositionOfSeqnoNumber, 13);
+			memcpy(uncaOrderNumber, cv_ts_order.key_id, 13);
+
 
 			long lSerialNumber = pReadQueueDAOs->GetSerialNumber();
 			time_t t = time(NULL);
@@ -147,8 +114,6 @@ void* CSKReadQueueDAO::Run()
 			memcpy(uncaTIGMessage + sizeof(struct TSKTIGMessage), uncaRecvBuf, nUserDataSize);
 			int nTIGMessageSize = sizeof(struct TSKTIGMessage) + nUserDataSize;
 
-			printf("%d:uncaRecvBuf = %s\n", nGetMessage, uncaRecvBuf);
-
 			while(1)
 			{
 				sleep(1);
@@ -166,7 +131,7 @@ void* CSKReadQueueDAO::Run()
 						FprintfStderrLog("GET_HASH_FALSE_ERROR", 0, uncaRecvBuf, nGetMessage);
 						break;
 					}
-					bool bResult= pTandemDAO->SendData(uncaRecvBuf, nGetMessage);
+					bool bResult= pTandemDAO->SendOrder(uncaRecvBuf, nGetMessage);
 					pTandemDAO->SetInuse(false);
 
 					if(bResult == true)

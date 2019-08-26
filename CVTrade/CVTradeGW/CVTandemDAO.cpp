@@ -186,7 +186,6 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 {
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nToSend);
-	CURL *curl;
 	CURLcode res;
 	string buysell_str;
 	unsigned char * mac = NULL;
@@ -248,7 +247,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	}
 
 	curl_global_init(CURL_GLOBAL_ALL);
-	curl = curl_easy_init();
+	m_curl = curl_easy_init();
 
 	switch(cv_ts_order.trade_type[0])
 	{
@@ -282,23 +281,23 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 					break;
 			}
 			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_order, strlen(cv_ts_order.apiSecret_order), encrystr, strlen(encrystr), mac, mac_length);
-			curl_easy_setopt(curl, CURLOPT_URL, ORDER_URL);
+			curl_easy_setopt(m_curl, CURLOPT_URL, ORDER_URL);
 			break;
 		case '1'://delete specific order
 			sprintf(apikey_str, "api-key: %s", cv_ts_order.apiKey_cancel);
 			sprintf(commandstr, "orderID=%.36s", cv_ts_order.order_bookno);
 			sprintf(encrystr, "DELETE/api/v1/order%d%s", expires, commandstr);
 			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_cancel, strlen(cv_ts_order.apiSecret_cancel), encrystr, strlen(encrystr), mac, mac_length);
-			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			curl_easy_setopt(curl, CURLOPT_URL, ORDER_URL);
+			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+			curl_easy_setopt(m_curl, CURLOPT_URL, ORDER_URL);
 			break;
 		case '2'://delete all order
 			sprintf(apikey_str, "api-key: %s", cv_ts_order.apiKey_cancel);
 			sprintf(commandstr, "symbol=%.6s", cv_ts_order.symbol_name); 
 			sprintf(encrystr, "DELETE/api/v1/order/all%d%s", expires, commandstr);
 			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_cancel, strlen(cv_ts_order.apiSecret_cancel), encrystr, strlen(encrystr), mac, mac_length);
-			curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			curl_easy_setopt(curl, CURLOPT_URL, ORDER_ALL_URL);
+			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+			curl_easy_setopt(m_curl, CURLOPT_URL, ORDER_ALL_URL);
 			break;
 		case '3'://change qty
 			break;
@@ -310,7 +309,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	}
 
 
-	if(curl) {
+	if(m_curl) {
 		struct curl_slist *http_header;
 		http_header = curl_slist_append(http_header, "Content-Type: application/x-www-form-urlencoded");
 		http_header = curl_slist_append(http_header, "Accept: application/json");
@@ -320,23 +319,23 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 		http_header = curl_slist_append(http_header, post_str);
 		sprintf(post_str, "api-expires: %d", expires);
 		http_header = curl_slist_append(http_header, post_str);
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, http_header);
-		curl_easy_setopt(curl, CURLOPT_HEADER, true);
+		curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, http_header);
+		curl_easy_setopt(m_curl, CURLOPT_HEADER, true);
 		sprintf(post_str, "%s", commandstr);
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(post_str));
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_str);
-		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, parseHeader);
-		curl_easy_setopt(curl, CURLOPT_WRITEHEADER, &headresponse);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-		res = curl_easy_perform(curl);
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE, strlen(post_str));
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, post_str);
+		curl_easy_setopt(m_curl, CURLOPT_HEADERFUNCTION, parseHeader);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
+		res = curl_easy_perform(m_curl);
 		printf("\n===================\n%s\n===================\n", response.c_str());
 
 		if(res != CURLE_OK)
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",
 		curl_easy_strerror(res));
 		curl_slist_free_all(http_header);
-		curl_easy_cleanup(curl);
+		curl_easy_cleanup(m_curl);
 	}
 
 	if(mac) {

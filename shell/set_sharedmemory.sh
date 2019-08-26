@@ -33,6 +33,8 @@ if [[ $HOSTNAME == "pc-keanuhuang-211" ]]; then
     NUM=$(( 2110000000000 + $[DateCode * SHIFT_BIT]))
 elif [[ $HOSTNAME == "pc-keanuhuang-119" ]]; then
     NUM=$(( 1190000000000 + $[DateCode * SHIFT_BIT]))
+elif [[ $HOSTNAME == "server-tqdb" ]]; then
+    NUM=$(( 2090000000000 + $[DateCode * SHIFT_BIT]))
 else
     NUM=$(( 1270000000000 + $[DateCode * SHIFT_BIT]))
     echo -e "${COLOR_RED}Host Wrong!!${COLOR_REST}"

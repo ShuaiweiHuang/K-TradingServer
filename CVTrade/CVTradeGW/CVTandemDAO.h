@@ -8,6 +8,7 @@
 #define SKTANDEMDAO_H_
 
 #include <vector>
+#include <curl/curl.h>
 
 #include "CVCommon/CVThread.h"
 #include "CVNet/CVSocket.h"
@@ -44,6 +45,8 @@ private:
 
 	CSKSocket* m_pSocket;
 	CSKHeartbeat* m_pHeartbeat;
+
+	CURL *m_curl;
 
 	string m_strHost;
 	string m_strPort;

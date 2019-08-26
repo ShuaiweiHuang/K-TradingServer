@@ -16,7 +16,7 @@ NOW=$(date +"%Y%m%d_%H%M%S")
 
 rm -rf ./Report/*.txt;
 mkdir -p ./Report
-THREADEXP=3
+THREADEXP=2
 
 #		ID	PASSWORD	ISLOGIN		LOOPNUM		ORDERNUM	THREADEXP	ACCOUNT		TESTPATH	IP	PORT	EXEC_RESULT
 ./sslconnect $USERID	$PASSWORD	1		1		3		$THREADEXP	$USERACC 	S		$IP     $PORT	;Result[3]=$?;

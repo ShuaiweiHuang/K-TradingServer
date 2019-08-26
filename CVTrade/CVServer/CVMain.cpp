@@ -44,8 +44,6 @@ int main(int argc, char *argv[])
 								 kQueueDAOReadStartKey, kQueueDAOReadEndKey);
 	pQueueDAOs->StartUpDAOs();
 
-	sleep(1);
-
 	CCVClients* pClients = CCVClients::GetInstance();
 	assert(pClients);
 

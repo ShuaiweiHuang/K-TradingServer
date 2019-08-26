@@ -285,7 +285,7 @@ void CSKWriteQueueDAOs::ReSendReplyMessage(CSKWriteQueueDAO* pWriteQueueDAO)
 		else
 		{
 			FprintfStderrLog("RECEND_GET_WRITE_QDAO_NULL_ERROR", -1, NULL, 0);
-			sleep(1);
+			usleep(200);
 		}
 	}
 }

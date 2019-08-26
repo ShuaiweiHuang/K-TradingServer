@@ -116,12 +116,12 @@ void* CSKTandemDAO::Run()
 				else
 				{
 					FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
-					sleep(1);
+					usleep(500);
 				}
 			}
 		}
 		else
-			usleep(500);
+			usleep(100);
 	}
 	return NULL;
 }
@@ -192,7 +192,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
 	int expires = (int)time(NULL)+1000, ret;
-	char encrystr[150], commandstr[150], macoutput[64], post_str[100], apikey_str[150];
+	char encrystr[150], commandstr[150], macoutput[128], post_str[100], apikey_str[150];
 	char qty[10], oprice[10], tprice[10];
 	double doprice = 0, dtprice = 0, dqty = 0;
 	struct HEADRESP headresponse;
@@ -316,7 +316,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 		http_header = curl_slist_append(http_header, "Accept: application/json");
 		http_header = curl_slist_append(http_header, "X-Requested-With: XMLHttpRequest");
 		http_header = curl_slist_append(http_header, apikey_str);
-		sprintf(post_str, "api-signature: %s", macoutput);
+		sprintf(post_str, "api-signature: %.64s", macoutput);
 		http_header = curl_slist_append(http_header, post_str);
 		sprintf(post_str, "api-expires: %d", expires);
 		http_header = curl_slist_append(http_header, post_str);
@@ -368,10 +368,10 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	{
 		memcpy(m_tandemreply.status_code, "1000", 4);
 		string orderbookNo = to_string(jtable["orderID"]);
-		memcpy(m_tandemreply.bookno, orderbookNo.c_str(), 36);
+		memcpy(m_tandemreply.bookno, orderbookNo.c_str()+1, 36);
 		memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
 		memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
-		sprintf(m_tandemreply.reply_msg, "submit success, orderID(BookNo):%s", m_tandemreply.bookno);
+		sprintf(m_tandemreply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandemreply.bookno);
 		SetStatus(tsMsgReady);
 	}
 

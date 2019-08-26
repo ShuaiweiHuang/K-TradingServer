@@ -115,7 +115,6 @@ void* CSKReadQueueDAO::Run()
 
 			while(1)
 			{
-				sleep(1);
 				pTandemDAO = pTandemDAOs->GetAvailableDAO();
 
 				if(pTandemDAO)
@@ -148,6 +147,7 @@ void* CSKReadQueueDAO::Run()
 				}
 				else
 				{
+					usleep(100);
 					FprintfStderrLog("GET_TANDEMDAO_ERROR", -1, uncaTIGMessage, 0);
 
 					if(!pTandemDAOs->IsDAOsFull())

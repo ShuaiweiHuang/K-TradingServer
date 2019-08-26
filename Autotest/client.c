@@ -236,14 +236,15 @@ void* test_run(void *arg)
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
-			memcpy(ts_order.order_price, "105005000", 9);
+			memcpy(ts_order.order_price, "100005000", 9);
 			memcpy(ts_order.touch_price, "106000000", 9);
 			memcpy(ts_order.qty_mark, "0", 1);
-			memcpy(ts_order.order_qty, "000000012", 9);
+			memcpy(ts_order.order_qty, "000000001", 9);
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
-			for(order_loop=0 ; order_loop<1 && is_conn ; order_loop++)
+			for(order_loop=0 ; order_loop<order_num && is_conn ; order_loop++)
 			{
+				printf("send order %d: %.1s %.9s %s\n", order_loop, ts_order.order_buysell, ts_order.order_price, ts_order.order_mark=='0'?"MARKET":"Limit");
 				if (write(server, (&ts_order.header_bit[0]), 256) <= 0) {
 					perror("write to server error !");
 					is_conn = 0;
@@ -252,10 +253,9 @@ void* test_run(void *arg)
 				}
 
 				printf("testing in order %d\n", order_loop);
-#if 1
 				int len;
 
-				len = read(server, data1, 512);
+				len = read(server, data1, 1024);
 				if (len < 0) 
 				{
 					printf("keanu read error\n");
@@ -265,13 +265,11 @@ void* test_run(void *arg)
 					break;
 				}
 				printf("keanu read success\n");
-				printf("read byte = %d,%x,%x,%.256s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1+2, data1+258, data1+262);
+				printf("read byte = %d,%x,%x,%x,%x,%.36s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1[2], data1[3], data1+100, data1+258, data1+262);
 
-#endif
 			}//end loop for order
 		}// end login
-		while(1);
-#if 1
+#if 0
 		data1[0] = 0x1b;
 		data1[1] = 0x7F;
 		write(server, data1, 2);
@@ -375,7 +373,8 @@ int main(int argc, char **argv[])
 			printf("create thread:%d\n", count);
 	}
 	
-	sleep(3);
+	while(count) { sleep(1); }
+
 	r = 0;
 
 	for(i=0 ; i < thread_num; i++) {

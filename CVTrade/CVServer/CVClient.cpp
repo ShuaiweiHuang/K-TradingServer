@@ -557,7 +557,7 @@ TCVClientStauts CCVClient::GetStatus()
 
 void CCVClient::GetOriginalOrder(long nOrderNumber, int nOrderSize, union CV_ORDER_REPLY &cv_order_reply)
 {	
-	memcpy(&cv_order_reply, m_mOriginalOrder[nOrderNumber].uncaBuf, nOrderSize);
+	memcpy(&cv_order_reply.cv_reply.original, m_mOriginalOrder[nOrderNumber].uncaBuf, nOrderSize);
 }
 
 bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply &logon_reply)

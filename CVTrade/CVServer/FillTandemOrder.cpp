@@ -39,7 +39,8 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 	assert(pClients);
 
 	memcpy(ucvts.cv_ts_order.client_ip, pIP, IPLEN);
-	memcpy(ucv.cv_order.seq_id, ucvts.cv_ts_order.seq_id, 13); 
+	memcpy(ucvts.cv_ts_order.seq_id, ucv.cv_order.seq_id, 13); 
+	printf("ucv.cv_order.seq_id = %.13s\n", ucv.cv_order.seq_id);
 //key id
 	if(ucv.cv_order.trade_type[0] == '0') {
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);

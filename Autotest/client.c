@@ -264,7 +264,7 @@ void* test_run(void *arg)
 					break;
 				}
 				printf("keanu read success\n");
-				printf("read byte = %d,%x,%x,%x,%x,%.36s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1[2], data1[3], data1+100, data1+258, data1+262);
+				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+262);
 
 			}//end loop for order
 		}// end login

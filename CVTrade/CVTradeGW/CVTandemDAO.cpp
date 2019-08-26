@@ -187,6 +187,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nToSend);
 	CURLcode res;
+	CURL *m_curl;
 	string buysell_str;
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;

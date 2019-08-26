@@ -221,8 +221,7 @@ void* test_run(void *arg)
 			memcpy(ts_order.agent_id, "MC", 2);
 			memcpy(ts_order.broker_id, "9801", 4);
 			memcpy(ts_order.exchange_id, "BITMEX\0", 6);
-			memcpy(ts_order.seq_id, "0000000001111", 13);
-			memcpy(ts_order.seq_id, "0000000000000", 13);
+			memcpy(ts_order.seq_id, "9487943123456", 13);
 			memcpy(ts_order.symbol_name, "XBTUSD", 6);
 			memcpy(ts_order.symbol_type, "F", 1);
 			memcpy(ts_order.symbol_mark, "0", 1);

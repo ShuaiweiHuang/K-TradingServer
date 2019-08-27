@@ -207,9 +207,7 @@ void* CCVClient::Run()
 					memset(&logon_reply, 0, m_nLengthOfLogonReplyMessage);
 					memset(m_uncaLogonID, 0, sizeof(m_uncaLogonID));
 					memcpy(m_uncaLogonID, logon_type.logon_id, sizeof(logon_type.logon_id));
-#if 1
-					bLogon = LogonAuth(logon_type.logon_id, logon_type.password, logon_reply);//logon & get logon reply data
-#else
+#ifdef DEBUG
 					printf("ID:%.20s\n", uncaMessageBuf+2);
 					if( (strcmp((char*)uncaMessageBuf+2, "P123069984") == 0 && strcmp((char*)uncaMessageBuf+22, "testtest") == 0 )
 					    || (strcmp((char*)uncaMessageBuf+2, "brianlee") == 0 && strcmp((char*)uncaMessageBuf+22, "ilovebrianlee") == 0))
@@ -222,6 +220,8 @@ void* CCVClient::Run()
 					printf("SA:%.2s\n", uncaMessageBuf+52);
 					printf("VS:%.10s\n", uncaMessageBuf+54);
 					printf("login success.\n");
+#else
+					bLogon = LogonAuth(logon_type.logon_id, logon_type.password, logon_reply);//logon & get logon reply data
 #endif
 					memset(uncaSendLogonBuf, 0, sizeof(uncaSendLogonBuf));
 					logon_reply.header_bit[0] = ESCAPE;

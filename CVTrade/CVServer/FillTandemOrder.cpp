@@ -60,7 +60,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 
 //Sub account id and strategy name
 	memcpy(ucvts.cv_ts_order.sub_acno_id, ucv.cv_order.sub_acno_id, 7);
-	if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "0000001", 7))
+	if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "A000001", 7))
 	{
 	        sprintf(ucvts.cv_ts_order.apiKey_order, "f3-gObpGoi5ECeCjFozXMm4K");
 	        sprintf(ucvts.cv_ts_order.apiSecret_order, "i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE");

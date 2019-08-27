@@ -303,11 +303,14 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 		case '4'://change price
 			break;
 	}
-	printf("encrystr = %s\n", encrystr);	
+
 	for(int i = 0; i < mac_length; i++) {
 		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
 	}
 
+	if(mac) {
+		free(mac);
+	}
 
 	if(m_curl) {
 		struct curl_slist *http_header;
@@ -338,9 +341,6 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 		curl_easy_cleanup(m_curl);
 	}
 
-	if(mac) {
-		free(mac);
-	}
 	curl_global_cleanup();
 
 	m_requestlimit = headresponse.limit;
@@ -349,10 +349,12 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	char notation;
 	for(int i=0 ; i<response.length() ; i++)
 	{
-		if(response[i] == '{') {
+		if(response[i] == '{' || response[i] == '[') {
 			notation = response[i];
-			jtable = json::parse(&(response[i]));
-			break;
+			if(response[i] == '{') {
+				jtable = json::parse(&(response[i]));
+				break;
+			}
 		}
 	}
 	string text = to_string(jtable["error"]["message"]);
@@ -368,13 +370,13 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	else
 	{
 		memcpy(m_tandemreply.status_code, "1000", 4);
-		string orderbookNo;
-		if(notation != '[')
-			orderbookNo = to_string(jtable["orderID"]);
-		memcpy(m_tandemreply.bookno, orderbookNo.c_str()+1, 36);
 		memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
 		memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
-		sprintf(m_tandemreply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandemreply.bookno);
+		if(notation != '[') {
+			string orderbookNo = to_string(jtable["orderID"]);
+			memcpy(m_tandemreply.bookno, orderbookNo.c_str()+1, 36);
+			sprintf(m_tandemreply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandemreply.bookno);
+		}
 		SetStatus(tsMsgReady);
 	}
 

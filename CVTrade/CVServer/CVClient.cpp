@@ -1,4 +1,4 @@
-#include<iostream>
+#include <iostream>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <curl/curl.h>
+#include <nlohmann/json.hpp>
+#include <iomanip>
 
 #include "CVQueueDAOs.h"
 #include "CVClient.h"
@@ -15,6 +18,7 @@
 #include "../include/CVType.h"
 #include "../include/CVGlobal.h"
 
+using json = nlohmann::json;
 using namespace std;
 
 typedef long (*FillTandemOrder)(string& strService, char* pIP, map<string, string>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order, bool bIsProxy);
@@ -72,7 +76,7 @@ void* CCVClient::Run()
 	unsigned char uncaOverheadMessageBuf[BUFSIZE];
 	unsigned char uncaOrder[BUFSIZE];
 	unsigned char uncaSendBuf[BUFSIZE];
-        unsigned char uncaEscapeBuf[2];
+	unsigned char uncaEscapeBuf[2];
 	struct CV_StructHeartbeat HeartbeatRP;
 	struct CV_StructHeartbeat HeartbeatRQ;
 
@@ -348,16 +352,16 @@ void* CCVClient::Run()
 				if(m_ClientStatus == csLogoning)
 				{
 					struct CV_StructOrderReply replymsg;
-                                        int errorcode = -LG_ERROR;
-                                        memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
-                                        replymsg.header_bit[0] = 0x1b;
-                                        replymsg.header_bit[1] = ORDERREP;
+					int errorcode = -LG_ERROR;
+					memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
+					replymsg.header_bit[0] = 0x1b;
+					replymsg.header_bit[1] = ORDERREP;
 
-                                        memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
-                                        sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
+					memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
+					sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
 
-                                        memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(LG_ERROR),
-                                                strlen(pErrorMessage->GetErrorMessage(LG_ERROR)));
+					memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(LG_ERROR),
+						strlen(pErrorMessage->GetErrorMessage(LG_ERROR)));
 
 					int nSendData = SendData((unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
 
@@ -498,46 +502,46 @@ bool CCVClient::SendAll(const unsigned char* pBuf, int nToSend)
 
 bool CCVClient::RecvAll(unsigned char* pBuf, int nToRecv)
 {
-        int nRecv = 0;
-        int nRecved = 0;
+	int nRecv = 0;
+	int nRecved = 0;
 
-        do
-        {
-                nToRecv -= nRecv;
-                nRecv = recv(m_ClientAddrInfo.nSocket, pBuf + nRecved, nToRecv, 0);
+	do
+	{
+		nToRecv -= nRecv;
+		nRecv = recv(m_ClientAddrInfo.nSocket, pBuf + nRecved, nToRecv, 0);
 
-                if(nRecv > 0)
-                {
-                        if(m_pHeartbeat)
-                                m_pHeartbeat->TriggerGetClientReplyEvent();
-                        else
-                                FprintfStderrLog("HEARTBEAT_NULL_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
+		if(nRecv > 0)
+		{
+			if(m_pHeartbeat)
+				m_pHeartbeat->TriggerGetClientReplyEvent();
+			else
+				FprintfStderrLog("HEARTBEAT_NULL_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
 
-                        FprintfStderrLog(NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), pBuf + nRecved, nRecv);
-                        nRecved += nRecv;
-                }
-                else if(nRecv == 0)
-                {
-                        SetStatus(csOffline);
-                        FprintfStderrLog("RECV_CV_CLOSE", 0, m_uncaLogonID, sizeof(m_uncaLogonID));
-                        break;
-                }
-                else if(nRecv == -1)
-                {
-                        SetStatus(csOffline);
-                        FprintfStderrLog("RECV_CV_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)strerror(errno), strlen(strerror(errno)));
-                        break;
-                }
-                else
-                {
-                        SetStatus(csOffline);
-                        FprintfStderrLog("RECV_CV_ELSE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)strerror(errno), strlen(strerror(errno)));
-                        break;
-                }
-        }
-        while(nRecv != nToRecv);
+			FprintfStderrLog(NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), pBuf + nRecved, nRecv);
+			nRecved += nRecv;
+		}
+		else if(nRecv == 0)
+		{
+			SetStatus(csOffline);
+			FprintfStderrLog("RECV_CV_CLOSE", 0, m_uncaLogonID, sizeof(m_uncaLogonID));
+			break;
+		}
+		else if(nRecv == -1)
+		{
+			SetStatus(csOffline);
+			FprintfStderrLog("RECV_CV_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)strerror(errno), strlen(strerror(errno)));
+			break;
+		}
+		else
+		{
+			SetStatus(csOffline);
+			FprintfStderrLog("RECV_CV_ELSE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), (unsigned char*)strerror(errno), strlen(strerror(errno)));
+			break;
+		}
+	}
+	while(nRecv != nToRecv);
 
-        return nRecv == nToRecv ? true : false;
+	return nRecv == nToRecv ? true : false;
 }
 
 
@@ -560,137 +564,43 @@ void CCVClient::GetOriginalOrder(long nOrderNumber, int nOrderSize, union CV_ORD
 	memcpy(&cv_order_reply.cv_reply.original, m_mOriginalOrder[nOrderNumber].uncaBuf, nOrderSize);
 }
 
-bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply &logon_reply)
+static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
-	char pass_ip[50];
-	memset(pass_ip, 0, 50);
-	sprintf(pass_ip, "192.168.101.209");
-
-	char cust_id[11];
-	memset(cust_id, 0,11);
-	memcpy(cust_id, pID, 10);
-
-	char en_id_pass[50];
-	memset(en_id_pass, 0, 50);
-	memcpy(en_id_pass, ppassword, 50);
-
+	((std::string*)userp)->append((char*)contents, size * nmemb);
+		return size * nmemb;
 }
 
-void CCVClient::GetAccount(char* pID, char* psource, char* pVersion, vector<struct AccountMessage> &vAccountMessage)
+bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply &logon_reply)
 {
-	CCVSocket* pSocket = new CCVSocket();
-	pSocket->Connect("aptrade.capital.com.tw", "4000");
+	json jtable;
+	CURLcode res;
+	string readBuffer, outstr;
+	CURL *curl = curl_easy_init();
 
-	unsigned char uncaSendBuf[MAXDATA];
-	char caSendBuf[MAXDATA];
-	unsigned char uncaRecvBuf[MAXDATA];
-	vector<struct AccountRecvBuf> vAccountRecvBuf;
-	char* caRecvBuf = NULL;
+	if(curl) {
+		char query_str[512];
+		sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20accounting_no%%20from%%20employee,accounting%20where%%20account%20=%20%27%s%%27%%20and%%20password%%20=%%20%%27%s%%27%%20and%%20accounting.trader_no=employee.trader_no", pID, ppassword);
+		printf("================\n%s\n===============\n", query_str);
+		curl_easy_setopt(curl, CURLOPT_URL, query_str);
 
-	sprintf(caSendBuf, "B real_no_pass 01000 %10.10s %c %c 0 0 0 0##", pID, psource, pVersion);
-	memset(uncaSendBuf, 0, sizeof(uncaSendBuf));
-	memcpy(uncaSendBuf, caSendBuf, MAXDATA);
-	pSocket->Send(uncaSendBuf, strlen(caSendBuf));
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+		res = curl_easy_perform(curl);
+		curl_easy_cleanup(curl);
+		jtable = json::parse(readBuffer.c_str());
 
+		if(jtable.size() == 0) {
+			return false;
+		}
 
-	int nRecv = 0;
-	int nRecved = 0;
-	do
-	{
-		struct AccountRecvBuf account_recv_buf;
-		memset(&account_recv_buf, 0, sizeof(struct AccountRecvBuf));
+		for(int i=0 ; i<jtable.size() ; i++) {
 
-		nRecv = pSocket->Recv(account_recv_buf.uncaRecvBuf, MAXDATA);
-		if(nRecv > 0)
-		{
-			account_recv_buf.nRecved = nRecv;
-			vAccountRecvBuf.push_back(account_recv_buf);
-			nRecved += nRecv;
+			outstr = to_string(jtable[i]["accounting_no"]);
+			cout << outstr << endl;
 		}
 	}
-	while(nRecv != 0);
 
-	caRecvBuf = new char[nRecved];
-
-	memset(caRecvBuf, 0, nRecved);
-
-	int nIndex = 0;
-	for(vector<struct AccountRecvBuf>::iterator iter = vAccountRecvBuf.begin(); iter != vAccountRecvBuf.end(); iter++)
-	{
-		memcpy(caRecvBuf + nIndex, iter->uncaRecvBuf, iter->nRecved);
-		nIndex += iter->nRecved;
-	}
-	delete pSocket;
-
-	vector<struct AccountItem> vAccountItem;
-	
-	char* pch = NULL;
-	pch = strtok(caRecvBuf, "#");
-	while(pch != NULL)
-	{
-		fprintf(stderr, "%s\n",pch);
-		if(strstr(pch, m_strService.c_str()))
-		{
-			struct AccountItem account_item;
-			memset(&account_item, 0, sizeof(struct AccountItem));
-
-			strcpy(account_item.caItem, pch);
-			vAccountItem.push_back(account_item);
-		}
-		pch = strtok(NULL, "#");
-	}
-	delete [] caRecvBuf;
-
-	char caItem[10][128];
-	int nItemCount = 0;
-	for(vector<struct AccountItem>::iterator iter = vAccountItem.begin(); iter != vAccountItem.end(); iter++)
-	{
-		memset(caItem, 0, sizeof(caItem));
-
-		pch = strtok(iter->caItem, ",");
-		while(pch != NULL)
-		{
-			strcpy(caItem[nItemCount], pch);
-			nItemCount++;
-			pch = strtok(NULL, ",");
-		}
-		nItemCount = 0;
-
-		struct AccountMessage account_message;
-		memset(&account_message, 0, sizeof(struct AccountMessage));
-
-		string strBranch(caItem[2]);
-		memcpy(account_message.caMessage, caItem[2], 10);
-
-		string strAccount(caItem[3]);
-		memcpy(account_message.caMessage + 10, caItem[3], 10);
-		if(m_strService.compare("OS") == 0)
-		{
-			if(strlen(caItem[3]) == 7)
-			{
-				strAccount.insert(0, 1, '0');
-				memcpy(account_message.caMessage + 11, account_message.caMessage + 10, 7);
-				memset(account_message.caMessage + 10, '0', 1);
-			}
-		}
-
-		string strSubAccount(caItem[5]);
-		memcpy(account_message.caMessage + 20, caItem[5], 10);
-		if(m_strService.compare("OS") == 0)
-		{
-			if(strlen(caItem[5]) == 7)
-			{
-				strSubAccount.insert(0, 1, '0');
-				memcpy(account_message.caMessage + 21, account_message.caMessage + 20, 7);
-				memset(account_message.caMessage + 20, '0', 1);
-			}
-		}
-
-		vAccountMessage.push_back(account_message);
-
-		string strBranchAccount = m_strService + strBranch + strAccount + strSubAccount;
-		m_mBranchAccount.insert(std::pair<string, string>(strBranchAccount, strBranchAccount));
-	}
+	return true;
 }
 
 int CCVClient::GetClientSocket()

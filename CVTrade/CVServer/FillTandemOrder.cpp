@@ -60,13 +60,13 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 
 //Sub account id and strategy name
 	memcpy(ucvts.cv_ts_order.sub_acno_id, ucv.cv_order.sub_acno_id, 7);
-	if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "A000001", 7))
+	if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "A000012", 7))
 	{
 	        sprintf(ucvts.cv_ts_order.apiKey_order, "f3-gObpGoi5ECeCjFozXMm4K");
 	        sprintf(ucvts.cv_ts_order.apiSecret_order, "i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE");
 	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "O-E5T-a0KJDs6AMh5loISqu6");
 	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "4RFDBMdJb8425ZzP61aoT_3sEwF6Q9FqhTo26uXIR3RjBMOP");
-	}if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "0000002", 7))
+	}if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "A000013", 7))
 	{
 	        sprintf(ucvts.cv_ts_order.apiKey_order, "A9oHum-Pjl590hShf8eXH3Hl");
 	        sprintf(ucvts.cv_ts_order.apiSecret_order, "FSgJUpbK4RCUKl8OYUrH3mZnf5KPx9arVy1i89tdIoEa3VsL");

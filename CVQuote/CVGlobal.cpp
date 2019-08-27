@@ -13,7 +13,7 @@ const char* OS_MARKET_CODE = "OS";
 const char* g_pHeartbeatRequestMessage = "HTBT";
 const char* g_pHeartbeatReplyMessage = "HTBR";
 
-unsigned char g_uncaHeaetbeatRequestBuf[6];
+unsigned char g_uncaHeartbeatRequestBuf[6];
 unsigned char g_uncaHeaetbeatReplyBuf[6];
 
 const char* REPEAT_LOGON_STATUS_CODE = "7160";
@@ -32,12 +32,12 @@ char g_caWhatError[7][128] = {"RECV_KEY_ERROR", "RECV_LOGON_ERROR", "RECV_HEARTB
 
 void InitialGlobal()
 {
-	memset(g_uncaHeaetbeatRequestBuf, 0, sizeof(g_uncaHeaetbeatRequestBuf));
+	memset(g_uncaHeartbeatRequestBuf, 0, sizeof(g_uncaHeartbeatRequestBuf));
 	memset(g_uncaHeaetbeatReplyBuf, 0, sizeof(g_uncaHeaetbeatReplyBuf));
 
-	g_uncaHeaetbeatRequestBuf[0] = g_uncaHeaetbeatReplyBuf[0] = ESCAPE_BYTE;
-	g_uncaHeaetbeatRequestBuf[1] = g_uncaHeaetbeatReplyBuf[1] = HEARTBEAT_BYTE;
+	g_uncaHeartbeatRequestBuf[0] = g_uncaHeaetbeatReplyBuf[0] = ESCAPE_BYTE;
+	g_uncaHeartbeatRequestBuf[1] = g_uncaHeaetbeatReplyBuf[1] = HEARTBEAT_BYTE;
 
-	memcpy(g_uncaHeaetbeatRequestBuf+2, g_pHeartbeatRequestMessage, strlen(g_pHeartbeatRequestMessage));
+	memcpy(g_uncaHeartbeatRequestBuf+2, g_pHeartbeatRequestMessage, strlen(g_pHeartbeatRequestMessage));
 	memcpy(g_uncaHeaetbeatReplyBuf+2, g_pHeartbeatReplyMessage, strlen(g_pHeartbeatReplyMessage));
 }

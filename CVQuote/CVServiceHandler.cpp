@@ -96,30 +96,32 @@ void* CCVClient::Run()
 
 void CCVClient::OnHeartbeatLost()
 {
-
+	//no need to implement, since GTA doesn't reply any message.
 }
 
 void CCVClient::OnHeartbeatRequest()
 {
-	char caHeaetbeatRequestBuf[128];
+	char caHeartbeatRequestBuf[128];
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
 
-	memset(caHeaetbeatRequestBuf, 0, 128);
+	memset(caHeartbeatRequestBuf, 0, 128);
 
-	sprintf(caHeaetbeatRequestBuf, "03_ServerDate=%d%02d%02d,ServerTime=%02d%02d%02d00,EPID=%s,\r\n",
+	sprintf(caHeartbeatRequestBuf, "03_ServerDate=%d%02d%02d,ServerTime=%02d%02d%02d00,EPID=%s,\r\n",
 		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, m_strEPID.c_str());
 
-	bool bSendAll = SendAll("HEARTBEAT_REQUEST", caHeaetbeatRequestBuf, sizeof(caHeaetbeatRequestBuf));
+	bool bSendAll = SendAll("HEARTBEAT_REQUEST", caHeartbeatRequestBuf, sizeof(caHeartbeatRequestBuf));
 
 	if(bSendAll == false)
 	{
-		FprintfStderrLog("HEARTBEAT_REQUEST_ERROR", -1, 0, NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), g_uncaHeaetbeatRequestBuf, sizeof(g_uncaHeaetbeatRequestBuf));
+		FprintfStderrLog("HEARTBEAT_REQUEST_ERROR", -1, 0, NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), g_uncaHeartbeatRequestBuf, sizeof(g_uncaHeartbeatRequestBuf));
 	}
+	m_pHeartbeat->TriggerGetReplyEvent();
 }
 
 void CCVClient::OnHeartbeatError(int nData, const char* pErrorMessage)
 {
+	exit(-1);
 }
 
 bool CCVClient::RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv)

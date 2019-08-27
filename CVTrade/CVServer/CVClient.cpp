@@ -207,7 +207,7 @@ void* CCVClient::Run()
 					memset(&logon_reply, 0, m_nLengthOfLogonReplyMessage);
 					memset(m_uncaLogonID, 0, sizeof(m_uncaLogonID));
 					memcpy(m_uncaLogonID, logon_type.logon_id, sizeof(logon_type.logon_id));
-#if 0
+#if 1
 					bLogon = LogonAuth(logon_type.logon_id, logon_type.password, logon_reply);//logon & get logon reply data
 #else
 					printf("ID:%.20s\n", uncaMessageBuf+2);
@@ -562,20 +562,9 @@ void CCVClient::GetOriginalOrder(long nOrderNumber, int nOrderSize, union CV_ORD
 
 bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply &logon_reply)
 {
-	CCVSocket* pSocket = new CCVSocket();
-	pSocket->Connect("pass.cryptovix.com.tw", "80");
-
-	char caBuf[MAXDATA];
-	unsigned char uncaSendBuf[MAXDATA];
-	unsigned char uncaRecvBuf[MAXDATA];
-
-	memset(caBuf, 0, MAXDATA);
-	memset(uncaSendBuf, 0, MAXDATA);
-	memset(uncaRecvBuf, 0, MAXDATA);
-
 	char pass_ip[50];
 	memset(pass_ip, 0, 50);
-	sprintf(pass_ip, "pass.cryptovix.com.tw");
+	sprintf(pass_ip, "192.168.101.209");
 
 	char cust_id[11];
 	memset(cust_id, 0,11);
@@ -585,176 +574,6 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 	memset(en_id_pass, 0, 50);
 	memcpy(en_id_pass, ppassword, 50);
 
-	sprintf(caBuf,"GET http://%s/PasswordGW/Gateway.asp?IDNO=%s&Func=2&PswdType=0&Password=%s&IP=%s HTTP/1.0\n\n",
-			pass_ip, cust_id, en_id_pass, m_ClientAddrInfo.caIP);
-
-	memcpy(uncaSendBuf, caBuf ,MAXDATA);
-
-	pSocket->Send(uncaSendBuf, strlen(caBuf));
-
-	pSocket->Recv(uncaRecvBuf,MAXDATA);
-	cout << uncaRecvBuf << endl;
-	delete pSocket;
-
-
-	char caRecvBuf[MAXDATA];
-
-	char* pFirstToken = NULL;
-	char* pToken = NULL;
-
-	char caItem[30][512];
-	int nItemCount;
-
-	char castatus_code[5], caHttpMessage[512];
-
-	memset(caRecvBuf, 0, MAXDATA);
-	memset(caItem, 0, sizeof(caItem));
-	memset(castatus_code, 0, 5);
-	memset(caHttpMessage, 0, 512);
-
-	memcpy(caRecvBuf, uncaRecvBuf, sizeof(caRecvBuf));
-
-	pFirstToken = strstr(caRecvBuf, "200 OK");
-	if(pFirstToken == NULL)
-	{
-		memcpy(logon_reply.error_code, "M999", 4);
-		sprintf(logon_reply.error_message, "Check PASS return error#");
-		return false;
-	}
-
-	pFirstToken = strstr(caRecvBuf, "\r\n\r\n");
-
-	if(pFirstToken == NULL)
-	{
-	}
-	else
-	{
-		pToken = strtok(pFirstToken, ",");
-		nItemCount = 0;
-		while(1)
-		{
-			if(pToken == NULL)
-				break;
-			strcpy(caItem[nItemCount], pToken);
-			nItemCount++;
-			pToken = strtok(NULL, ",");
-		}
-
-		pToken = strtok(caItem[0], "=");
-		pToken = strtok(NULL, "=");
-		sprintf(castatus_code, "%04d", atol(pToken));
-
-		for(int i=1;i<nItemCount;i++)
-		{
-			if(strncmp(caItem[i], "Msg", 3) == 0)
-			{
-				pToken = strtok(caItem[i], "=");
-				pToken = strtok(NULL, "=");
-				sprintf(caHttpMessage, "%s", pToken);
-			}
-		}
-
-		if(strncmp(castatus_code, "0000", 4) == 0 || strncmp(castatus_code, "0001", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M000", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return true;
-		}
-		else if (strncmp(castatus_code, "7997", 4) == 0)
-		{ /* first login */ 
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M151", 4);
-			sprintf(logon_reply.error_message, "±K½X¿ù»~#");
-			return false;
-		}
-		else if (strncmp(castatus_code, "7996", 4) == 0)
-		{ /* first login */
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M155", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return false;
-		}
-		else if(strncmp(castatus_code, "7993", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M156", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			//SetStatus(csOnline);
-			return true;
-		}
-		else if(strncmp(castatus_code, "7992", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M156", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			//SetStatus(csOnline);
-			return true;
-		}
-		else if (strncmp(castatus_code, "7998", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M152", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return false;
-		}
-		else if (strncmp(castatus_code, "1999", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M999", 4);
-			sprintf(logon_reply.error_message, "M999 pass server busy#");
-			return false;
-		}
-		else if (strncmp(castatus_code, "8992", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return false;
-		}
-		else if (strncmp(castatus_code, "8994", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return false;
-		}
-		else if (strncmp(castatus_code, "8995", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return false;
-		}
-		else if (strncmp(castatus_code, "8996", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return false;
-		}
-		else if (strncmp(castatus_code, "8997", 4) == 0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return false;
-		}
-		else if (strncmp(castatus_code, "8998", 4)==0)
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return false;
-		}
-		else
-		{
-			memcpy(logon_reply.status_code, castatus_code, 4);
-			memcpy(logon_reply.error_code, "M153", 4);
-			memcpy(logon_reply.error_message, caHttpMessage, sizeof(logon_reply.error_message));
-			return false;
-		}
-	}
 }
 
 void CCVClient::GetAccount(char* pID, char* psource, char* pVersion, vector<struct AccountMessage> &vAccountMessage)

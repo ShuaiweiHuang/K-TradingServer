@@ -98,7 +98,6 @@ void* CCVServer::Run()
 			m_pClientSocket->m_cfd.run();
 			SetStatus(ssBreakdown);
 			exit(-1);
-			//ReconnectSocket();
 		}
 		catch (exception& e)
 		{
@@ -110,7 +109,6 @@ void* CCVServer::Run()
 
 void CCVServer::OnConnect()
 {
-
 	if(m_ssServerStatus == ssNone)
 	{
 		try {
@@ -239,9 +237,9 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-		pServer->m_pHeartbeat->TriggerTerminateEvent();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
+		pServer->m_pHeartbeat->TriggerGetReplyEvent();
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;
@@ -299,6 +297,7 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
+	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 #if DEBUG
 	cout << setw(4) << jtable << endl;
 	cout << netmsg << endl;
@@ -307,10 +306,13 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 
 void CCVServer::OnHeartbeatLost()
 {
+FprintfStderrLog("HEARTBEAT LOST", -1, 0, NULL, 0,  NULL, 0);
+	exit(-1);
 }
 
 void CCVServer::OnHeartbeatRequest()
 {
+FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, NULL, 0,  NULL, 0);
 	if(m_strName == "BITMEX") {
 		if(m_heartbeat_count <= HTBT_COUNT_LIMIT) {
 			auto msg = m_pClientSocket->m_conn->send("ping");
@@ -318,27 +320,20 @@ void CCVServer::OnHeartbeatRequest()
 			FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, NULL, 0,  NULL, 0);
 			if(msg.message() != "SUCCESS")
 				exit(-1);
-			m_heartbeat_count++;
+			else {
+				m_pHeartbeat->TriggerGetReplyEvent();
+				m_heartbeat_count++;
+			}
 		}
-		else
+		else {
 			exit(-1);
+		}
 	}
 }
 
 void CCVServer::OnHeartbeatError(int nData, const char* pErrorMessage)
 {
-}
-
-void CCVServer::OnData(unsigned char* pBuf, int nSize)
-{
-}
-
-void CCVServer::OnRequest()
-{
-}
-
-void CCVServer::OnRequestError(int nData, const char* pErrorMessage)
-{
+	exit(-1);
 }
 
 bool CCVServer::RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv)
@@ -355,7 +350,7 @@ void CCVServer::ReconnectSocket()
 {
 	if(m_pClientSocket)
 	{
-		sleep(10);
+		sleep(5);
 		SetStatus(ssReconnecting);
 		m_pClientSocket->Connect( m_strWeb, m_strQstr, m_strName, CONNECT_WEBSOCK);//start
 	}

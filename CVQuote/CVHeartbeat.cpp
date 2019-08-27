@@ -47,24 +47,25 @@ void* CCVHeartbeat::Run()
 		if(nResult == WAIT_TIMEOUT)
 		{
 			m_nIdleTime += 5;
-			if(m_nIdleTime < m_nTimeInterval)
+
+			if(m_nIdleTime <= m_nTimeInterval)
 			{
 				continue;
 			}
-			else if(m_nIdleTime >= m_nTimeInterval)
+			else if(m_nIdleTime >= m_nTimeInterval && m_nIdleTime <= m_nTimeInterval+10)
 			{
 				if(m_pHeartbeatCallback)
 					m_pHeartbeatCallback->OnHeartbeatRequest();
-				m_nIdleTime = 0;
+				continue;
 			}
 			else
 			{
 				if(m_pHeartbeatCallback)
-					m_pHeartbeatCallback->OnHeartbeatError(m_nIdleTime, "HEARTBEAT_IDLETIME_ERROR");
+					m_pHeartbeatCallback->OnHeartbeatLost();
 				break;
 			}
 		}
-		else
+		else // Get event
 		{
 			if(nIndex == 0)//get client reply
 			{

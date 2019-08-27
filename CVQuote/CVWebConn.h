@@ -74,12 +74,8 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		void OnHeartbeatRequest();
 		void OnHeartbeatError(int nData, const char* pErrorMessage);
 
-		void OnRequest();
-		void OnRequestError(int nData, const char* pErrorMessage);
-
 		bool RecvAll(const char* pWhat, unsigned char* pBuf, int nToRecv);
 		bool SendAll(const char* pWhat, const unsigned char* pBuf, int nToSend);
-		void OnData(unsigned char* pBuf, int nSize);
 
 		void ReconnectSocket();
 

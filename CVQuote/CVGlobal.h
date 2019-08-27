@@ -8,7 +8,7 @@
 #define IPLEN			16
 #define UIDLEN			10
 #define SCALE_VOL_BINANCE	1000000
-#define HTBT_COUNT_LIMIT	10
+#define HTBT_COUNT_LIMIT	2
 #include "CVCommon/CVSharedMemory.h"
 
 /***** PACKET IDENTIFIER *****/
@@ -66,7 +66,7 @@ extern const char* OS_MARKET_CODE;
 extern const char* g_pHeartbeatRequestMessage;
 extern const char* g_pHeartbeatReplyMessage;
 
-extern unsigned char g_uncaHeaetbeatRequestBuf[6];
+extern unsigned char g_uncaHeartbeatRequestBuf[6];
 extern unsigned char g_uncaHeaetbeatReplyBuf[6];
 
 /***** ERROR MESSAGE *****/

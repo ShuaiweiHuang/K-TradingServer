@@ -355,6 +355,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 				jtable = json::parse(&(response[i]));
 				break;
 			}
+			break;
 		}
 	}
 	string text = to_string(jtable["error"]["message"]);

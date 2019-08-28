@@ -128,7 +128,7 @@ void CCVServer::OnConnect()
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_BitmexLess,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BITMEXINDEX") {
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_BitmexIndex,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BINANCE") {
@@ -229,6 +229,7 @@ void CCVServer::OnData_BitmexIndex(client* c, websocketpp::connection_hdl con, c
 		printf("Bitmex breakdown\n");
 		exit(-1);
 	}
+	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
 		memset(netmsg, 0, BUFFERSIZE);
@@ -249,8 +250,7 @@ void CCVServer::OnData_BitmexIndex(client* c, websocketpp::connection_hdl con, c
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
-//		pServer->m_pHeartbeat->TriggerGetReplyEvent();
-		printf("%s\n", netmsg);
+//		printf("%s\n", netmsg);
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;
@@ -282,6 +282,7 @@ void CCVServer::OnData_BitmexLess(client* c, websocketpp::connection_hdl con, cl
 		printf("Bitmex breakdown\n");
 		exit(-1);
 	}
+	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
 		memset(netmsg, 0, BUFFERSIZE);
@@ -300,7 +301,6 @@ void CCVServer::OnData_BitmexLess(client* c, websocketpp::connection_hdl con, cl
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
-		pServer->m_pHeartbeat->TriggerGetReplyEvent();
 //		printf("%s\n", netmsg);
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
@@ -334,6 +334,7 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 		printf("Bitmex breakdown\n");
 		exit(-1);
 	}
+	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
 		memset(netmsg, 0, BUFFERSIZE);
@@ -352,7 +353,6 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
-		pServer->m_pHeartbeat->TriggerGetReplyEvent();
 		//printf("%s\n", netmsg);
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
@@ -385,6 +385,7 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 		printf("Binance breakdown\n");
 		exit(-1);
 	}
+	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 
 	memset(netmsg, 0, BUFFERSIZE);
 	memset(timemsg, 0, 8);
@@ -409,7 +410,6 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
-	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	//printf("%s\n", netmsg);
 #if DEBUG
 	cout << setw(4) << jtable << endl;
@@ -425,7 +425,7 @@ void CCVServer::OnHeartbeatLost()
 
 void CCVServer::OnHeartbeatRequest()
 {
-	FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, NULL, 0,  NULL, 0);
+	FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
 
 #if 0//Regardless PING/PONG mechanism
 

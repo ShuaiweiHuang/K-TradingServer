@@ -60,6 +60,7 @@ void* CCVHeartbeat::Run()
 			}
 			else
 			{
+				printf("time = %d\n", m_nIdleTime);
 				if(m_pHeartbeatCallback)
 					m_pHeartbeatCallback->OnHeartbeatLost();
 				break;

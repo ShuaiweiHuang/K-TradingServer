@@ -66,12 +66,20 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 	        sprintf(ucvts.cv_ts_order.apiSecret_order, "i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE");
 	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "O-E5T-a0KJDs6AMh5loISqu6");
 	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "4RFDBMdJb8425ZzP61aoT_3sEwF6Q9FqhTo26uXIR3RjBMOP");
-	}if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "A000013", 7))
+	}
+	if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "A000013", 7))
 	{
 	        sprintf(ucvts.cv_ts_order.apiKey_order, "A9oHum-Pjl590hShf8eXH3Hl");
 	        sprintf(ucvts.cv_ts_order.apiSecret_order, "FSgJUpbK4RCUKl8OYUrH3mZnf5KPx9arVy1i89tdIoEa3VsL");
 	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "A9oHum-Pjl590hShf8eXH3Hl");
 	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "FSgJUpbK4RCUKl8OYUrH3mZnf5KPx9arVy1i89tdIoEa3VsL");
+	}
+	if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "A000015", 7))
+	{
+	        sprintf(ucvts.cv_ts_order.apiKey_order, "FOwdXKqBW-HiTjP2AQRTONDn");
+	        sprintf(ucvts.cv_ts_order.apiSecret_order, "-AWfoHglVakD4wi_iS3IDMEkS-yeTAtGvKn4hQbu198uNSyT");
+	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "FOwdXKqBW-HiTjP2AQRTONDn");
+	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "-AWfoHglVakD4wi_iS3IDMEkS-yeTAtGvKn4hQbu198uNSyT");
 	}
 	memcpy(ucvts.cv_ts_order.strategy_name, ucv.cv_order.strategy_name, 7);
 

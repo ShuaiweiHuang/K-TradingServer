@@ -1,6 +1,9 @@
 #define ORDER_URL "https://testnet.bitmex.com/api/v1/order"
 #define ORDER_ALL_URL "https://testnet.bitmex.com/api/v1/order/all"
 
+#define ORDER_URL_FORMAL "https://www.bitmex.com/api/v1/order"
+#define ORDER_ALL_URL_FORMAL "https://www.bitmex.com/api/v1/order/all"
+
 #define MAXDATA		1024
 
 #define ESCAPE		0x1b

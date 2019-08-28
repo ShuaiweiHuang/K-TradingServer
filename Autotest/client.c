@@ -220,7 +220,7 @@ void* test_run(void *arg)
 			memcpy(ts_order.strategy_name, "MACD123", 7);
 			memcpy(ts_order.agent_id, "MC", 2);
 			memcpy(ts_order.broker_id, "9801", 4);
-			memcpy(ts_order.exchange_id, "BITMEX\0", 6);
+			memcpy(ts_order.exchange_id, "BITMEX", 6);
 			memcpy(ts_order.seq_id, "9487943123456", 13);
 			memcpy(ts_order.symbol_name, "XBTUSD", 6);
 			memcpy(ts_order.symbol_type, "F", 1);
@@ -231,7 +231,7 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_time, "17160301", 8);
 			memcpy(ts_order.order_buysell, "B", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
-			memcpy(ts_order.order_mark, "0", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
+			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
@@ -265,6 +265,7 @@ void* test_run(void *arg)
 				}
 				printf("keanu read success\n");
 				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+262);
+#if 1
 				memcpy(ts_order.order_bookno, data1+100, 36);
 				memcpy(ts_order.trade_type, "1", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 				printf("send order %d: %.1s %.9s %s\n", order_loop, ts_order.order_buysell, ts_order.order_price, ts_order.order_mark=='0'?"MARKET":"Limit");
@@ -285,7 +286,7 @@ void* test_run(void *arg)
 				}
 				printf("keanu read success\n");
 				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+262);
-
+#endif
 
 			}//end loop for order
 		}// end login

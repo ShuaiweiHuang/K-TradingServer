@@ -130,7 +130,7 @@ void* CSKReadQueueDAO::Run()
 						break;
 					}
 					bool bResult= pTandemDAO->SendOrder(uncaRecvBuf, nGetMessage);
-					pTandemDAO->SetInuse(false);
+					//pTandemDAO->SetInuse(false);
 
 					if(bResult == true)
 					{

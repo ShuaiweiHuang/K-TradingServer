@@ -111,6 +111,7 @@ void* CSKTandemDAO::Run()
 					pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandemreply, sizeof(m_tandemreply));
 					pWriteQueueDAO->TriggerWakeUpEvent();
 					SetStatus(tsServiceOn);
+					SetInuse(false);
 				}
 				else
 				{
@@ -255,23 +256,23 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			switch(cv_ts_order.order_mark[0])
 			{
 				case '0'://Market
-					sprintf(commandstr, "clOrdID=%.7s,%.16s,%.13s&symbol=XBTUSD&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel",
-						cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.key_id, buysell_str.c_str(), atoi(qty));
+					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=XBTUSD&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel",
+						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, buysell_str.c_str(), atoi(qty));
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "clOrdID=%.7s,%.16s,%.13s&symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel",
-						cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.key_id, buysell_str.c_str(), atoi(qty), doprice);
+					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel",
+						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, buysell_str.c_str(), atoi(qty), doprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '3'://stop market
-					sprintf(commandstr, "clOrdID=%.7s,%.16s,%.13s&symbol=XBTUSD&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop",
-						cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.key_id, buysell_str.c_str(), atoi(qty), dtprice);
+					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=XBTUSD&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop",
+						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, buysell_str.c_str(), atoi(qty), dtprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '4'://stop limit
-					sprintf(commandstr, "clOrdID=%.7s,%.16s,%.13s&symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit", 
-						cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.key_id, buysell_str.c_str(), atoi(qty), doprice, dtprice);
+					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit", 
+						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, buysell_str.c_str(), atoi(qty), doprice, dtprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '2'://Protect
@@ -303,6 +304,8 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 		case '4'://change price
 			break;
 	}
+
+	printf("encrystr = %s\n", encrystr);
 
 	for(int i = 0; i < mac_length; i++) {
 		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
@@ -380,7 +383,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 		}
 		SetStatus(tsMsgReady);
 	}
-
+//	printf("m_tandemreply.trade_type = %c\n", cv_ts_order.trade_type[0]);
 	return true;
 }
 

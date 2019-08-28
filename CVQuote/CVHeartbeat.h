@@ -18,7 +18,6 @@ class CCVHeartbeat: public CCVThread
 {
 	private:
 		int m_nTimeInterval;
-		int m_nIdleTime;
 
 		ICVHeartbeatCallback* m_pHeartbeatCallback;
 		neosmart_event_t m_PEvent[2];
@@ -27,6 +26,7 @@ class CCVHeartbeat: public CCVThread
 		void* Run();
 
 	public:
+		int m_nIdleTime;
 		CCVHeartbeat(ICVHeartbeatCallback* pHeartbeatCallback);
 		virtual ~CCVHeartbeat();
 		void SetTimeInterval(int);

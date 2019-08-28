@@ -110,7 +110,9 @@ CCVServer* CCVServers::GetServerByName(string name)
 	while(iter != m_vServerPool.end())
 	{
 		if((*iter)->m_strName == name)
+		{
 			return *iter;
+		}
 		iter++;
 	}
 	return NULL;

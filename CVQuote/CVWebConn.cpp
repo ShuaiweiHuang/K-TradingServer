@@ -221,7 +221,7 @@ void CCVServer::OnData_BitmexIndex(client* c, websocketpp::connection_hdl con, c
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BITMEX";
+	string strname = "BITMEXINDEX";
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
 	pServer->m_heartbeat_count = 0;
 	if(pServer->GetStatus() == ssBreakdown) {
@@ -274,7 +274,7 @@ void CCVServer::OnData_BitmexLess(client* c, websocketpp::connection_hdl con, cl
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BITMEX";
+	string strname = "BITMEXLESS";
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
 	pServer->m_heartbeat_count = 0;
 	if(pServer->GetStatus() == ssBreakdown) {
@@ -419,13 +419,14 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 
 void CCVServer::OnHeartbeatLost()
 {
-	FprintfStderrLog("HEARTBEAT LOST", -1, 0, NULL, 0,  NULL, 0);
+	FprintfStderrLog("HEARTBEAT LOST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
 	exit(-1);
 }
 
 void CCVServer::OnHeartbeatRequest()
 {
 	FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
+	//printf("nIdleTime = %d\n", m_pHeartbeat->m_nIdleTime );
 
 #if 0//Regardless PING/PONG mechanism
 
@@ -446,7 +447,6 @@ void CCVServer::OnHeartbeatRequest()
 		}
 	}
 #endif
-	exit(-1);
 }
 
 void CCVServer::OnHeartbeatError(int nData, const char* pErrorMessage)

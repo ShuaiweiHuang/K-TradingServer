@@ -80,6 +80,9 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		bool SendAll(const char* pWhat, const unsigned char* pBuf, int nToSend);
 
 		void ReconnectSocket();
+		void OnRequest();
+		void OnRequestError(int, const char*);
+		void OnData(unsigned char*, int);
 
 	public:
 		TCVServerStatus m_ssServerStatus;

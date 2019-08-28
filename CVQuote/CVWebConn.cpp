@@ -507,3 +507,14 @@ context_ptr CCVServer::CB_TLS_Init(const char * hostname, websocketpp::connectio
     return ctx;
 }
 
+void CCVServer::OnRequest()
+{
+}
+
+void CCVServer::OnRequestError(int, const char*)
+{
+}
+
+void CCVServer::OnData(unsigned char*, int)
+{
+}

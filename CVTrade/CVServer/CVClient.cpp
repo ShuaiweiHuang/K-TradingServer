@@ -234,7 +234,9 @@ void* CCVClient::Run()
 					}
 					else//logon failed
 					{
+						SetStatus(csOffline);
 						FprintfStderrLog("LOGON_ON_FAILED", 0, reinterpret_cast<unsigned char*>(m_ClientAddrInfo.caIP), sizeof(m_ClientAddrInfo.caIP));
+						break;
 					}
 				}
 				else if(m_ClientStatus == csOnline)//repeat logon
@@ -567,7 +569,6 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			acno = acno.substr(1, 7);
 			exno = exno.substr(1, 7);
 			sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20exchange_name_en%%20from%%20exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
-			printf("================\n%s\n===============\n", query_str);
 			curl_easy_setopt(curl, CURLOPT_URL, query_str);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
@@ -577,7 +578,7 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			exname = to_string(jtable_exname[0]["exchange_name_en"]);
 			exname = exname.substr(1,exname.length()-1);
 			m_mBranchAccount.insert(pair<string, string>(acno, exname));
-			cout << acno <<", " << exno << ", " << exname << endl;
+			//cout << acno <<", " << exno << ", " << exname << endl;
 		}
 			memcpy(logon_reply.status_code, "OK", 2);//to do
 			memcpy(logon_reply.backup_ip, BACKUP_IP, 15);

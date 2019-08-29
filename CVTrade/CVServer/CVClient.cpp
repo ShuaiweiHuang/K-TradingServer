@@ -21,8 +21,8 @@
 using json = nlohmann::json;
 using namespace std;
 
-typedef long (*FillTandemOrder)(string& strService, char* pIP, map<string, string>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
-extern long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, string>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
+typedef long (*FillTandemOrder)(string& strService, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
+extern long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
 CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService)
@@ -541,7 +541,9 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 	json jtable;
 	json jtable_exname;
 	CURLcode res;
-	string readBuffer1, readBuffer2, acno, exno, exname;
+	string readBuffer1, readBuffer2, acno, exno;
+	struct AccountData acdata;
+
 	CURL *curl = curl_easy_init();
 
 	if(curl) {
@@ -568,17 +570,21 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			exno = to_string(jtable[i]["exchange_no"]);
 			acno = acno.substr(1, 7);
 			exno = exno.substr(1, 7);
-			sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20exchange_name_en%%20from%%20exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
+			sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 			curl_easy_setopt(curl, CURLOPT_URL, query_str);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
 			res = curl_easy_perform(curl);
 			printf("%s\n", readBuffer2.c_str());
 			jtable_exname = json::parse(readBuffer2.c_str());
-			exname = to_string(jtable_exname[0]["exchange_name_en"]);
-			exname = exname.substr(1,exname.length()-1);
-			m_mBranchAccount.insert(pair<string, string>(acno, exname));
-			//cout << acno <<", " << exno << ", " << exname << endl;
+			acdata.exchange_name = to_string(jtable_exname[0]["exchange_name_en"]);
+			acdata.api_id = to_string(jtable_exname[0]["api_id"]);
+			acdata.api_key = to_string(jtable_exname[0]["api_secret"]);
+			acdata.exchange_name = acdata.exchange_name.substr(1, acdata.exchange_name.length()-1);
+			acdata.api_id = acdata.api_id.substr(1, acdata.api_id.length()-1);
+			acdata.api_key = acdata.api_key.substr(1, acdata.api_key.length()-1);
+	
+			m_mBranchAccount.insert(pair<string, struct AccountData>(acno, acdata));
 		}
 			memcpy(logon_reply.status_code, "OK", 2);//to do
 			memcpy(logon_reply.backup_ip, BACKUP_IP, 15);

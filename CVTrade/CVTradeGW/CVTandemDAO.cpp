@@ -151,6 +151,12 @@ bool CSKTandemDAO::IsInuse()
 
 bool CSKTandemDAO::RiskControl()
 {
+	int limit = atoi (m_requestlimit.c_str());
+	int time  = atoi (m_timelimit.c_str());
+#if 1
+	if(limit <10)
+		return true;
+#endif	
 	return false;
 }
 
@@ -160,6 +166,12 @@ bool CSKTandemDAO::SendOrder(const unsigned char* pBuf, int nSize)
 		return FillRiskMsg(pBuf, nSize);
 	else
 		return OrderSubmit(pBuf, nSize);
+}
+
+bool CSKTandemDAO::FillRiskMsg(const unsigned char* pBuf, int nSize)
+{
+	//add reply message
+	return true;
 }
 
 size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp)
@@ -333,7 +345,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 
 #if 1//test
 	sprintf(encrystr, "message=%s:%.6s:%1f", buysell_str.c_str(), cv_ts_order.symbol_name, doprice);
-	//SendNotify(encrystr);
+	SendNotify(encrystr);
 #endif
 	for(int i = 0; i < mac_length; i++) {
 		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);

@@ -43,28 +43,19 @@ struct CVOriginalOrder
 	unsigned char uncaBuf[BUFFERSIZE];
 };
 
-struct AccountRecvBuf
-{
-	int nRecved;
-	unsigned char uncaRecvBuf[BUFFERSIZE];
-};
-
-struct AccountItem
-{
-	char caItem[128];
-};
-
-struct AccountMessage
-{
-	char caMessage[30];
-};
-
 enum TCVClientStauts
 {
 	csNone,
 	csLogoning,
 	csOnline,
 	csOffline
+};
+
+struct AccountData
+{
+	string api_id;
+	string api_key;
+	string exchange_name;
 };
 
 class CCVClient: public CCVThread
@@ -82,14 +73,14 @@ class CCVClient: public CCVThread
 		struct TCVClientAddrInfo m_ClientAddrInfo;
 		TCVClientStauts m_ClientStatus;
 		map<long, struct CVOriginalOrder> m_mOriginalOrder;
-		map<string, string> m_mBranchAccount;
+		map<string, struct AccountData> m_mBranchAccount;
 		string m_strService;
 		CCVHeartbeat* m_pHeartbeat;
 		pthread_mutex_t m_MutexLockOnClientStatus;
 	protected:
 		void* Run();
 		bool LogonAuth(char* pID, char* pPasswd, struct CV_StructLogonReply &logon_reply);
-		void GetAccount(char* pID, char* pAgent, char* pVersion, vector<struct AccountMessage> &vAccountMessage);
+		void GetAccount(char* pID, char* pAgent, char* pVersion, vector<struct AccountData> &vAccountMessage);
 
 	public:
 		CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService);

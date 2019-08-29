@@ -82,6 +82,7 @@ public:
 	void SetStatus(TSKTandemDAOStatus tsStatus);
 	void RestoreStatus();
 	void SendLogout();
+	void SendNotify(char* pBuf);
 
 	void ReconnectSocket();
 	void CloseSocket();

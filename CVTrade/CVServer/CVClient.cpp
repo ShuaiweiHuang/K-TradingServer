@@ -596,6 +596,7 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 		for(int i=0 ; i<jtable.size() ; i++) {
 
 			outstr = to_string(jtable[i]["accounting_no"]);
+			outstr = outstr.substr(1,7);
 			cout << outstr << endl;
 		}
 	}

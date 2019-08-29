@@ -182,6 +182,32 @@ size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userda
 }
 
 
+void CSKTandemDAO::SendNotify(char* pBuf)
+{
+        CURL *curl;
+        CURLcode res;
+        curl_global_init(CURL_GLOBAL_ALL);
+
+        curl = curl_easy_init();
+        if(curl) {
+                struct curl_slist *chunk;
+                chunk = curl_slist_append(chunk, ACCESS_TOKEN);
+                chunk = curl_slist_append(chunk, "Content-Type: application/x-www-form-urlencoded");
+                curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+                curl_easy_setopt(curl, CURLOPT_HEADER, true);
+                curl_easy_setopt(curl, CURLOPT_URL, "https://notify-api.line.me/api/notify");
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(pBuf));
+                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, pBuf);
+
+                res = curl_easy_perform(curl);
+                if(res != CURLE_OK)
+                fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                curl_easy_strerror(res));
+                curl_easy_cleanup(curl);
+        }
+        curl_global_cleanup();
+}
+
 bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 {
 	struct CV_StructTSOrder cv_ts_order;
@@ -248,7 +274,6 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
-
 	switch(cv_ts_order.trade_type[0])
 	{
 		case '0'://new order
@@ -256,23 +281,23 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			switch(cv_ts_order.order_mark[0])
 			{
 				case '0'://Market
-					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=XBTUSD&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel",
-						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, buysell_str.c_str(), atoi(qty));
+					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=%s&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel",
+						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty));
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel",
-						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, buysell_str.c_str(), atoi(qty), doprice);
+					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=%s&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel",
+						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '3'://stop market
-					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=XBTUSD&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop",
-						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, buysell_str.c_str(), atoi(qty), dtprice);
+					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=%s&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop",
+						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), dtprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '4'://stop limit
-					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=XBTUSD&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit", 
-						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, buysell_str.c_str(), atoi(qty), doprice, dtprice);
+					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=%s&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit", 
+						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice, dtprice);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '2'://Protect
@@ -305,8 +330,11 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			break;
 	}
 
-	printf("encrystr = %s\n", encrystr);
 
+#if 1//test
+	sprintf(encrystr, "message=%s:%.6s:%1f", buysell_str.c_str(), cv_ts_order.symbol_name, doprice);
+	SendNotify(encrystr);
+#endif
 	for(int i = 0; i < mac_length; i++) {
 		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
 	}
@@ -383,7 +411,6 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 		}
 		SetStatus(tsMsgReady);
 	}
-//	printf("m_tandemreply.trade_type = %c\n", cv_ts_order.trade_type[0]);
 	return true;
 }
 

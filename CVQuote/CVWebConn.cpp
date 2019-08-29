@@ -328,13 +328,14 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 
 	string strname = "BITMEX";
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
-	pServer->m_heartbeat_count = 0;
+	//pServer->m_heartbeat_count = 0;
+	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	if(pServer->GetStatus() == ssBreakdown) {
 		c->close(con,websocketpp::close::status::normal,"");
 		printf("Bitmex breakdown\n");
 		exit(-1);
 	}
-	pServer->m_pHeartbeat->TriggerGetReplyEvent();
+
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
 		memset(netmsg, 0, BUFFERSIZE);
@@ -426,7 +427,7 @@ void CCVServer::OnHeartbeatLost()
 void CCVServer::OnHeartbeatRequest()
 {
 	FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
-	//printf("nIdleTime = %d\n", m_pHeartbeat->m_nIdleTime );
+	exit(-1);
 
 #if 0//Regardless PING/PONG mechanism
 

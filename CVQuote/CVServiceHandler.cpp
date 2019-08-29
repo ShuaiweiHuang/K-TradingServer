@@ -86,12 +86,7 @@ void* CCVClient::Run()
 		}
 		sleep(1);
 	}
-
-	if(m_pHeartbeat)
-		m_pHeartbeat->TriggerTerminateEvent();
-
 	return NULL;
-
 }
 
 void CCVClient::OnHeartbeatLost()

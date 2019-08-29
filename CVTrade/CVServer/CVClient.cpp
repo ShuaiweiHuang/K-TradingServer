@@ -21,11 +21,11 @@
 using json = nlohmann::json;
 using namespace std;
 
-typedef long (*FillTandemOrder)(string& strService, char* pIP, map<string, string>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order, bool bIsProxy);
-extern long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, string>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order, bool bIsProxy);
+typedef long (*FillTandemOrder)(string& strService, char* pIP, map<string, string>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
+extern long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, string>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService, bool bIsProxy)
+CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService)
 {
 	memset(&m_ClientAddrInfo, 0, sizeof(struct TCVClientAddrInfo));
 	memcpy(&m_ClientAddrInfo, &ClientAddrInfo, sizeof(struct TCVClientAddrInfo));
@@ -48,12 +48,6 @@ CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService
 	{
 		//Keanu : add error message.
 	}
-
-	if(bIsProxy)
-		m_nLengthOfOrderMessage += (IPLEN);
-
-	m_bIsProxy = bIsProxy;
-
 	Start();
 }
 
@@ -131,63 +125,63 @@ void* CCVClient::Run()
 
 	while(m_ClientStatus != csOffline)
 	{
-			memset(uncaEscapeBuf, 0, sizeof(uncaEscapeBuf));
+		memset(uncaEscapeBuf, 0, sizeof(uncaEscapeBuf));
 
-			bool bRecvAll = RecvAll(uncaEscapeBuf, 2);
+		bool bRecvAll = RecvAll(uncaEscapeBuf, 2);
 
+		if(bRecvAll == false)
+		{
+			FprintfStderrLog("RECV_ESC_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), uncaEscapeBuf, sizeof(uncaEscapeBuf));
+			continue;
+		}
+
+		if(uncaEscapeBuf[0] != ESCAPE)
+		{
+			FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
+			printf("Error byte = %x\n", uncaEscapeBuf[0]);
+			continue;
+		}
+		else
+		{
+			nToRecv = 0;
+			switch(uncaEscapeBuf[1])
+			{
+				case LOGREQ:
+					nToRecv = sizeof(struct CV_StructLogon)-2;
+			printf("\nlogin nToRecv = %d\n", nToRecv);
+					break;
+				case HEARTBEATREQ:
+					nToRecv = sizeof(struct CV_StructHeartbeat)-2;
+			printf("\nhbrq nToRecv = %d\n", nToRecv);
+					break;
+				case HEARTBEATREP:
+					nToRecv = sizeof(struct CV_StructHeartbeat)-2;
+			printf("\nhbrp nToRecv = %d\n", nToRecv);
+					break;
+				case ORDERREQ:
+					nToRecv = sizeof(struct CV_StructOrder)-2;
+			printf("\norder nToRecv = %d\n", nToRecv);
+					break;
+				case DISCONNMSG:
+					SetStatus(csOffline);
+			printf("\ndisconnect nToRecv = %d\n", nToRecv);
+					break;
+				default:
+					FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
+					printf("\nError byte = %x\n", uncaEscapeBuf[1]);
+					continue;
+			}
+			if(m_ClientStatus == csOffline)
+				break;
+
+			memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
+			bRecvAll = RecvAll(uncaRecvBuf, nToRecv);
 			if(bRecvAll == false)
 			{
-				FprintfStderrLog("RECV_ESC_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), uncaEscapeBuf, sizeof(uncaEscapeBuf));
+				FprintfStderrLog("RECV_TRAIL_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), uncaRecvBuf, nToRecv);
 				continue;
 			}
-
-			if(uncaEscapeBuf[0] != ESCAPE)
-			{
-				FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
-				printf("Error byte = %x\n", uncaEscapeBuf[0]);
-				continue;
-			}
-			else
-			{
-				nToRecv = 0;
-				switch(uncaEscapeBuf[1])
-				{
-					case LOGREQ:
-						nToRecv = sizeof(struct CV_StructLogon)-2;
-				printf("\nlogin nToRecv = %d\n", nToRecv);
-						break;
-					case HEARTBEATREQ:
-						nToRecv = sizeof(struct CV_StructHeartbeat)-2;
-				printf("\nhbrq nToRecv = %d\n", nToRecv);
-						break;
-					case HEARTBEATREP:
-						nToRecv = sizeof(struct CV_StructHeartbeat)-2;
-				printf("\nhbrp nToRecv = %d\n", nToRecv);
-						break;
-					case ORDERREQ:
-						nToRecv = sizeof(struct CV_StructOrder)-2;
-				printf("\norder nToRecv = %d\n", nToRecv);
-						break;
-					case DISCONNMSG:
-						SetStatus(csOffline);
-				printf("\ndisconnect nToRecv = %d\n", nToRecv);
-						break;
-					default:
-						FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
-						printf("\nError byte = %x\n", uncaEscapeBuf[1]);
-						continue;
-				}
-				if(m_ClientStatus == csOffline)
-					break;
-
-				memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
-				bRecvAll = RecvAll(uncaRecvBuf, nToRecv);
-				if(bRecvAll == false)
-				{
-					FprintfStderrLog("RECV_TRAIL_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), uncaRecvBuf, nToRecv);
-					continue;
-				}
-			}
+		}
 
 		memcpy(uncaMessageBuf, uncaEscapeBuf, 2);
 		memcpy(uncaMessageBuf+2, uncaRecvBuf, nToRecv);
@@ -211,40 +205,12 @@ void* CCVClient::Run()
 					memset(&logon_reply, 0, m_nLengthOfLogonReplyMessage);
 					memset(m_uncaLogonID, 0, sizeof(m_uncaLogonID));
 					memcpy(m_uncaLogonID, logon_type.logon_id, sizeof(logon_type.logon_id));
-#ifdef DEBUG
-					printf("ID:%.20s\n", uncaMessageBuf+2);
-					if( (strcmp((char*)uncaMessageBuf+2, "P123069984") == 0 && strcmp((char*)uncaMessageBuf+22, "testtest") == 0 )
-					    || (strcmp((char*)uncaMessageBuf+2, "brianlee") == 0 && strcmp((char*)uncaMessageBuf+22, "ilovebrianlee") == 0))
-						bLogon = true;
-					else
-						bLogon = false;
-					
-					bLogon = true;
-					printf("PW:%.30s\n", uncaMessageBuf+22);
-					printf("SA:%.2s\n", uncaMessageBuf+52);
-					printf("VS:%.10s\n", uncaMessageBuf+54);
-					printf("login success.\n");
-#else
 					bLogon = LogonAuth(logon_type.logon_id, logon_type.password, logon_reply);//logon & get logon reply data
-#endif
 					memset(uncaSendLogonBuf, 0, sizeof(uncaSendLogonBuf));
 					logon_reply.header_bit[0] = ESCAPE;
 					logon_reply.header_bit[1] = LOGREP;
 					uncaSendLogonBuf[0] = ESCAPE;
 					uncaSendLogonBuf[1] = LOGREP;
-
-					if(bLogon) {
-						memcpy(logon_reply.status_code, "OK", 2);//to do
-						memcpy(logon_reply.backup_ip, "192.168.101.211", 15);
-						memcpy(logon_reply.error_code, "00", 4);//to do
-						sprintf(logon_reply.error_message, "login success.");
-					}
-					else {
-						memcpy(logon_reply.status_code, "NG", 2);//to do
-						memcpy(logon_reply.backup_ip, "192.168.101.211", 15);
-						memcpy(logon_reply.error_code, "01", 4);//to do
-						sprintf(logon_reply.error_message, "login fail.");
-					}
 					memcpy(uncaSendLogonBuf, &logon_reply.header_bit[0], m_nLengthOfLogonReplyMessage);
 					bool bSendData = SendData(uncaSendLogonBuf, m_nLengthOfLogonReplyMessage);
 
@@ -281,8 +247,8 @@ void* CCVClient::Run()
 					logon_reply.header_bit[0] = ESCAPE;
 					logon_reply.header_bit[1] = 0x01;
 					memcpy(logon_reply.status_code, "NG", 2);//to do
-					memcpy(logon_reply.backup_ip, "192.168.101.211", 15);
-					memcpy(logon_reply.error_code, "02", 4);//to do
+					memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+					memcpy(logon_reply.error_code, "02", 2);//to do
 					sprintf(logon_reply.error_message, "Account has logon.");
 					memcpy(uncaSendRelogBuf, &logon_reply.header_bit[0], m_nLengthOfLogonReplyMessage);
 
@@ -345,8 +311,6 @@ void* CCVClient::Run()
 			}
 			else if(uncaMessageBuf[1] == ORDERREQ)
 			{
-				if(m_bIsProxy)
-					nSizeOfRecvedCVMessage -= (IPLEN);//ip
 				FprintfStderrLog("RECV_CV_ORDER", 0, uncaMessageBuf, nSizeOfRecvedCVMessage);
 
 				if(m_ClientStatus == csLogoning)
@@ -386,7 +350,7 @@ void* CCVClient::Run()
 					memset(&cv_ts_order, 0, sizeof(union CV_TS_ORDER));
 					long lOrderNumber = 0;
 					lOrderNumber = fpFillTandemOrder(m_strService, m_ClientAddrInfo.caIP,
-									m_mBranchAccount, cv_order, cv_ts_order, m_bIsProxy ? true : false);
+									m_mBranchAccount, cv_order, cv_ts_order);
 
 					if(lOrderNumber < 0)//error
 					{
@@ -573,35 +537,61 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply &logon_reply)
 {
 	json jtable;
+	json jtable_exname;
 	CURLcode res;
-	string readBuffer, outstr;
+	string readBuffer1, readBuffer2, acno, exno, exname;
 	CURL *curl = curl_easy_init();
 
 	if(curl) {
 		char query_str[512];
-		sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20accounting_no%%20from%%20employee,accounting%20where%%20account%20=%20%27%s%%27%%20and%%20password%%20=%%20%%27%s%%27%%20and%%20accounting.trader_no=employee.trader_no", pID, ppassword);
+		sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20accounting_no,exchange_no%%20from%%20employee,accounting%20where%%20account%20=%20%27%s%%27%%20and%%20password%%20=%%20%%27%s%%27%%20and%%20accounting.trader_no=employee.trader_no", pID, ppassword);
 		printf("================\n%s\n===============\n", query_str);
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
-
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer1);
 		res = curl_easy_perform(curl);
-		curl_easy_cleanup(curl);
-		jtable = json::parse(readBuffer.c_str());
+		jtable = json::parse(readBuffer1.c_str());
 
 		if(jtable.size() == 0) {
+			memcpy(logon_reply.status_code, "NG", 2);//to do
+			memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+			memcpy(logon_reply.error_code, "01", 2);
+			sprintf(logon_reply.error_message, "login authentication fail");
 			return false;
 		}
 
 		for(int i=0 ; i<jtable.size() ; i++) {
-
-			outstr = to_string(jtable[i]["accounting_no"]);
-			outstr = outstr.substr(1,7);
-			cout << outstr << endl;
+			readBuffer2 = "";
+			acno = to_string(jtable[i]["accounting_no"]);
+			exno = to_string(jtable[i]["exchange_no"]);
+			acno = acno.substr(1, 7);
+			exno = exno.substr(1, 7);
+			sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20exchange_name_en%%20from%%20exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
+			printf("================\n%s\n===============\n", query_str);
+			curl_easy_setopt(curl, CURLOPT_URL, query_str);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
+			res = curl_easy_perform(curl);
+			printf("%s\n", readBuffer2.c_str());
+			jtable_exname = json::parse(readBuffer2.c_str());
+			exname = to_string(jtable_exname[0]["exchange_name_en"]);
+			exname = exname.substr(1,exname.length()-1);
+			m_mBranchAccount.insert(pair<string, string>(acno, exname));
+			cout << acno <<", " << exno << ", " << exname << endl;
 		}
+			memcpy(logon_reply.status_code, "OK", 2);//to do
+			memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+			memcpy(logon_reply.error_code, "00", 2);
+			sprintf(logon_reply.error_message, "login success");
+		curl_easy_cleanup(curl);
+		return true;
 	}
+	memcpy(logon_reply.status_code, "NG", 2);//to do
+	memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+	memcpy(logon_reply.error_code, "01", 2);
+	sprintf(logon_reply.error_message, "cannot accesss authentication server");
+	return false;
 
-	return true;
 }
 
 int CCVClient::GetClientSocket()

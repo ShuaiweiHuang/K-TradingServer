@@ -110,16 +110,8 @@ void* CCVClients::Run()
 
 
 		CCVClient* pNewClient = NULL;
-		if(IsProxy(ClientAddrInfo.caIP))
-		{
-			pNewClient = new CCVClient(ClientAddrInfo, m_strService, true);
-			cout << "Accept! Proxy IP = " << ClientAddrInfo.caIP << endl;
-		}
-		else
-		{
-			pNewClient = new CCVClient(ClientAddrInfo, m_strService, false);
-			cout << "Accept! Client IP = " << ClientAddrInfo.caIP << endl;
-		}
+		pNewClient = new CCVClient(ClientAddrInfo, m_strService);
+		cout << "Accept! Client IP = " << ClientAddrInfo.caIP << endl;
 		PushBackClientToOnlineVector(pNewClient);
 	}
 }

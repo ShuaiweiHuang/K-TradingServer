@@ -31,7 +31,7 @@ bool IsNum(string strData, int nLength)
 		return true;
 }
 
-long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, string>& mBranchAccount, union CV_ORDER &ucv, union CV_TS_ORDER &ucvts, bool bIsProxy = false)
+long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, string>& mBranchAccount, union CV_ORDER &ucv, union CV_TS_ORDER &ucvts)
 {
 	char caQty[10];
 	char caOrderPrice[10];

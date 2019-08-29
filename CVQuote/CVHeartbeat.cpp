@@ -3,7 +3,6 @@
 #include <cerrno> 
 #include <sys/socket.h>
 #include <unistd.h>
-//#include <assert.h>
 
 #include "CVHeartbeat.h"
 #include <iostream>
@@ -60,7 +59,6 @@ void* CCVHeartbeat::Run()
 			}
 			else
 			{
-				printf("time = %d\n", m_nIdleTime);
 				if(m_pHeartbeatCallback)
 					m_pHeartbeatCallback->OnHeartbeatLost();
 				break;

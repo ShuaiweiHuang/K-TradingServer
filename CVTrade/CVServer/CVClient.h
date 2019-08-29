@@ -92,7 +92,7 @@ class CCVClient: public CCVThread
 		void GetAccount(char* pID, char* pAgent, char* pVersion, vector<struct AccountMessage> &vAccountMessage);
 
 	public:
-		CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService, bool bIsProxy = false);
+		CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService);
 		TCVClientStauts GetStatus();
 		virtual ~CCVClient();
 		bool SendData(const unsigned char* pBuf, int nSize);

@@ -41,7 +41,7 @@ struct CV_StructAcclistReply
 	char header_bit[2];
 	char acno[4];
 	char sub_acno[7];
-	char exchange[4];
+	char exchange[10];
 };
 
 struct CV_StructOrder

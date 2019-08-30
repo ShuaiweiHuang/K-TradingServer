@@ -1,9 +1,3 @@
-/*
- * SKTandemDAO.h
- *
- *  Created on: 2015年11月12日
- *      Author: alex
- */
 #ifndef SKTANDEMDAO_H_
 #define SKTANDEMDAO_H_
 
@@ -22,8 +16,8 @@ class CSKTandem;
 
 struct HEADRESP
 {
-        string limit;
-        string epoch;
+	string remain;
+	string epoch;
 };
 
 enum TSKTandemDAOStatus
@@ -47,8 +41,8 @@ private:
 
 	string m_strHost;
 	string m_strPort;
-	string m_requestlimit;
-	string m_timelimit;
+	string m_request_remain;
+	string m_time_limit;
 	struct CV_StructTSOrderReply m_tandemreply;
 	TSKTandemDAOStatus m_TandemDAOStatus;
 	bool m_bInuse;

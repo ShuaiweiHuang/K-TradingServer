@@ -17,25 +17,16 @@ using namespace std;
 #define BUFFERSIZE	1024
 #define IPLEN		16
 #define UIDLEN		10
+#define QUEUESIZE	10
+#ifdef  MNTRMSG
 
-#ifdef MNTRMSG
-#define QUEUESIZE 10
-struct LogMesssage
-{
-	int order_index;
-	int reply_index;
-	int order_msg_len[QUEUESIZE];
-	int reply_msg_len[QUEUESIZE];
-	char order_msg_buf[QUEUESIZE][BUFFERSIZE];
-	char reply_msg_buf[QUEUESIZE][BUFFERSIZE];
-};
 #endif
 
 struct TCVClientAddrInfo
 {
-    int nSocket;
+	int nSocket;
 	char caIP[IPLEN];
-    struct sockaddr_storage ClientAddr;
+	struct sockaddr_storage ClientAddr;
 };
 
 struct CVOriginalOrder
@@ -55,6 +46,7 @@ struct AccountData
 {
 	string api_id;
 	string api_key;
+	string broker_id;
 	string exchange_name;
 };
 
@@ -80,7 +72,8 @@ class CCVClient: public CCVThread
 	protected:
 		void* Run();
 		bool LogonAuth(char* pID, char* pPasswd, struct CV_StructLogonReply &logon_reply);
-		void GetAccount(char* pID, char* pAgent, char* pVersion, vector<struct AccountData> &vAccountMessage);
+		void ReplyAccountContents();
+		void ReplyAccountNum();
 
 	public:
 		CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService);

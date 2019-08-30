@@ -20,20 +20,10 @@ struct CV_StructLogout
 	char header_bit[2];
 };
 
-struct CV_StructAccnum
-{
-	char header_bit[2];
-};
-
 struct CV_StructAccnumReply
 {
 	char header_bit[2];
-	char accnum[2];
-};
-
-struct CV_StructAcclist
-{
-	char header_bit[2];
+	char accnum;
 };
 
 struct CV_StructAcclistReply
@@ -41,7 +31,7 @@ struct CV_StructAcclistReply
 	char header_bit[2];
 	char acno[4];
 	char sub_acno[7];
-	char exchange[10];
+	char exchange_name[10];
 };
 
 struct CV_StructOrder

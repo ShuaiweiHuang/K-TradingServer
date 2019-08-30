@@ -1,8 +1,8 @@
 #ifndef SKTANDEM_H_
 #define SKTANDEM_H_
 
-#include "../include/SKTIGNode.h"
-#include "../include/SKTIGService.h"
+#include "../include/CVTIGNode.h"
+#include "../include/CVTIGService.h"
 #include <vector>
 
 class CSKTandem

@@ -1,10 +1,3 @@
-/*
- * CSKSocket.cpp
- *
- *  Created on: 2015年10月26日
- *      Author: alex
- */
-
 #include <string.h>
 #include <sstream>
 #include <stddef.h>

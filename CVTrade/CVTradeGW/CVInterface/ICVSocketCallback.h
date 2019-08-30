@@ -1,9 +1,3 @@
-/*
- * ISKSocketCallback.h
- *
- *  Created on: 2015年10月27日
- *      Author: alex
- */
 #ifndef SKINTERFACE_ISKSOCKETCALLBACK_H_
 #define SKINTERFACE_ISKSOCKETCALLBACK_H_
 

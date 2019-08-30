@@ -34,7 +34,6 @@ CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService
 	m_strService = strService;
 	m_pHeartbeat = NULL;
 	pthread_mutex_init(&m_MutexLockOnClientStatus, NULL);
-	m_nLengthOfAccountNum = sizeof(struct CV_StructAccnum);
 	m_nLengthOfLogonMessage = sizeof(struct CV_StructLogon);
 	m_nLengthOfLogonReplyMessage = sizeof(struct CV_StructLogonReply);
 	m_nLengthOfHeartbeatMessage = sizeof(struct CV_StructHeartbeat);
@@ -46,7 +45,7 @@ CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService
 	}
 	else
 	{
-		//Keanu : add error message.
+		FprintfStderrLog("SERVICE_TYPE_ERROR", -1, 0, 0, 0, 0);
 	}
 	Start();
 }
@@ -148,23 +147,18 @@ void* CCVClient::Run()
 			{
 				case LOGREQ:
 					nToRecv = sizeof(struct CV_StructLogon)-2;
-			printf("\nlogin nToRecv = %d\n", nToRecv);
 					break;
 				case HEARTBEATREQ:
 					nToRecv = sizeof(struct CV_StructHeartbeat)-2;
-			printf("\nhbrq nToRecv = %d\n", nToRecv);
 					break;
 				case HEARTBEATREP:
 					nToRecv = sizeof(struct CV_StructHeartbeat)-2;
-			printf("\nhbrp nToRecv = %d\n", nToRecv);
 					break;
 				case ORDERREQ:
 					nToRecv = sizeof(struct CV_StructOrder)-2;
-			printf("\norder nToRecv = %d\n", nToRecv);
 					break;
 				case DISCONNMSG:
 					SetStatus(csOffline);
-			printf("\ndisconnect nToRecv = %d\n", nToRecv);
 					break;
 				default:
 					FprintfStderrLog("ESCAPE_BYTE_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID));
@@ -175,7 +169,10 @@ void* CCVClient::Run()
 				break;
 
 			memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
-			bRecvAll = RecvAll(uncaRecvBuf, nToRecv);
+
+			if(nToRecv)
+				bRecvAll = RecvAll(uncaRecvBuf, nToRecv);
+
 			if(bRecvAll == false)
 			{
 				FprintfStderrLog("RECV_TRAIL_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), uncaRecvBuf, nToRecv);
@@ -186,7 +183,8 @@ void* CCVClient::Run()
 		memcpy(uncaMessageBuf, uncaEscapeBuf, 2);
 		memcpy(uncaMessageBuf+2, uncaRecvBuf, nToRecv);
 		nSizeOfRecvedCVMessage = 2 + nToRecv;	
-		if(nToRecv > 0)
+
+		if(nToRecv >= 0)
 		{
 			if(uncaMessageBuf[1] == LOGREQ)//logon message
 			{
@@ -224,12 +222,10 @@ void* CCVClient::Run()
 						perror("SEND_SOCKET_ERROR");
 					}
 
-					U_ByteSint bytesint;
-					memset(&bytesint,0,16);
-
 					if(bLogon)//success
 					{
 						SetStatus(csOnline);
+						ReplyAccountNum();
 						m_pHeartbeat->Start();
 					}
 					else//logon failed
@@ -270,6 +266,7 @@ void* CCVClient::Run()
 					break;
 				}
 			}
+
 			else if(uncaMessageBuf[1] == HEARTBEATREQ)//heartbeat message
 			{
 				if(memcmp(uncaMessageBuf + 2, HeartbeatRQ.heartbeat_msg, 4) == 0)
@@ -292,6 +289,7 @@ void* CCVClient::Run()
 					FprintfStderrLog("RECV_CV_HBRQ_ERROR", -1, uncaMessageBuf + 2, 4);
 				}
 			}
+
 			else if(uncaMessageBuf[1] == HEARTBEATREP)//heartbeat message
 			{
 				if(memcmp(uncaMessageBuf + 2, HeartbeatRP.heartbeat_msg, 4) == 0)
@@ -304,13 +302,14 @@ void* CCVClient::Run()
 				}
 			}
 
-
+			
 			else if(uncaMessageBuf[1] == DISCONNMSG)
 			{
 				SetStatus(csOffline);
 				FprintfStderrLog("RECV_CV_DISCONNECT", 0, 0, 0);
 				break;
 			}
+
 			else if(uncaMessageBuf[1] == ORDERREQ)
 			{
 				FprintfStderrLog("RECV_CV_ORDER", 0, uncaMessageBuf, nSizeOfRecvedCVMessage);
@@ -320,7 +319,7 @@ void* CCVClient::Run()
 					struct CV_StructOrderReply replymsg;
 					int errorcode = -LG_ERROR;
 					memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
-					replymsg.header_bit[0] = 0x1b;
+					replymsg.header_bit[0] = ESCAPE;
 					replymsg.header_bit[1] = ORDERREP;
 
 					memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
@@ -360,7 +359,7 @@ void* CCVClient::Run()
 						struct CV_StructOrderReply replymsg;
 
 						memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
-						replymsg.header_bit[0] = 0x1b;
+						replymsg.header_bit[0] = ESCAPE;
 						replymsg.header_bit[1] = ORDERREP;
 
 						memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
@@ -430,6 +429,8 @@ void* CCVClient::Run()
 	pClients->MoveOnlineClientToOfflineVector(this);
 	return NULL;
 }
+
+
 
 bool CCVClient::SendData(const unsigned char* pBuf, int nSize)
 {
@@ -536,27 +537,103 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 		return size * nmemb;
 }
 
+void CCVClient::ReplyAccountContents()
+{
+	char AcclistReplyBuf[1024];
+	AcclistReplyBuf[0] = ESCAPE;
+	AcclistReplyBuf[1] = ACCLISTREP;
+#if 0
+	map<string, struct AccountData> m_mBranchAccount;
+	
+	struct AccountData
+	{
+		string api_id;
+		string api_key;
+		string broker_id;
+		string exchange_name;
+	};
+#endif
+	map<string, struct AccountData>::iterator iter;
+	memset(AcclistReplyBuf, 0, 1024);
+
+	int i = 0, len ;
+	for(iter = m_mBranchAccount.begin(); iter != m_mBranchAccount.end() ; iter++, i++)
+	{
+		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2), iter->second.broker_id.c_str(), 4);
+		printf("keanu test %s %s, %d\n", iter->second.broker_id.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2));
+		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, iter->first.c_str(), 7);
+		printf("keanu test %s %s, %d\n", iter->first.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4);
+		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, iter->second.exchange_name.c_str(), 10);
+		printf("keanu test %s %s, %d\n", iter->second.exchange_name.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11);
+		len = 2+(i+1)*(sizeof(struct CV_StructAcclistReply)-2); 
+	}
+	int nSendData = SendData((unsigned char*)AcclistReplyBuf, len);
+
+	if(nSendData)
+	{
+		FprintfStderrLog("SEND_ACCOUNT_LIST", 0, (unsigned char*)AcclistReplyBuf, len);
+	}
+	else
+	{
+		FprintfStderrLog("SEND_ACCOUNT_LIST_ERROR", -1, (unsigned char*)AcclistReplyBuf, len);
+		perror("SEND_SOCKET_ERROR");
+	}
+}
+
+void CCVClient::ReplyAccountNum()
+{
+	struct CV_StructAccnumReply replymsg;
+	int num = 0, nSendData;
+	char mapsize[3];
+
+	replymsg.header_bit[0] = ESCAPE;
+	replymsg.header_bit[1] = ACCNUMREP;
+
+	if(m_ClientStatus == csLogoning)
+	{
+		replymsg.accnum = 0;
+		nSendData = SendData((unsigned char*)&replymsg, sizeof(struct CV_StructAccnumReply));
+	}
+	else
+	{
+		replymsg.accnum = m_mBranchAccount.size();
+		nSendData = SendData((unsigned char*)&replymsg, sizeof(struct CV_StructAccnumReply));
+	}
+
+	if(nSendData)
+	{
+		FprintfStderrLog("SEND_ACCOUNT_NUM", 0, (unsigned char*)&replymsg, sizeof(struct CV_StructAccnumReply));
+	}
+	else
+	{
+		FprintfStderrLog("SEND_ACCOUNT_NUM_ERROR", -1, (unsigned char*)&replymsg, sizeof(struct CV_StructAccnumReply));
+		perror("SEND_SOCKET_ERROR");
+	}
+
+	if(nSendData)
+		ReplyAccountContents();
+}
+
 bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply &logon_reply)
 {
-	json jtable;
-	json jtable_exname;
+	json jtable_query_account;
+	json jtable_query_exchange;
 	CURLcode res;
-	string readBuffer1, readBuffer2, acno, exno;
+	string readBuffer1, readBuffer2, acno, exno, brno;
 	struct AccountData acdata;
-
 	CURL *curl = curl_easy_init();
 
 	if(curl) {
 		char query_str[512];
-		sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20accounting_no,exchange_no%%20from%%20employee,accounting%20where%%20account%20=%20%27%s%%27%%20and%%20password%%20=%%20%%27%s%%27%%20and%%20accounting.trader_no=employee.trader_no", pID, ppassword);
+		sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20accounting_no,exchange_no,broker_no%%20from%%20employee,accounting%20where%%20account%20=%20%27%s%%27%%20and%%20password%%20=%%20%%27%s%%27%%20and%%20accounting.trader_no=employee.trader_no", pID, ppassword);
 		printf("================\n%s\n===============\n", query_str);
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer1);
 		res = curl_easy_perform(curl);
-		jtable = json::parse(readBuffer1.c_str());
+		jtable_query_account = json::parse(readBuffer1.c_str());
 
-		if(jtable.size() == 0) {
+		if(jtable_query_account.size() == 0) {
 			memcpy(logon_reply.status_code, "NG", 2);//to do
 			memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
 			memcpy(logon_reply.error_code, "01", 2);
@@ -564,35 +641,44 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			return false;
 		}
 
-		for(int i=0 ; i<jtable.size() ; i++) {
+		for(int i=0 ; i<jtable_query_account.size() ; i++) {
 			readBuffer2 = "";
-			acno = to_string(jtable[i]["accounting_no"]);
-			exno = to_string(jtable[i]["exchange_no"]);
+			acno = to_string(jtable_query_account[i]["accounting_no"]);
+			exno = to_string(jtable_query_account[i]["exchange_no"]);
+			brno = to_string(jtable_query_account[i]["broker_no"]);
 			acno = acno.substr(1, 7);
 			exno = exno.substr(1, 7);
+			brno = brno.substr(1, 4);
 			sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
+#ifdef DEBUG
+			printf("%s\n", readBuffer1.c_str());
+#endif
 			curl_easy_setopt(curl, CURLOPT_URL, query_str);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
 			res = curl_easy_perform(curl);
-			printf("%s\n", readBuffer2.c_str());
-			jtable_exname = json::parse(readBuffer2.c_str());
-			acdata.exchange_name = to_string(jtable_exname[0]["exchange_name_en"]);
-			acdata.api_id = to_string(jtable_exname[0]["api_id"]);
-			acdata.api_key = to_string(jtable_exname[0]["api_secret"]);
+			jtable_query_exchange = json::parse(readBuffer2.c_str());
+			
+			acdata.exchange_name = to_string(jtable_query_exchange[0]["exchange_name_en"]);
+			acdata.api_id = to_string(jtable_query_exchange[0]["api_id"]);
+			acdata.api_key = to_string(jtable_query_exchange[0]["api_secret"]);
 			acdata.exchange_name = acdata.exchange_name.substr(1, acdata.exchange_name.length()-1);
 			acdata.api_id = acdata.api_id.substr(1, acdata.api_id.length()-1);
 			acdata.api_key = acdata.api_key.substr(1, acdata.api_key.length()-1);
-	
+			acdata.broker_id = brno;
 			m_mBranchAccount.insert(pair<string, struct AccountData>(acno, acdata));
+#ifdef DEBUG
+			printf("%s, %s, %s, %s\n", acdata.api_id.c_str(), acdata.api_key.c_str(), acdata.exchange_name.c_str(), acdata.broker_id.c_str());
+#endif
 		}
-			memcpy(logon_reply.status_code, "OK", 2);//to do
-			memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
-			memcpy(logon_reply.error_code, "00", 2);
-			sprintf(logon_reply.error_message, "login success");
+		memcpy(logon_reply.status_code, "OK", 2);//to do
+		memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+		memcpy(logon_reply.error_code, "00", 2);
+		sprintf(logon_reply.error_message, "login success");
 		curl_easy_cleanup(curl);
 		return true;
 	}
+
 	memcpy(logon_reply.status_code, "NG", 2);//to do
 	memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
 	memcpy(logon_reply.error_code, "01", 2);

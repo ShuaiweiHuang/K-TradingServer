@@ -141,6 +141,7 @@ void* test_run(void *arg)
 
 		conn_retry = CONNRETRY;
 
+		int packs=1, len;
 		if(is_login && is_conn) {
 #if 1
 			data[0] = 0x1b;
@@ -157,30 +158,51 @@ void* test_run(void *arg)
 				is_conn = 0;
 				break;
 			}
-			int packs=1, len;
 
 			while(packs--)
 			{
-				if ((len=read(server, data, MAXDATA)) <= 0) 
+				if ((len=read(server, data, 128)) <= 0) 
 				{
 					perror ("read from aptrader_server error !");
 					ret = -1;
 					is_conn = 0;
 					break;
 				}
-				if(data[1] == 0x03) {
+
+				printf("login: len=%d,%x,%x,%.2s,%.40s,%.2s,%.82s\n", len, data[0], data[1], data+2, data+4, data+44, data+46);
+
+				if ((len=read(server, data, 3)) <= 0) 
+				{
+					perror ("read from aptrader_server error !");
+					ret = -1;
+					is_conn = 0;
+					break;
+				}
+
+
+				if(data[1] == 0x02) {
 					account_num = data[2];
-					printf("account num: packet len=%d, %x, %x, %d\n", len, data[0], data[1], account_num);
+					printf("account num: packet len=%d, %x, %x, %x\n", len, data[0], data[1], data[2]);
 				}
-				if(data[1] == 0x05) {
-					printf("account: packet len=%d, %x, %x,\n",	len, data[0], data[1]);
- 
-					for(i=0 ; i<account_num ; i++)
-						printf("%.10s %.10s %.10s\n", data+2+i*30, data+12+i*30, data+22+i*30);
+printf("keanu test 1\n");
+				if ((len=read(server, data, 44)) <= 0) 
+				{
+					perror ("read from aptrader_server error !");
+					ret = -1;
+					is_conn = 0;
+					break;
 				}
-				if(data[1] == 0x01)
-					printf("login: len=%d,%x,%x,%.2s,%.40s,%.2s,%.82s\n", len, data[0], data[1], data+2, data+4, data+44, data+46);
+
+printf("keanu test 2\n");
+				printf("account: packet len=%d, %x, %x,\n",	len, data[0], data[1]);
 			}
+#endif
+#if 0
+			data[0] = 0x1b;
+			data[1] = 0x02;
+			write(server, data, 2);
+			len = read(server, data, 4);
+			printf("account num: packet len=%d, %x, %x, %.2s\n", len, data[0], data[1], data+2);
 #endif
 #if 0
 			data[0] = 0x1b;
@@ -229,7 +251,7 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_dayoff, "N", 1);
 			memcpy(ts_order.order_date, "20190821", 8);
 			memcpy(ts_order.order_time, "17160301", 8);
-			memcpy(ts_order.order_buysell, "B", 1);
+			memcpy(ts_order.order_buysell, "S", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
 			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price

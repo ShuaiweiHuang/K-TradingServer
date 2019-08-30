@@ -1,10 +1,3 @@
-/*
- * CSKSocket.h
- *
- *  Created on: 2015年10月26日
- *      Author: alex
- */
-
 #ifndef CSKSOCKET_H_
 #define CSKSOCKET_H_
 

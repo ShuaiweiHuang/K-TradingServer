@@ -151,9 +151,10 @@ bool CSKTandemDAO::IsInuse()
 
 bool CSKTandemDAO::RiskControl()
 {
-	int limit = atoi (m_requestlimit.c_str());
-	int time  = atoi (m_timelimit.c_str());
-#if 1
+	int limit = atoi (m_request_remain.c_str());
+	int time  = atoi (m_time_limit.c_str());
+	printf("limit = %d, time = %s\n", limit, m_time_limit.c_str());
+#if 0
 	if(limit <10)
 		return true;
 #endif	
@@ -170,54 +171,61 @@ bool CSKTandemDAO::SendOrder(const unsigned char* pBuf, int nSize)
 
 bool CSKTandemDAO::FillRiskMsg(const unsigned char* pBuf, int nSize)
 {
+	struct CV_StructTSOrder cv_ts_order;
+	memcpy(&cv_ts_order, pBuf, nSize);
 	//add reply message
+	memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
+	memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
+	memcpy(m_tandemreply.status_code, "1002", 4);
+	sprintf(m_tandemreply.reply_msg, "submit fail, risk control issue");
+	SetStatus(tsMsgReady);
 	return true;
 }
 
 size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp)
 {
-    ((std::string*)userp)->append((char*)contents, size * nmemb);
-    return size * nmemb;
+	((std::string*)userp)->append((char*)contents, size * nmemb);
+	return size * nmemb;
 }
 
 size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userdata)
 {
-    if ( strncmp((char *)ptr, "X-RateLimit-Remaining:", 22) == 0 ) { // get Token
+	if ( strncmp((char *)ptr, "X-RateLimit-Remaining:", 22) == 0 ) { // get Token
 	strtok((char *)ptr, " ");
-	(*userdata).limit = (string(strtok(NULL, " \n")));	// token will be stored in userdata
-    }
-    else if ( strncmp((char *)ptr, "X-RateLimit-Reset", 17) == 0 ) {  // get http response code
+	(*userdata).remain = (string(strtok(NULL, " \n")));	// token will be stored in userdata
+	}
+	else if ( strncmp((char *)ptr, "X-RateLimit-Reset", 17) == 0 ) {  // get http response code
 	strtok((char *)ptr, " ");
 	(*userdata).epoch = (string(strtok(NULL, " \n")));	// http response code
-    }
-    return nmemb;
+	}
+	return nmemb;
 }
 
 
 void CSKTandemDAO::SendNotify(char* pBuf)
 {
-        CURL *curl;
-        CURLcode res;
-        curl_global_init(CURL_GLOBAL_ALL);
+		CURL *curl;
+		CURLcode res;
+		curl_global_init(CURL_GLOBAL_ALL);
 
-        curl = curl_easy_init();
-        if(curl) {
-                struct curl_slist *chunk;
-                chunk = curl_slist_append(chunk, ACCESS_TOKEN);
-                chunk = curl_slist_append(chunk, "Content-Type: application/x-www-form-urlencoded");
-                curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
-                curl_easy_setopt(curl, CURLOPT_HEADER, true);
-                curl_easy_setopt(curl, CURLOPT_URL, "https://notify-api.line.me/api/notify");
-                curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(pBuf));
-                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, pBuf);
+		curl = curl_easy_init();
+		if(curl) {
+				struct curl_slist *chunk;
+				chunk = curl_slist_append(chunk, ACCESS_TOKEN);
+				chunk = curl_slist_append(chunk, "Content-Type: application/x-www-form-urlencoded");
+				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+				curl_easy_setopt(curl, CURLOPT_HEADER, true);
+				curl_easy_setopt(curl, CURLOPT_URL, "https://notify-api.line.me/api/notify");
+				curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(pBuf));
+				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, pBuf);
 
-                res = curl_easy_perform(curl);
-                if(res != CURLE_OK)
-                fprintf(stderr, "curl_easy_perform() failed: %s\n",
-                curl_easy_strerror(res));
-                curl_easy_cleanup(curl);
-        }
-        curl_global_cleanup();
+				res = curl_easy_perform(curl);
+				if(res != CURLE_OK)
+				fprintf(stderr, "curl_easy_perform() failed: %s\n",
+				curl_easy_strerror(res));
+				curl_easy_cleanup(curl);
+		}
+		curl_global_cleanup();
 }
 
 bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
@@ -229,7 +237,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
 	int expires = (int)time(NULL)+1000, ret;
-	char encrystr[150], commandstr[150], macoutput[128], post_str[100], apikey_str[150];
+	char encrystr[256], commandstr[256], macoutput[128], post_str[256], apikey_str[256];
 	char qty[10], oprice[10], tprice[10];
 	double doprice = 0, dtprice = 0, dqty = 0;
 	struct HEADRESP headresponse;
@@ -293,23 +301,23 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			switch(cv_ts_order.order_mark[0])
 			{
 				case '0'://Market
-					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=%s&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel",
-						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty));
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel&text=%.7s|%.16s",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=%s&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel",
-						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel&text=%.7s|%.16s",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '3'://stop market
-					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=%s&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop",
-						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), dtprice);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop&text=%.7s|%.16s",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), dtprice, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '4'://stop limit
-					sprintf(commandstr, "clOrdID=%.13s,%.7s,%.16s&symbol=%s&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit", 
-						cv_ts_order.key_id, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice, dtprice);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit&text=%.7s|%.16s",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice, dtprice, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '2'://Protect
@@ -343,7 +351,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	}
 
 
-#if 1//test
+#if 0//test
 	sprintf(encrystr, "message=%s:%.6s:%1f", buysell_str.c_str(), cv_ts_order.symbol_name, doprice);
 	SendNotify(encrystr);
 #endif
@@ -386,8 +394,9 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 
 	curl_global_cleanup();
 
-	m_requestlimit = headresponse.limit;
-	m_timelimit = headresponse.epoch;
+	m_request_remain = headresponse.remain;
+	m_time_limit = headresponse.epoch;
+	printf("time = %s\n", m_time_limit.c_str());
 
 	char notation;
 	for(int i=0 ; i<response.length() ; i++)

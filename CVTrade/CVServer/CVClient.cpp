@@ -662,9 +662,9 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			acdata.exchange_name = to_string(jtable_query_exchange[0]["exchange_name_en"]);
 			acdata.api_id = to_string(jtable_query_exchange[0]["api_id"]);
 			acdata.api_key = to_string(jtable_query_exchange[0]["api_secret"]);
-			acdata.exchange_name = acdata.exchange_name.substr(1, acdata.exchange_name.length()-1);
-			acdata.api_id = acdata.api_id.substr(1, acdata.api_id.length()-1);
-			acdata.api_key = acdata.api_key.substr(1, acdata.api_key.length()-1);
+			acdata.exchange_name = acdata.exchange_name.substr(1, acdata.exchange_name.length()-2);
+			acdata.api_id = acdata.api_id.substr(1, acdata.api_id.length()-2);
+			acdata.api_key = acdata.api_key.substr(1, acdata.api_key.length()-2);
 			acdata.broker_id = brno;
 			m_mBranchAccount.insert(pair<string, struct AccountData>(acno, acdata));
 #ifdef DEBUG

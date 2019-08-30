@@ -153,7 +153,6 @@ bool CSKTandemDAO::RiskControl()
 {
 	int limit = atoi (m_request_remain.c_str());
 	int time  = atoi (m_time_limit.c_str());
-	printf("limit = %d, time = %s\n", limit, m_time_limit.c_str());
 #if 0
 	if(limit <10)
 		return true;
@@ -396,7 +395,6 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 
 	m_request_remain = headresponse.remain;
 	m_time_limit = headresponse.epoch;
-	printf("time = %s\n", m_time_limit.c_str());
 
 	char notation;
 	for(int i=0 ; i<response.length() ; i++)

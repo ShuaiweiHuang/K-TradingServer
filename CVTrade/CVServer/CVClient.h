@@ -69,6 +69,7 @@ class CCVClient: public CCVThread
 		string m_strService;
 		CCVHeartbeat* m_pHeartbeat;
 		pthread_mutex_t m_MutexLockOnClientStatus;
+		char m_username[20];
 	protected:
 		void* Run();
 		bool LogonAuth(char* pID, char* pPasswd, struct CV_StructLogonReply &logon_reply);

@@ -300,23 +300,26 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			switch(cv_ts_order.order_mark[0])
 			{
 				case '0'://Market
-					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel&text=%.7s|%.16s",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&ordType=Market&timeInForce=GoodTillCancel&text=%.7s|%.16s|%.20s",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel&text=%.7s|%.16s",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel&text=%.7s|%.16s|%.20s",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice,
+					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '3'://stop market
-					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop&text=%.7s|%.16s",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), dtprice, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&stopPx=%.1f&ordType=Stop&text=%.7s|%.16s|%.20s",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), dtprice,
+					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '4'://stop limit
-					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit&text=%.7s|%.16s",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice, dtprice, cv_ts_order.sub_acno_id, cv_ts_order.strategy_name);
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&ordType=StopLimit&text=%.7s|%.16s|%.20s",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice, dtprice,
+					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '2'://Protect

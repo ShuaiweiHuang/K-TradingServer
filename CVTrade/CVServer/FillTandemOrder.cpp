@@ -31,7 +31,7 @@ bool IsNum(string strData, int nLength)
 		return true;
 }
 
-long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &ucv, union CV_TS_ORDER &ucvts)
+long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &ucv, union CV_TS_ORDER &ucvts)
 {
 	char caQty[10];
 	char caOrderPrice[10];
@@ -40,6 +40,8 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 
 	memcpy(ucvts.cv_ts_order.client_ip, pIP, IPLEN);
 	memcpy(ucvts.cv_ts_order.seq_id, ucv.cv_order.seq_id, 13); 
+	memcpy(ucvts.cv_ts_order.username, pUsername, 20); 
+	
 	printf("ucv.cv_order.seq_id = %.13s\n", ucv.cv_order.seq_id);
 //key id
 	if(ucv.cv_order.trade_type[0] == '0') {
@@ -81,7 +83,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, str
 	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "FOwdXKqBW-HiTjP2AQRTONDn");
 	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "-AWfoHglVakD4wi_iS3IDMEkS-yeTAtGvKn4hQbu198uNSyT");
 	}
-	memcpy(ucvts.cv_ts_order.strategy_name, ucv.cv_order.strategy_name, 7);
+	memcpy(ucvts.cv_ts_order.strategy_name, ucv.cv_order.strategy_name, 16);
 
 //Agent ID
 	if(strcmp(ucvts.cv_ts_order.agent_id, "MC") != 0 &&

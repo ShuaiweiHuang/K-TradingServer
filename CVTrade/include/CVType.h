@@ -102,6 +102,7 @@ struct CV_StructHeartbeatReply
 struct CV_StructTSOrder
 {
 	char client_ip[16];
+	char username[20];
 	char sub_acno_id[7];
 	char strategy_name[16];
 	char agent_id[2];

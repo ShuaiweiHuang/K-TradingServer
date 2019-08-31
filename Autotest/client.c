@@ -239,7 +239,7 @@ printf("keanu test 2\n");
 			ts_order.header_bit[0] = 0x1b;
 			ts_order.header_bit[1] = 0x40;
 			memcpy(ts_order.sub_acno_id, cp_account, 7);
-			memcpy(ts_order.strategy_name, "MACD123", 7);
+			memcpy(ts_order.strategy_name, "MACD-1234\0", 16);
 			memcpy(ts_order.agent_id, "MC", 2);
 			memcpy(ts_order.broker_id, "9801", 4);
 			memcpy(ts_order.exchange_id, "BITMEX\0", 7);
@@ -253,12 +253,12 @@ printf("keanu test 2\n");
 			memcpy(ts_order.order_time, "17160301", 8);
 			memcpy(ts_order.order_buysell, "S", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
-			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
+			memcpy(ts_order.order_mark, "0", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
 			memcpy(ts_order.order_price, "100005000", 9);
-			memcpy(ts_order.touch_price, "106000000", 9);
+			memcpy(ts_order.touch_price, "106005000", 9);
 			memcpy(ts_order.qty_mark, "0", 1);
 			memcpy(ts_order.order_qty, "000000001", 9);
 			memcpy(ts_order.order_kind,"0", 1);

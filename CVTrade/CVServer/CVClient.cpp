@@ -21,8 +21,8 @@
 using json = nlohmann::json;
 using namespace std;
 
-typedef long (*FillTandemOrder)(string& strService, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
-extern long FillTandemBitcoinOrderFormat(string& strService, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
+typedef long (*FillTandemOrder)(string& strService, char* pUsername, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
+extern long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
 CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService)
@@ -203,12 +203,17 @@ void* CCVClient::Run()
 					memset(&logon_reply, 0, m_nLengthOfLogonReplyMessage);
 					memset(m_uncaLogonID, 0, sizeof(m_uncaLogonID));
 					memcpy(m_uncaLogonID, logon_type.logon_id, sizeof(logon_type.logon_id));
+					memcpy(m_username, logon_type.logon_id, 20);
+
 					bLogon = LogonAuth(logon_type.logon_id, logon_type.password, logon_reply);//logon & get logon reply data
 					memset(uncaSendLogonBuf, 0, sizeof(uncaSendLogonBuf));
+
 					logon_reply.header_bit[0] = ESCAPE;
 					logon_reply.header_bit[1] = LOGREP;
+
 					uncaSendLogonBuf[0] = ESCAPE;
 					uncaSendLogonBuf[1] = LOGREP;
+
 					memcpy(uncaSendLogonBuf, &logon_reply.header_bit[0], m_nLengthOfLogonReplyMessage);
 					bool bSendData = SendData(uncaSendLogonBuf, m_nLengthOfLogonReplyMessage);
 
@@ -350,9 +355,9 @@ void* CCVClient::Run()
 					memcpy(&cv_order, uncaMessageBuf, nSizeOfCVOrder);
 					memset(&cv_ts_order, 0, sizeof(union CV_TS_ORDER));
 					long lOrderNumber = 0;
-					lOrderNumber = fpFillTandemOrder(m_strService, m_ClientAddrInfo.caIP,
+					lOrderNumber = fpFillTandemOrder(m_strService, m_username, m_ClientAddrInfo.caIP,
 									m_mBranchAccount, cv_order, cv_ts_order);
-
+					
 					if(lOrderNumber < 0)//error
 					{
 						int errorcode = -lOrderNumber;
@@ -560,11 +565,11 @@ void CCVClient::ReplyAccountContents()
 	for(iter = m_mBranchAccount.begin(); iter != m_mBranchAccount.end() ; iter++, i++)
 	{
 		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2), iter->second.broker_id.c_str(), 4);
-		printf("keanu test %s %s, %d\n", iter->second.broker_id.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2));
+		//printf("keanu test %s %s, %d\n", iter->second.broker_id.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2));
 		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, iter->first.c_str(), 7);
-		printf("keanu test %s %s, %d\n", iter->first.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4);
+		//printf("keanu test %s %s, %d\n", iter->first.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4);
 		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, iter->second.exchange_name.c_str(), 10);
-		printf("keanu test %s %s, %d\n", iter->second.exchange_name.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11);
+		//printf("keanu test %s %s, %d\n", iter->second.exchange_name.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11);
 		len = 2+(i+1)*(sizeof(struct CV_StructAcclistReply)-2); 
 	}
 	int nSendData = SendData((unsigned char*)AcclistReplyBuf, len);

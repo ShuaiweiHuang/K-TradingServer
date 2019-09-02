@@ -256,7 +256,7 @@ printf("keanu test 2\n");
 			memcpy(ts_order.order_time, "17160301", 8);
 			memcpy(ts_order.order_buysell, "S", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
-			memcpy(ts_order.order_mark, "0", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
+			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);

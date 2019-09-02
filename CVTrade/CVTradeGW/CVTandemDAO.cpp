@@ -294,17 +294,18 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
+	string order_url, order_all_url;
 
-	if(!strcmp(cv_ts_order.exchange_id, "TESTNET")
+	if(!strcmp(cv_ts_order.exchange_id, "TESTNET"))
 	{
-		string order_url = "https://testnet.bitmex.com/api/v1/order";
-		string order_all_url = "https://testnet.bitmex.com/api/v1/order/all";
+		order_url = "https://testnet.bitmex.com/api/v1/order";
+		order_all_url = "https://testnet.bitmex.com/api/v1/order/all";
 	}
 	
-	if(!strcmp(cv_ts_order.exchange_id, "BITMEX")
+	if(!strcmp(cv_ts_order.exchange_id, "BITMEX"))
 	{
-		string order_url = "https://www.bitmex.com/api/v1/order";
-		string order_all_url = "https://www.bitmex.com/api/v1/order/all";
+		order_url = "https://www.bitmex.com/api/v1/order";
+		order_all_url = "https://www.bitmex.com/api/v1/order/all";
 	}
 
 	switch(cv_ts_order.trade_type[0])

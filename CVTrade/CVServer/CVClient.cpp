@@ -564,12 +564,15 @@ void CCVClient::ReplyAccountContents()
 	int i = 0, len ;
 	for(iter = m_mBranchAccount.begin(); iter != m_mBranchAccount.end() ; iter++, i++)
 	{
-		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2), iter->second.broker_id.c_str(), 4);
-		//printf("keanu test %s %s, %d\n", iter->second.broker_id.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2));
-		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, iter->first.c_str(), 7);
-		//printf("keanu test %s %s, %d\n", iter->first.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4);
-		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, iter->second.exchange_name.c_str(), 10);
-		//printf("keanu test %s %s, %d\n", iter->second.exchange_name.c_str(), AcclistReplyBuf, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11);
+		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2), iter->second.broker_id.c_str(), iter->second.broker_id.length());
+		//printf("keanu test (%s) (%s), %d\n", iter->second.broker_id.c_str(), 
+		//		AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2), 2 + i*(sizeof(struct CV_StructAcclistReply)-2));
+		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, iter->first.c_str(), iter->first.length());
+		//printf("keanu test (%s) (%s), %d\n", iter->first.c_str(),
+		//		AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4);
+		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, iter->second.exchange_name.c_str(), iter->second.exchange_name.length());
+		//printf("keanu test (%s) (%s), %d\n", iter->second.exchange_name.c_str(),
+		//		AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11);
 		len = 2+(i+1)*(sizeof(struct CV_StructAcclistReply)-2); 
 	}
 	int nSendData = SendData((unsigned char*)AcclistReplyBuf, len);
@@ -663,7 +666,7 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
 			res = curl_easy_perform(curl);
 			jtable_query_exchange = json::parse(readBuffer2.c_str());
-			
+			memset(&acdata, sizeof(struct AccountData), 0);
 			acdata.exchange_name = to_string(jtable_query_exchange[0]["exchange_name_en"]);
 			acdata.api_id = to_string(jtable_query_exchange[0]["api_id"]);
 			acdata.api_key = to_string(jtable_query_exchange[0]["api_secret"]);

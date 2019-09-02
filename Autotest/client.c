@@ -194,7 +194,10 @@ printf("keanu test 1\n");
 				}
 
 printf("keanu test 2\n");
-				printf("account: packet len=%d, %x, %x,\n",	len, data[0], data[1]);
+				printf("account: packet len=%d, %x, %x, %.4s, %.7s, %.10s, %.4s, %.7s, %.10s\n", len, data[0], data[1], data+2, data+6, data+13, data+23, data+27, data+34);
+				for(i = 0 ; i<len ; i++)
+					printf("[%x] ", data[i]);
+				printf("\n");
 			}
 #endif
 #if 0

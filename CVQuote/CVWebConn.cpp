@@ -335,7 +335,7 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 
 	string strname = "BITMEX";
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
-	//pServer->m_heartbeat_count = 0;
+	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	if(pServer->GetStatus() == ssBreakdown) {
 		c->close(con,websocketpp::close::status::normal,"");
@@ -483,7 +483,7 @@ void CCVServer::OnHeartbeatRequest()
 	FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
 	exit(-1);
 
-#if 0//Regardless PING/PONG mechanism
+#if 1
 
 	if(m_strName == "BITMEX") {
 		if(m_heartbeat_count <= HTBT_COUNT_LIMIT) {
@@ -493,7 +493,7 @@ void CCVServer::OnHeartbeatRequest()
 			if(msg.message() != "SUCCESS")
 				exit(-1);
 			else {
-				m_pHeartbeat->TriggerGetReplyEvent();
+				//m_pHeartbeat->TriggerGetReplyEvent();
 				m_heartbeat_count++;
 			}
 		}

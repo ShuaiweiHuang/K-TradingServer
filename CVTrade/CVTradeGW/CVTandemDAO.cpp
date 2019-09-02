@@ -153,6 +153,7 @@ bool CSKTandemDAO::RiskControl()
 {
 	int limit = atoi (m_request_remain.c_str());
 	int time  = atoi (m_time_limit.c_str());
+	printf("Limit = %d\n", limit);
 #if 0
 	if(limit <10)
 		return true;
@@ -210,7 +211,7 @@ void CSKTandemDAO::SendNotify(char* pBuf)
 		curl = curl_easy_init();
 		if(curl) {
 				struct curl_slist *chunk;
-				chunk = curl_slist_append(chunk, ACCESS_TOKEN);
+				chunk = curl_slist_append(chunk, "Authorization: Bearer naBftXyXgOX00lJg8Fl78QyKD5hNe6by4PWjJ5sArVU");
 				chunk = curl_slist_append(chunk, "Content-Type: application/x-www-form-urlencoded");
 				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
 				curl_easy_setopt(curl, CURLOPT_HEADER, true);
@@ -293,6 +294,19 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
+
+	if(!strcmp(cv_ts_order.exchange_id, "TESTNET")
+	{
+		string order_url = "https://testnet.bitmex.com/api/v1/order";
+		string order_all_url = "https://testnet.bitmex.com/api/v1/order/all";
+	}
+	
+	if(!strcmp(cv_ts_order.exchange_id, "BITMEX")
+	{
+		string order_url = "https://www.bitmex.com/api/v1/order";
+		string order_all_url = "https://www.bitmex.com/api/v1/order/all";
+	}
+
 	switch(cv_ts_order.trade_type[0])
 	{
 		case '0'://new order
@@ -328,7 +342,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 					break;
 			}
 			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_order, strlen(cv_ts_order.apiSecret_order), encrystr, strlen(encrystr), mac, mac_length);
-			curl_easy_setopt(m_curl, CURLOPT_URL, ORDER_URL);
+			curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
 			break;
 		case '1'://delete specific order
 			sprintf(apikey_str, "api-key: %s", cv_ts_order.apiKey_cancel);
@@ -336,7 +350,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			sprintf(encrystr, "DELETE/api/v1/order%d%s", expires, commandstr);
 			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_cancel, strlen(cv_ts_order.apiSecret_cancel), encrystr, strlen(encrystr), mac, mac_length);
 			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			curl_easy_setopt(m_curl, CURLOPT_URL, ORDER_URL);
+			curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
 			break;
 		case '2'://delete all order
 			sprintf(apikey_str, "api-key: %s", cv_ts_order.apiKey_cancel);
@@ -344,7 +358,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			sprintf(encrystr, "DELETE/api/v1/order/all%d%s", expires, commandstr);
 			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_cancel, strlen(cv_ts_order.apiSecret_cancel), encrystr, strlen(encrystr), mac, mac_length);
 			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			curl_easy_setopt(m_curl, CURLOPT_URL, ORDER_ALL_URL);
+			curl_easy_setopt(m_curl, CURLOPT_URL, order_all_url.c_str());
 			break;
 		case '3'://change qty
 			break;

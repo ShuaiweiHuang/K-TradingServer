@@ -61,7 +61,29 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 
 
 //Sub account id and strategy name
+	int i = 0, len ;
+
 	memcpy(ucvts.cv_ts_order.sub_acno_id, ucv.cv_order.sub_acno_id, 7);
+	bool account_check = false;
+	for(map<string, struct AccountData>::iterator iter = mBranchAccount.begin(); iter != mBranchAccount.end() ; iter++)
+	{
+		if(!memcmp(iter->first.c_str(), ucvts.cv_ts_order.sub_acno_id, iter->first.length()))
+		{
+			account_check = true;
+			memcpy(ucvts.cv_ts_order.apiKey_order, iter->second.api_id.c_str(), iter->second.api_id.length());
+			printf("api id (%d): %s\n", iter->second.api_id.length(), iter->second.api_id.c_str());
+			memcpy(ucvts.cv_ts_order.apiSecret_order, iter->second.api_key.c_str(), iter->second.api_key.length());
+			printf("api key (%d): %s\n", iter->second.api_key.length(), iter->second.api_key.c_str());
+			memcpy(ucvts.cv_ts_order.apiKey_cancel, iter->second.api_id.c_str(), iter->second.api_id.length());
+			memcpy(ucvts.cv_ts_order.apiSecret_cancel, iter->second.api_key.c_str(), iter->second.api_key.length());
+			break;
+		}
+	}
+
+	if(!account_check)
+		return AC_ERROR;
+
+#if 0//TEST ONLY
 	if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "A000012", 7))
 	{
 	        sprintf(ucvts.cv_ts_order.apiKey_order, "f3-gObpGoi5ECeCjFozXMm4K");
@@ -69,6 +91,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "O-E5T-a0KJDs6AMh5loISqu6");
 	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "4RFDBMdJb8425ZzP61aoT_3sEwF6Q9FqhTo26uXIR3RjBMOP");
 	}
+#if 0
 	if(!strncmp(ucvts.cv_ts_order.sub_acno_id, "A000013", 7))
 	{
 	        sprintf(ucvts.cv_ts_order.apiKey_order, "A9oHum-Pjl590hShf8eXH3Hl");
@@ -83,6 +106,8 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 	        sprintf(ucvts.cv_ts_order.apiKey_cancel, "FOwdXKqBW-HiTjP2AQRTONDn");
 	        sprintf(ucvts.cv_ts_order.apiSecret_cancel, "-AWfoHglVakD4wi_iS3IDMEkS-yeTAtGvKn4hQbu198uNSyT");
 	}
+#endif
+#endif
 	memcpy(ucvts.cv_ts_order.strategy_name, ucv.cv_order.strategy_name, 16);
 
 //Agent ID

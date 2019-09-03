@@ -97,6 +97,8 @@ void* CCVServer::Run()
 
 void CCVServer::OnConnect()
 {
+	unsigned char msg[BUFFERSIZE];
+
 	if(m_ssServerStatus == ssNone)
 	{
 		try {
@@ -109,7 +111,9 @@ void CCVServer::OnConnect()
 			try
 			{
 				m_pHeartbeat = new CCVHeartbeat(this);
-				m_pHeartbeat->Start();
+				memset(msg, BUFFERSIZE, 0);
+				sprintf((char*)msg, "add heartbeat in %s service.", m_strName.c_str());
+				FprintfStderrLog("NEW_HEARTBEAT_CREATE", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_heartbeat_count = 0;
 			}
 			catch (exception& e)
@@ -120,26 +124,38 @@ void CCVServer::OnConnect()
 			}
 
 			if(m_strName == "BITMEX") {
+				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
+				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitmex,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BITMEXLESS") {
+				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_MIN);
+				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_BitmexLess,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BITMEXINDEX") {
+				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_MIN);
+				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_BitmexIndex,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
-			if(m_strName == "BITSTAMP") {
+			else if(m_strName == "BITSTAMP") {
+				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
+				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitstamp,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BINANCE") {
+				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
+				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Binance,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
-
+			else {
+				
+			}
 			string uri = m_strWeb + m_strQstr;
 
 			m_pClientSocket->m_cfd.set_tls_init_handler(std::bind(&CB_TLS_Init, m_strWeb.c_str(), ::_1));
@@ -419,7 +435,7 @@ void CCVServer::OnData_Bitstamp(client* c, websocketpp::connection_hdl con, clie
 }
 void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
-//	printf("[on_message_binance]\n");
+	//printf("[on_message_binance]\n");
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	string str = msg->get_payload();
@@ -481,27 +497,29 @@ void CCVServer::OnHeartbeatLost()
 void CCVServer::OnHeartbeatRequest()
 {
 	FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
-	exit(-1);
+	char replymsg[BUFFERSIZE];
+	memset(replymsg, 0, BUFFERSIZE);
 
-#if 1
+	if(m_heartbeat_count <= HTBT_COUNT_LIMIT)
+	{
+		auto msg = m_pClientSocket->m_conn->send("ping");
+		sprintf(replymsg, "%s send PING message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
+		FprintfStderrLog("PING/PONG protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
 
-	if(m_strName == "BITMEX") {
-		if(m_heartbeat_count <= HTBT_COUNT_LIMIT) {
-			auto msg = m_pClientSocket->m_conn->send("ping");
-			cout << m_strName << " send \"PING\" and response: "<< msg.message() << endl;
-			FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, NULL, 0,  NULL, 0);
-			if(msg.message() != "SUCCESS")
-				exit(-1);
-			else {
-				//m_pHeartbeat->TriggerGetReplyEvent();
-				m_heartbeat_count++;
-			}
-		}
-		else {
+		if(msg.message() != "SUCCESS" && msg.message() != "Success")
+		{
+			FprintfStderrLog("Server PING/PONG Fail", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
 			exit(-1);
 		}
+		else
+		{
+			m_heartbeat_count++;
+		}
 	}
-#endif
+	else
+	{
+		exit(-1);
+	}
 }
 
 void CCVServer::OnHeartbeatError(int nData, const char* pErrorMessage)

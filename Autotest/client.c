@@ -195,9 +195,6 @@ printf("keanu test 1\n");
 
 printf("keanu test 2\n");
 				printf("account: packet len=%d, %x, %x, %.4s, %.7s, %.10s, %.4s, %.7s, %.10s\n", len, data[0], data[1], data+2, data+6, data+13, data+23, data+27, data+34);
-				for(i = 0 ; i<len ; i++)
-					printf("[%x] ", data[i]);
-				printf("\n");
 			}
 #endif
 #if 0
@@ -245,7 +242,7 @@ printf("keanu test 2\n");
 			memcpy(ts_order.strategy_name, "MACD-1234\0", 16);
 			memcpy(ts_order.agent_id, "MC", 2);
 			memcpy(ts_order.broker_id, "9801", 4);
-			memcpy(ts_order.exchange_id, "BITMEX\0", 7);
+			memcpy(ts_order.exchange_id, "TESTNET\0", 8);
 			memcpy(ts_order.seq_id, "9487943123456", 13);
 			memcpy(ts_order.symbol_name, "XBTUSD\0", 7);
 			memcpy(ts_order.symbol_type, "F", 1);
@@ -256,7 +253,7 @@ printf("keanu test 2\n");
 			memcpy(ts_order.order_time, "17160301", 8);
 			memcpy(ts_order.order_buysell, "S", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
-			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
+			memcpy(ts_order.order_mark, "0", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);

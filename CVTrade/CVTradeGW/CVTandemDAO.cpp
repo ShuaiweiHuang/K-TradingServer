@@ -295,7 +295,6 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
 	string order_url, order_all_url;
-
 	if(!strcmp(cv_ts_order.exchange_id, "TESTNET"))
 	{
 		order_url = "https://testnet.bitmex.com/api/v1/order";

@@ -116,14 +116,14 @@ void* CSKTandemDAO::Run()
 				else
 				{
 					FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
-					usleep(100);
+					usleep(10000);
 				}
 			}
 			printf("request remain: %s\n", m_request_remain.c_str());
 			printf("time limit: %s\n", m_time_limit.c_str());
 		}
 		else
-			usleep(100);
+			usleep(10000);
 	}
 	return NULL;
 }

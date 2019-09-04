@@ -561,20 +561,25 @@ bool CSKTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 
 	//printf("\n\n\n%s\n\n\n", bitmex_data[1].c_str());
 	if(option == OPT_ADD) {
-		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_price=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[1].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[4].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[13].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str());
+		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[1].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[13].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str());
+		if(bitmex_data[4] != "null")
+			sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, bitmex_data[4].c_str());
 		if(bitmex_data[9] != "null")
-			sprintf(insert_str, "%sstop_price=%%27%s%%27", insert_str, bitmex_data[9].c_str());
+			sprintf(insert_str, "%s,stop_price=%%27%s%%27", insert_str, bitmex_data[9].c_str());
 		if(bitmex_data[10] != "null")
-			sprintf(insert_str, "%match_price=%%27%s%%27", insert_str, bitmex_data[10].c_str());
+			sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, bitmex_data[10].c_str());
 	}
 
 	if(option == OPT_DELETE) {
-		sprintf(delete_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=delete%%20from%%20bitmex_order_history%20where%%20order_no%%20=%%20%%27%s%%27", bitmex_data[1].c_str());
-		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_price=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[1].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[4].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[13].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str());
+//		sprintf(delete_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=delete%%20from%%20bitmex_order_history%20where%%20order_no%%20=%%20%%27%s%%27", bitmex_data[1].c_str());
+		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=update%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[13].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str());
+		if(bitmex_data[4] != "null")
+			sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, bitmex_data[4].c_str());
 		if(bitmex_data[9] != "null")
-			sprintf(insert_str, "%sstop_price=%%27%s%%27", insert_str, bitmex_data[9].c_str());
+			sprintf(insert_str, "%s,stop_price=%%27%s%%27", insert_str, bitmex_data[9].c_str());
 		if(bitmex_data[10] != "null")
-			sprintf(insert_str, "%match_price=%%27%s%%27", insert_str, bitmex_data[10].c_str());
+			sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, bitmex_data[10].c_str());
+		sprintf(insert_str, "%s%%20where order_no=%%27%s%%27", insert_str, bitmex_data[1].c_str());
 	}
 
 	for(int i=0 ; i<strlen(insert_str) ; i++)

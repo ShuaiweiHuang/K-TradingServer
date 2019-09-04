@@ -10,6 +10,10 @@
 #include "CVWriteQueueDAOs.h"
 #include "../include/CVType.h"
 #include "../include/CVGlobal.h"
+#include <nlohmann/json.hpp>
+#include <iomanip>
+
+using json = nlohmann::json;
 
 class CSKHeartbeat;
 class CSKTandem;
@@ -18,6 +22,12 @@ struct HEADRESP
 {
 	string remain;
 	string epoch;
+};
+
+enum TYPE_SELECT
+{
+	OPT_ADD,
+	OPT_DELETE
 };
 
 enum TSKTandemDAOStatus
@@ -69,8 +79,10 @@ public:
 
 	bool SendOrder(const unsigned char* pBuf, int nSize);
 	bool OrderSubmit(const unsigned char* pBuf, int nSize);
+	bool OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool RiskControl();
 	bool FillRiskMsg(const unsigned char* pBuf, int nSize);
+	bool LogOrderReplyDB_Bitmex(json* jtable, int option);
 
 	TSKTandemDAOStatus GetStatus();
 	void SetStatus(TSKTandemDAOStatus tsStatus);

@@ -654,9 +654,9 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			acno = to_string(jtable_query_account[i]["accounting_no"]);
 			exno = to_string(jtable_query_account[i]["exchange_no"]);
 			brno = to_string(jtable_query_account[i]["broker_no"]);
-			acno = acno.substr(1, 7);
-			exno = exno.substr(1, 7);
-			brno = brno.substr(1, 4);
+			acno = acno.substr(1, acno.length()-2);
+			exno = exno.substr(1, exno.length()-2);
+			brno = brno.substr(1, brno.length()-2);
 			sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 #ifdef DEBUG
 			printf("%s\n", readBuffer1.c_str());

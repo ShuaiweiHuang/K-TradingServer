@@ -66,6 +66,8 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		static void OnData_BitmexIndex(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Binance(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Bitstamp(client* c, websocketpp::connection_hdl, client::message_ptr msg);
+		int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);
+
 
 	protected:
 		void* Run();

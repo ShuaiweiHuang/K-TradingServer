@@ -80,6 +80,7 @@ public:
 	bool SendOrder(const unsigned char* pBuf, int nSize);
 	bool OrderSubmit(const unsigned char* pBuf, int nSize);
 	bool OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize);
+	bool OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool RiskControl();
 	bool FillRiskMsg(const unsigned char* pBuf, int nSize);
 	bool LogOrderReplyDB_Bitmex(json* jtable, int option);

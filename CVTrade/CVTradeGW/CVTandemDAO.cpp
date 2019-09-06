@@ -31,7 +31,7 @@ int CSKTandemDAO::HmacEncodeSHA256( const char * key, unsigned int key_length, c
 	HMAC_CTX ctx;
 	HMAC_CTX_init(&ctx);
 	HMAC_Init_ex(&ctx, key, strlen(key), engine, NULL);
-	HMAC_Update(&ctx, (unsigned char*)input, strlen(input));	// input is OK; &input is WRONG !!!
+	HMAC_Update(&ctx, (unsigned char*)input, strlen(input));
 	HMAC_Final(&ctx, output, &output_length);
 	HMAC_CTX_cleanup(&ctx);
 	return 0;
@@ -233,9 +233,14 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nToSend);
 
-	if(!strcmp(cv_ts_order.exchange_id, "TESTNET") || !strcmp(cv_ts_order.exchange_id, "BITMEX"))
+	if(!strcmp(cv_ts_order.exchange_id, "BITMEX_T") || !strcmp(cv_ts_order.exchange_id, "BITMEX"))
 	{
 		return OrderSubmit_Bitmex(cv_ts_order, nToSend);
+	}
+	if(!strcmp(cv_ts_order.exchange_id, "BINANCE_T") || !strcmp(cv_ts_order.exchange_id, "BINANCE"))
+	{
+		return true;
+		//return OrderSubmit_Binance(cv_ts_order, nToSend);
 	}
 	return false;
 }
@@ -305,7 +310,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
 	string order_url, order_all_url;
-	if(!strcmp(cv_ts_order.exchange_id, "TESTNET"))
+	if(!strcmp(cv_ts_order.exchange_id, "BITMEX_T"))
 	{
 		order_url = "https://testnet.bitmex.com/api/v1/order";
 		order_all_url = "https://testnet.bitmex.com/api/v1/order/all";

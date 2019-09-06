@@ -128,12 +128,28 @@ bool CCVClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 {
 	int nSend = 0;
 	int nSended = 0;
+	int retry = 3;
 
+	if(nToSend == 0)
+		return true;
 	do
 	{
 		nToSend -= nSend;
 
-		nSend = send(m_ClientAddrInfo.nSocket, pBuf + nSended, nToSend, 0);
+		do {
+			nSend = send(m_ClientAddrInfo.nSocket, pBuf + nSended, nToSend, 0);
+
+			if(nSend > 0) {
+				retry = 3;
+				break;
+			}
+			else {
+				FprintfStderrLog("SEND_CV_RETRY", -1, 0, NULL, 0);
+				sleep(1);
+			}
+
+		} while(retry--);
+
 		if(nSend <= 0) // socket close or disconnect
 		{
 			SetStatus(csOffline);
@@ -160,8 +176,7 @@ bool CCVClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 				break;
 			}
 		}
-	}
-	while(nSend != nToSend);
+	} while(nSend != nToSend);
 
 	return nSend == nToSend ? true : false;
 }

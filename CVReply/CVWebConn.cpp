@@ -84,7 +84,8 @@ void* CCVServer::Run()
 		try
 		{
 			SetStatus(ssNone);
-			m_pClientSocket->m_cfd.run();
+			//m_pClientSocket->m_cfd.run();
+			sleep(1);
 			SetStatus(ssBreakdown);
 			exit(-1);
 		}
@@ -97,15 +98,15 @@ void* CCVServer::Run()
 }
 
 int CCVServer::HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length) {
-        const EVP_MD * engine = EVP_sha256();
-        output = (unsigned char*)malloc(EVP_MAX_MD_SIZE);
-        HMAC_CTX ctx;
-        HMAC_CTX_init(&ctx);
-        HMAC_Init_ex(&ctx, key, strlen(key), engine, NULL);
-        HMAC_Update(&ctx, (unsigned char*)input, strlen(input));
-        HMAC_Final(&ctx, output, &output_length);
-        HMAC_CTX_cleanup(&ctx);
-        return 0;
+	const EVP_MD * engine = EVP_sha256();
+	output = (unsigned char*)malloc(EVP_MAX_MD_SIZE);
+	HMAC_CTX ctx;
+	HMAC_CTX_init(&ctx);
+	HMAC_Init_ex(&ctx, key, strlen(key), engine, NULL);
+	HMAC_Update(&ctx, (unsigned char*)input, strlen(input));
+	HMAC_Final(&ctx, output, &output_length);
+	HMAC_CTX_cleanup(&ctx);
+	return 0;
 }
 
 
@@ -155,13 +156,6 @@ void CCVServer::OnConnect()
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitmex,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
-			else if(m_strName == "BINANCE")
-			{
-				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
-				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
-				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Binance,&m_pClientSocket->m_cfd,::_1,::_2));
-			}
 			else {
 				FprintfStderrLog("ERROR_EXCHANGE_SETTING", -1, 0, __FILE__, __LINE__, 0, 0);
 				exit(-1);
@@ -173,12 +167,18 @@ void CCVServer::OnConnect()
 			websocketpp::lib::error_code errcode;
 
 			m_pClientSocket->m_conn = m_pClientSocket->m_cfd.get_connection(uri, errcode);
+			m_pClientSocket->m_cfd.run();
+			sprintf(querystr, "{\"op\": \"authKeyExpires\", \"args\": [f3-gObpGoi5ECeCjFozXMm4K, %d, %s]}", expires, macoutput);
+			printf("quertstr=%s\n", querystr);
+			auto msg = m_pClientSocket->m_conn->send(querystr);
+			sprintf(replymsg, "%s send auth message reply: %s\n", m_strName.c_str(), msg.message().c_str());
+			printf("replymsg=%s\n", replymsg);
 
-	                sprintf(querystr, "{\"op\": \"subscribe\", \"args\": \"position\"}");
-	                printf("quertstr=%s\n", querystr);
-	                auto msg = m_pClientSocket->m_conn->send(querystr);
-	                sprintf(replymsg, "%s send position message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
-	                //printf("%s\n", msg);
+			sprintf(querystr, "{\"op\": \"subscribe\", \"args\": \"position\"}");
+			printf("quertstr=%s\n", querystr);
+			msg = m_pClientSocket->m_conn->send(querystr);
+			sprintf(replymsg, "%s send position message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
+			printf("replymsg=%s\n", replymsg);
 
 			if (errcode) {
 				cout << "could not create connection because: " << errcode.message() << endl;
@@ -260,65 +260,11 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 
 }
 
-void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
-{
-	//printf("[on_message_binance]\n");
-	static char netmsg[BUFFERSIZE];
-	static char timemsg[9];
-	string str = msg->get_payload();
-	string price_str, size_str, side_str, time_str, symbol_str;
-	json jtable = json::parse(str.c_str());
-
-	static CCVClients* pClients = CCVClients::GetInstance();
-	static int tick_count_binance=0;
-
-	if(pClients == NULL)
-		throw "GET_CLIENTS_ERROR";
-
-	string strname = "BINANCE";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
-	pServer->m_heartbeat_count = 0;
-	if(pServer->GetStatus() == ssBreakdown) {
-		c->close(con,websocketpp::close::status::normal,"");
-		printf("Binance breakdown\n");
-		exit(-1);
-	}
-	pServer->m_pHeartbeat->TriggerGetReplyEvent();
-
-	memset(netmsg, 0, BUFFERSIZE);
-	memset(timemsg, 0, 8);
-
-	time_str   = "00000000";
-	symbol_str = to_string(jtable["s"]);
-	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
-	price_str  = to_string(jtable["p"]);
-	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
-	size_str   = to_string(jtable["q"]);
-	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
-
-	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
-	size_str = to_string(size_int);
-
-	sprintf(netmsg, "01_ID=%s.BINANCE,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
-		symbol_str.c_str(), time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance++, pClients->m_strEPIDNum.c_str());
-
-	int msglen = strlen(netmsg);
-	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
-	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
-	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-	assert(pClients);
-	pQueueDAO->SendData(netmsg, strlen(netmsg));
-	//printf("%s\n", netmsg);
-#if DEBUG
-	cout << setw(4) << jtable << endl;
-	cout << netmsg << endl;
-#endif
-}
 
 void CCVServer::OnHeartbeatLost()
 {
 	FprintfStderrLog("HEARTBEAT LOST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
-	//exit(-1);
+	exit(-1);
 }
 
 void CCVServer::OnHeartbeatRequest()
@@ -334,7 +280,6 @@ void CCVServer::OnHeartbeatRequest()
 		sprintf(replymsg, "%s send PING message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
 		printf("%s\n", msg);
 		FprintfStderrLog("PING/PONG protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
-		m_pHeartbeat->TriggerGetReplyEvent();
 
 		if(msg.message() != "SUCCESS" && msg.message() != "Success")
 		{
@@ -343,6 +288,7 @@ void CCVServer::OnHeartbeatRequest()
 		}
 		else
 		{
+			m_pHeartbeat->TriggerGetReplyEvent();
 			m_heartbeat_count++;
 		}
 	}

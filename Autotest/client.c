@@ -242,7 +242,7 @@ printf("keanu test 2\n");
 			memcpy(ts_order.strategy_name, "MACD-1234\0", 16);
 			memcpy(ts_order.agent_id, "MC", 2);
 			memcpy(ts_order.broker_id, "9801", 4);
-			memcpy(ts_order.exchange_id, "TESTNET\0", 8);
+			memcpy(ts_order.exchange_id, "BITMEX_T\0", 10);
 			memcpy(ts_order.seq_id, "9487943123456", 13);
 			memcpy(ts_order.symbol_name, "XBTUSD\0", 7);
 			memcpy(ts_order.symbol_type, "F", 1);

@@ -239,10 +239,12 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	}
 	if(!strcmp(cv_ts_order.exchange_id, "BINANCE_T") || !strcmp(cv_ts_order.exchange_id, "BINANCE"))
 	{
+		SetInuse(false);
 		return true;
 		//return OrderSubmit_Binance(cv_ts_order, nToSend);
 	}
-	return false;
+	SetInuse(false);
+	return true;
 }
 
 bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)

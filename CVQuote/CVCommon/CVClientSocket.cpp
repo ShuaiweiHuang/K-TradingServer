@@ -50,6 +50,8 @@ CCVClientSocket::~CCVClientSocket()
 
 void CCVClientSocket::Connect(string strHost, string strPara, string strName, int type)
 {
+	signal(SIGPIPE, SIG_IGN);
+
 	if(type == CONNECT_TCP)
 	{
 		m_cssClientSocketStatus = cssConnecting;

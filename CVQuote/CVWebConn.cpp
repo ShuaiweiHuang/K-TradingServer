@@ -353,7 +353,7 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BITMEX";
+	string strname = "BITMEX_T";
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
@@ -373,7 +373,7 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 		price_str  = to_string(jtable["data"][i]["price"]);
 		size_str   = to_string(jtable["data"][i]["size"]);
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BMEX_T,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
+		sprintf(netmsg, "01_ID=%s.BITMEX_T,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
 			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
 		int msglen = strlen(netmsg);
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;

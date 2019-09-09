@@ -129,17 +129,23 @@ void CCVServer::OnConnect()
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitmex,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
+			else if(m_strName == "BITMEX_T") {
+				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
+				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
+				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitmex_Test,&m_pClientSocket->m_cfd,::_1,::_2));
+			}
 			else if(m_strName == "BITMEXLESS") {
 				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_MIN);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
-				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_BitmexLess,&m_pClientSocket->m_cfd,::_1,::_2));
+				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitmex_Less,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BITMEXINDEX") {
 				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_MIN);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
-				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_BitmexIndex,&m_pClientSocket->m_cfd,::_1,::_2));
+				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitmex_Index,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BITSTAMP") {
 				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
@@ -230,7 +236,7 @@ void CCVServer::OnDisconnect()
 	m_pClientSocket->Connect( m_strWeb, m_strQstr, m_strName, CONNECT_WEBSOCK);//start & reset heartbeat
 }
 
-void CCVServer::OnData_BitmexIndex(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
+void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
 //	printf("[on_message_bitmexIndex]\n");
 	static char netmsg[BUFFERSIZE];
@@ -283,7 +289,7 @@ void CCVServer::OnData_BitmexIndex(client* c, websocketpp::connection_hdl con, c
 }
 
 
-void CCVServer::OnData_BitmexLess(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
+void CCVServer::OnData_Bitmex_Less(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
 //	printf("[on_message_bitmexLess]\n");
 	static char netmsg[BUFFERSIZE];
@@ -333,6 +339,56 @@ void CCVServer::OnData_BitmexLess(client* c, websocketpp::connection_hdl con, cl
 
 }
 
+void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
+{
+	//printf("[on_message_bitmex_T]\n");
+	static char netmsg[BUFFERSIZE];
+	static char timemsg[9];
+
+	string str = msg->get_payload();
+	string price_str, size_str, side_str, time_str, symbol_str;
+	json jtable = json::parse(str.c_str());
+	static CCVClients* pClients = CCVClients::GetInstance();
+
+	if(pClients == NULL)
+		throw "GET_CLIENTS_ERROR";
+
+	string strname = "BITMEX";
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	pServer->m_heartbeat_count = 0;
+	pServer->m_pHeartbeat->TriggerGetReplyEvent();
+	if(pServer->GetStatus() == ssBreakdown) {
+		c->close(con,websocketpp::close::status::normal,"");
+		printf("Bitmex breakdown\n");
+		exit(-1);
+	}
+
+	for(int i=0 ; i<jtable["data"].size() ; i++)
+	{ 
+		memset(netmsg, 0, BUFFERSIZE);
+		memset(timemsg, 0, 8);
+		static int tick_count=0;
+		time_str   = jtable["data"][i]["timestamp"];
+		symbol_str = jtable["data"][i]["symbol"];
+		price_str  = to_string(jtable["data"][i]["price"]);
+		size_str   = to_string(jtable["data"][i]["size"]);
+		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
+		sprintf(netmsg, "01_ID=%s.BMEX_T,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
+			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
+		int msglen = strlen(netmsg);
+		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
+		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
+		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
+		assert(pClients);
+		pQueueDAO->SendData(netmsg, strlen(netmsg));
+		//printf("%s\n", netmsg);
+#ifdef DEBUG
+		cout << setw(4) << jtable << endl;
+		cout << netmsg << endl;
+#endif
+	}
+
+}
 
 
 void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client::message_ptr msg)

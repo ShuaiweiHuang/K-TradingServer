@@ -62,8 +62,9 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		pthread_mutex_t m_pmtxServerStatusLock;
 		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
 		static void OnData_Bitmex(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_BitmexLess(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_BitmexIndex(client* c, websocketpp::connection_hdl, client::message_ptr msg);
+		static void OnData_Bitmex_Less(client* c, websocketpp::connection_hdl, client::message_ptr msg);
+		static void OnData_Bitmex_Test(client* c, websocketpp::connection_hdl, client::message_ptr msg);
+		static void OnData_Bitmex_Index(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Binance(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Bitstamp(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 

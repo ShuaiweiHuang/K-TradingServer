@@ -1,7 +1,7 @@
 #define BACKUP_IP "192.168.101.211"
 
 #define MAXDATA		1024
-
+#define MAXHISTORY	100
 #define ESCAPE		0x1b
 #define LOGREQ		0x00
 #define LOGREP		0x01

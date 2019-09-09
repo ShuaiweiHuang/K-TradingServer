@@ -53,18 +53,16 @@ private:
 	string m_strPort;
 	string m_request_remain;
 	string m_time_limit;
-	struct CV_StructTSOrderReply m_tandemreply;
 	TSKTandemDAOStatus m_TandemDAOStatus;
-	bool m_bInuse;
-
 	CSKWriteQueueDAOs* m_pWriteQueueDAOs;
-
 	CSKTandem* m_pTandem;
-	unsigned int m_nTandemNodeIndex;
-
 	pthread_mutex_t m_MutexLockOnSetStatus;
 
+	unsigned int m_nTandemNodeIndex;
+	bool m_bInuse;
 	char m_caTandemDAOID[4];
+	struct CV_StructTSOrderReply m_tandem_reply;
+	struct CV_StructTSOrderReply m_trade_reply[MAXHISTORY];
 private:
 	char* GetReplyMsgOffsetPointer(const unsigned char *pMessageBuf);
 
@@ -81,6 +79,7 @@ public:
 	bool OrderSubmit(const unsigned char* pBuf, int nSize);
 	bool OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nSize);
+	bool Transaction_Bitmex();
 	bool RiskControl();
 	bool FillRiskMsg(const unsigned char* pBuf, int nSize);
 	bool LogOrderReplyDB_Bitmex(json* jtable, int option);

@@ -100,6 +100,7 @@ void* CSKTandemDAO::Run()
 		if(GetStatus() == tsMsgReady)
 		{
 			CSKWriteQueueDAO* pWriteQueueDAO = NULL;
+
 			while(pWriteQueueDAO == NULL)
 			{
 				if(m_pWriteQueueDAOs)
@@ -107,8 +108,8 @@ void* CSKTandemDAO::Run()
 
 				if(pWriteQueueDAO)
 				{
-					FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandemreply ,sizeof(m_tandemreply));
-					pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandemreply, sizeof(m_tandemreply));
+					FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
+					pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
 					pWriteQueueDAO->TriggerWakeUpEvent();
 					SetStatus(tsServiceOn);
 					SetInuse(false);
@@ -123,7 +124,10 @@ void* CSKTandemDAO::Run()
 			printf("time limit: %s\n", m_time_limit.c_str());
 		}
 		else
-			usleep(10000);
+		{
+			//Transaction_Bitmex();
+			usleep(100000);
+		}
 	}
 	return NULL;
 }
@@ -173,10 +177,10 @@ bool CSKTandemDAO::FillRiskMsg(const unsigned char* pBuf, int nSize)
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nSize);
 	//add reply message
-	memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
-	memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
-	memcpy(m_tandemreply.status_code, "1002", 4);
-	sprintf(m_tandemreply.reply_msg, "submit fail, due to risk control issue");
+	memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
+	memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
+	memcpy(m_tandem_reply.status_code, "1002", 4);
+	sprintf(m_tandem_reply.reply_msg, "submit fail, due to risk control issue");
 	SetStatus(tsMsgReady);
 	return true;
 }
@@ -247,6 +251,116 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	return true;
 }
 
+//GET --header 'Accept: application/json' --header 'X-Requested-With: XMLHttpRequest' 'https://testnet.bitmex.com/api/v1/execution/tradeHistory?symbol=XBTUSD&count=10&reverse=true'
+bool CSKTandemDAO::Transaction_Bitmex()
+{
+	printf("Transaction_Bitmex\n");
+	CURLcode res;
+	string buysell_str;
+	unsigned char * mac = NULL;
+	unsigned int mac_length = 0;
+	int expires = (int)time(NULL)+1000, ret;
+	char encrystr[256], commandstr[256], macoutput[256], execution_str[256], apikey_str[256];
+	char qty[10], oprice[10], tprice[10];
+	double doprice = 0, dtprice = 0, dqty = 0;
+	struct HEADRESP headresponse;
+	string response;
+	json jtable;
+
+	memset(commandstr, 0, sizeof(commandstr));
+	memset((void*)m_trade_reply, 0 , sizeof(m_trade_reply)*MAXHISTORY);
+	CURL *m_curl = curl_easy_init();
+	curl_global_init(CURL_GLOBAL_ALL);
+	string order_url, order_all_url;
+#if 0
+	if(!strcmp(exchange_name.c_str(), "BITMEX_T"))
+#endif
+	{
+		order_url = "https://testnet.bitmex.com/api/v1/order";
+		order_all_url = "https://testnet.bitmex.com/api/v1/order/all";
+	}
+#if 0	
+	if(!strcmp(exchange_name.c_str(), "BITMEX"))
+	{
+		order_url = "https://www.bitmex.com/api/v1/order";
+		order_all_url = "https://www.bitmex.com/api/v1/order/all";
+	}
+#endif
+	sprintf(commandstr, "tradeHistory?symbol=XBTUSD&count=10&reverse=true");
+	sprintf(encrystr, "Get/api/v1/execution%d%s", expires, commandstr);
+	ret = HmacEncodeSHA256("i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE", 48, encrystr, strlen(encrystr), mac, mac_length);
+	curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
+
+	for(int i = 0; i < mac_length; i++)
+		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
+
+	if(mac) free(mac);
+	sprintf(apikey_str, "api-key: f3-gObpGoi5ECeCjFozXMm4K");
+	if(m_curl) {
+		struct curl_slist *http_header;
+		http_header = curl_slist_append(http_header, "Accept: application/json");
+		http_header = curl_slist_append(http_header, "X-Requested-With: XMLHttpRequest");
+		http_header = curl_slist_append(http_header, apikey_str);
+		sprintf(execution_str, "api-signature: %.64s", macoutput);
+		http_header = curl_slist_append(http_header, execution_str);
+		sprintf(execution_str, "api-expires: %d", expires);
+		http_header = curl_slist_append(http_header, execution_str);
+		curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, http_header);
+		curl_easy_setopt(m_curl, CURLOPT_HEADER, true);
+		sprintf(execution_str, "%s", commandstr);
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE, strlen(execution_str));
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, execution_str);
+		curl_easy_setopt(m_curl, CURLOPT_HEADERFUNCTION, parseHeader);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
+		res = curl_easy_perform(m_curl);
+		printf("\n===================\n%s\n===================\n", response.c_str());
+		if(res != CURLE_OK)
+		fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+		curl_slist_free_all(http_header);
+		curl_easy_cleanup(m_curl);
+	}
+	curl_global_cleanup();
+#if 0
+	m_request_remain = headresponse.remain;
+	m_time_limit = headresponse.epoch;
+	string text;
+	for(int i=0 ; i<response.length() ; i++)
+	{
+		if(response[i] == '[') {
+			response = response.substr(i, response.length()-i);
+			FprintfStderrLog("GET_ORDER_REPLY", -1, (unsigned char*)response.c_str() ,response.length());
+			jtable = json::parse(response.c_str());
+			break;
+		}
+	}
+
+	for(int i=0 ; i<jtable.size() ; i++)
+	{
+		text = to_string(jtable[i]["error"]["message"]);
+
+		if(text != "null")
+		{
+			memcpy(m_tandem_reply.status_code, "1001", 4);
+			sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
+			SetStatus(tsMsgReady);
+		}
+		else
+		{
+			memcpy(m_tandem_reply.status_code, "1000", 4);
+			string orderbookNo = to_string(jtable[i]["orderID"]);
+			memcpy(m_tandem_reply.bookno, orderbookNo.c_str()+1, 36);
+			sprintf(m_tandem_reply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandem_reply.bookno);
+			LogOrderReplyDB_Bitmex(&jtable[i], OPT_DELETE);
+			SetStatus(tsMsgReady);
+		}
+	}
+#endif
+	return true;
+}
+
 bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
 {
 	CURLcode res;
@@ -254,7 +368,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
 	int expires = (int)time(NULL)+1000, ret;
-	char encrystr[256], commandstr[256], macoutput[256], post_str[256], apikey_str[256];
+	char encrystr[256], commandstr[256], macoutput[256], execution_str[256], apikey_str[256];
 	char qty[10], oprice[10], tprice[10];
 	double doprice = 0, dtprice = 0, dqty = 0;
 	struct HEADRESP headresponse;
@@ -265,7 +379,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	memset(qty, 0, sizeof(qty));
 	memset(oprice, 0, sizeof(oprice));
 	memset(tprice, 0, sizeof(tprice));
-	memset((void*) &m_tandemreply, 0 , sizeof(m_tandemreply));
+	memset((void*) &m_tandem_reply, 0 , sizeof(m_tandem_reply));
 	memcpy(qty, cv_ts_order.order_qty, 9);
 	memcpy(oprice, cv_ts_order.order_price, 9);
 	memcpy(tprice, cv_ts_order.touch_price, 9);
@@ -402,15 +516,15 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 		http_header = curl_slist_append(http_header, "Accept: application/json");
 		http_header = curl_slist_append(http_header, "X-Requested-With: XMLHttpRequest");
 		http_header = curl_slist_append(http_header, apikey_str);
-		sprintf(post_str, "api-signature: %.64s", macoutput);
-		http_header = curl_slist_append(http_header, post_str);
-		sprintf(post_str, "api-expires: %d", expires);
-		http_header = curl_slist_append(http_header, post_str);
+		sprintf(execution_str, "api-signature: %.64s", macoutput);
+		http_header = curl_slist_append(http_header, execution_str);
+		sprintf(execution_str, "api-expires: %d", expires);
+		http_header = curl_slist_append(http_header, execution_str);
 		curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, http_header);
 		curl_easy_setopt(m_curl, CURLOPT_HEADER, true);
-		sprintf(post_str, "%s", commandstr);
-		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE, strlen(post_str));
-		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, post_str);
+		sprintf(execution_str, "%s", commandstr);
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE, strlen(execution_str));
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, execution_str);
 		curl_easy_setopt(m_curl, CURLOPT_HEADERFUNCTION, parseHeader);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
@@ -444,20 +558,20 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 
 			if(text != "null")
 			{
-				memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
-				memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
-				memcpy(m_tandemreply.status_code, "1001", 4);
-				sprintf(m_tandemreply.reply_msg, "submit fail, error message:%s", text.c_str());
+				memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
+				memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
+				memcpy(m_tandem_reply.status_code, "1001", 4);
+				sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
 				SetStatus(tsMsgReady);
 			}
 			else
 			{
-				memcpy(m_tandemreply.status_code, "1000", 4);
-				memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
-				memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
+				memcpy(m_tandem_reply.status_code, "1000", 4);
+				memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
+				memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 				string orderbookNo = to_string(jtable["orderID"]);
-				memcpy(m_tandemreply.bookno, orderbookNo.c_str()+1, 36);
-				sprintf(m_tandemreply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandemreply.bookno);
+				memcpy(m_tandem_reply.bookno, orderbookNo.c_str()+1, 36);
+				sprintf(m_tandem_reply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandem_reply.bookno);
 				LogOrderReplyDB_Bitmex(&jtable, OPT_ADD);
 				SetStatus(tsMsgReady);
 			}
@@ -476,24 +590,24 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 
 			for(int i=0 ; i<jtable.size() ; i++)
 			{
-				text = to_string(jtable[i]["error"]["message"]);
+				text = to_string(jtable[i]["error"]);
 
 				if(text != "null")
 				{
-					memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
-					memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
-					memcpy(m_tandemreply.status_code, "1001", 4);
-					sprintf(m_tandemreply.reply_msg, "submit fail, error message:%s", text.c_str());
+					memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
+					memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
+					memcpy(m_tandem_reply.status_code, "1001", 4);
+					sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
 					SetStatus(tsMsgReady);
 				}
 				else
 				{
-					memcpy(m_tandemreply.status_code, "1000", 4);
-					memcpy(&m_tandemreply.original, &cv_ts_order, sizeof(cv_ts_order));
-					memcpy(m_tandemreply.key_id, cv_ts_order.key_id, 13);
+					memcpy(m_tandem_reply.status_code, "1000", 4);
+					memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
+					memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 					string orderbookNo = to_string(jtable[i]["orderID"]);
-					memcpy(m_tandemreply.bookno, orderbookNo.c_str()+1, 36);
-					sprintf(m_tandemreply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandemreply.bookno);
+					memcpy(m_tandem_reply.bookno, orderbookNo.c_str()+1, 36);
+					sprintf(m_tandem_reply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandem_reply.bookno);
 					LogOrderReplyDB_Bitmex(&jtable[i], OPT_DELETE);
 					SetStatus(tsMsgReady);
 				}

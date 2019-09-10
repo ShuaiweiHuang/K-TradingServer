@@ -111,6 +111,7 @@ void* CSKTandemDAO::Run()
 					FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
 					pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
 					pWriteQueueDAO->TriggerWakeUpEvent();
+					//Transaction_Bitmex();
 					SetStatus(tsServiceOn);
 					SetInuse(false);
 				}
@@ -125,7 +126,6 @@ void* CSKTandemDAO::Run()
 		}
 		else
 		{
-			//Transaction_Bitmex();
 			usleep(100000);
 		}
 	}
@@ -213,20 +213,19 @@ void CSKTandemDAO::SendNotify(char* pBuf)
 
 		curl = curl_easy_init();
 		if(curl) {
-				struct curl_slist *chunk;
-				chunk = curl_slist_append(chunk, "Authorization: Bearer naBftXyXgOX00lJg8Fl78QyKD5hNe6by4PWjJ5sArVU");
-				chunk = curl_slist_append(chunk, "Content-Type: application/x-www-form-urlencoded");
-				curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
-				curl_easy_setopt(curl, CURLOPT_HEADER, true);
-				curl_easy_setopt(curl, CURLOPT_URL, "https://notify-api.line.me/api/notify");
-				curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(pBuf));
-				curl_easy_setopt(curl, CURLOPT_POSTFIELDS, pBuf);
-
-				res = curl_easy_perform(curl);
-				if(res != CURLE_OK)
-				fprintf(stderr, "curl_easy_perform() failed: %s\n",
-				curl_easy_strerror(res));
-				curl_easy_cleanup(curl);
+			struct curl_slist *chunk;
+			chunk = curl_slist_append(chunk, "Authorization: Bearer naBftXyXgOX00lJg8Fl78QyKD5hNe6by4PWjJ5sArVU");
+			chunk = curl_slist_append(chunk, "Content-Type: application/x-www-form-urlencoded");
+			curl_easy_setopt(curl, CURLOPT_HTTPHEADER, chunk);
+			curl_easy_setopt(curl, CURLOPT_HEADER, true);
+			curl_easy_setopt(curl, CURLOPT_URL, "https://notify-api.line.me/api/notify");
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(pBuf));
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, pBuf);
+			res = curl_easy_perform(curl);
+			if(res != CURLE_OK)
+			fprintf(stderr, "curl_easy_perform() failed: %s\n",
+			curl_easy_strerror(res));
+			curl_easy_cleanup(curl);
 		}
 		curl_global_cleanup();
 }
@@ -254,7 +253,6 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 //GET --header 'Accept: application/json' --header 'X-Requested-With: XMLHttpRequest' 'https://testnet.bitmex.com/api/v1/execution/tradeHistory?symbol=XBTUSD&count=10&reverse=true'
 bool CSKTandemDAO::Transaction_Bitmex()
 {
-	printf("Transaction_Bitmex\n");
 	CURLcode res;
 	string buysell_str;
 	unsigned char * mac = NULL;
@@ -268,7 +266,7 @@ bool CSKTandemDAO::Transaction_Bitmex()
 	json jtable;
 
 	memset(commandstr, 0, sizeof(commandstr));
-	memset((void*)m_trade_reply, 0 , sizeof(m_trade_reply)*MAXHISTORY);
+	memset((void*)m_trade_reply, 0 , sizeof(m_trade_reply));
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
 	string order_url, order_all_url;
@@ -276,7 +274,7 @@ bool CSKTandemDAO::Transaction_Bitmex()
 	if(!strcmp(exchange_name.c_str(), "BITMEX_T"))
 #endif
 	{
-		order_url = "https://testnet.bitmex.com/api/v1/order";
+		order_url = "https://testnet.bitmex.com/api/v1/execution";
 		order_all_url = "https://testnet.bitmex.com/api/v1/order/all";
 	}
 #if 0	
@@ -287,8 +285,10 @@ bool CSKTandemDAO::Transaction_Bitmex()
 	}
 #endif
 	sprintf(commandstr, "tradeHistory?symbol=XBTUSD&count=10&reverse=true");
-	sprintf(encrystr, "Get/api/v1/execution%d%s", expires, commandstr);
+	sprintf(encrystr, "GET/api/v1/execution/%s%d", commandstr, expires);
 	ret = HmacEncodeSHA256("i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE", 48, encrystr, strlen(encrystr), mac, mac_length);
+	printf("encrystr = %s\n", encrystr);
+	printf("commandstr = %s\n", commandstr);
 	curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
 
 	for(int i = 0; i < mac_length; i++)
@@ -314,12 +314,14 @@ bool CSKTandemDAO::Transaction_Bitmex()
 		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
-		res = curl_easy_perform(m_curl);
 		printf("\n===================\n%s\n===================\n", response.c_str());
+		printf("keanu test 4\n");
+		res = curl_easy_perform(m_curl);
 		if(res != CURLE_OK)
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",
 		curl_easy_strerror(res));
 		curl_slist_free_all(http_header);
+		printf("keanu test 5\n");
 		curl_easy_cleanup(m_curl);
 	}
 	curl_global_cleanup();
@@ -472,6 +474,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 					printf("Error order type.\n");
 					break;
 			}
+			printf("encrystr = %s\n", encrystr);
 			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_order, strlen(cv_ts_order.apiSecret_order), encrystr, strlen(encrystr), mac, mac_length);
 			curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
 			break;
@@ -544,7 +547,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	string text;
 	switch(cv_ts_order.trade_type[0])
 	{
-		case '0':
+		case '0'://new
 			for(int i=0 ; i<response.length() ; i++)
 			{
 				if(response[i] == '{') {
@@ -576,7 +579,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 				SetStatus(tsMsgReady);
 			}
 			break;
-		case '1':
+		case '1'://old
 		case '2':
 			for(int i=0 ; i<response.length() ; i++)
 			{

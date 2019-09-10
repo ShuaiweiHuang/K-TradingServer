@@ -124,7 +124,6 @@ void* CCVQueueDAO::Run()
 					memcpy(&tig_reply, uncaRecvBuf, nSizeOfTIGReply);
 
 					fpFillCVReply(cv_order_reply, tig_reply);
-					//printf("\n\nORIGINAL: %.36s\n\n", cv_order_reply.cv_reply.original.order_bookno);
 					memcpy(uncaSendBuf , &cv_order_reply, sizeof(union CV_ORDER_REPLY));
 
 					bool bSendData = false;
@@ -155,7 +154,6 @@ void* CCVQueueDAO::Run()
 				cout << "OrderNumber: " << lOrderNumber << " " << pExceptionMessage << endl;
 				continue;//to do
 			}
-
 		}
 		else
 		{

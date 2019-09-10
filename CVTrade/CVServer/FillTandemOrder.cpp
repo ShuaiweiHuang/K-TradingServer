@@ -47,17 +47,17 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 	if(ucv.cv_order.trade_type[0] == '0') {
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
 		memcpy(ucv.cv_order.key_id, ucvts.cv_ts_order.key_id, 13); 
-		memcpy(ucvts.cv_ts_order.trade_type, ucv.cv_order.trade_type, 1);
 	}
 	else if(ucv.cv_order.trade_type[0] >= '1' && ucv.cv_order.trade_type[0] <= '3') {
 		//todo : check key id valid
-		memcpy(ucvts.cv_ts_order.key_id, ucv.cv_order.key_id, 13);
-		memcpy(ucvts.cv_ts_order.trade_type, ucv.cv_order.trade_type, 1);
+		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
+		//memcpy(ucvts.cv_ts_order.key_id, ucv.cv_order.key_id, 13);
 		memcpy(ucvts.cv_ts_order.order_bookno, ucv.cv_order.order_bookno, 36);
 	}
 	else {
 		return TT_ERROR;
 	}
+	memcpy(ucvts.cv_ts_order.trade_type, ucv.cv_order.trade_type, 1);
 
 
 //Sub account id and strategy name

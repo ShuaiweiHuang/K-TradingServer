@@ -26,9 +26,8 @@ cd $SCRIPTPATH
 
 #----------- By Host Set NUM -----------#
 #----------- Take the date of last code and plus on NUM.  -----------#
-DateCode=`date +%d`
-DateCode=$(($DateCode % 100))
-SHIFT_BIT=100000000
+DateCode=$(date +"%-m%d")
+SHIFT_BIT=1000000
 if [[ $HOSTNAME == "pc-keanuhuang-211" ]]; then
     NUM=$(( 2110000000000 + $[DateCode * SHIFT_BIT]))
 elif [[ $HOSTNAME == "pc-keanuhuang-119" ]]; then

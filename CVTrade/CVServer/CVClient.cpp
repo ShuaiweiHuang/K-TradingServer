@@ -357,7 +357,6 @@ void* CCVClient::Run()
 					long lOrderNumber = 0;
 					lOrderNumber = fpFillTandemOrder(m_strService, m_username, m_ClientAddrInfo.caIP,
 									m_mBranchAccount, cv_order, cv_ts_order);
-					
 					if(lOrderNumber < 0)//error
 					{
 						int errorcode = -lOrderNumber;
@@ -413,6 +412,7 @@ void* CCVClient::Run()
 						struct CVOriginalOrder newOriginalOrder;
 						memset(newOriginalOrder.uncaBuf, 0, sizeof(newOriginalOrder.uncaBuf));
 						memcpy(newOriginalOrder.uncaBuf, &cv_order, nSizeOfCVOrder);
+						//std::map<long, struct CVOriginalOrder>::iterator i = m_mOriginalOrder.find(lOrderNumber);
 						m_mOriginalOrder.insert(std::pair<long, struct CVOriginalOrder>(lOrderNumber, newOriginalOrder));
 					}
 					else if(nResult == -1)

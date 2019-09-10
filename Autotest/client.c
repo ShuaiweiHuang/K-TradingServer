@@ -253,7 +253,7 @@ printf("keanu test 2\n");
 			memcpy(ts_order.order_time, "17160301", 8);
 			memcpy(ts_order.order_buysell, "B", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
-			memcpy(ts_order.order_mark, "3", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
+			memcpy(ts_order.order_mark, "0", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
@@ -289,6 +289,7 @@ printf("keanu test 2\n");
 				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+262);
 #if 1
 				memcpy(ts_order.order_bookno, data1+100, 36);
+				memcpy(ts_order.key_id, data1+56, 13);
 				memcpy(ts_order.trade_type, "1", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 				printf("send order %d: %.1s %.9s %s\n", order_loop, ts_order.order_buysell, ts_order.order_price, ts_order.order_mark=='0'?"MARKET":"Limit");
 				if (write(server, (&ts_order.header_bit[0]), 256) <= 0) {

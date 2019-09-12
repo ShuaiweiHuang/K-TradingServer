@@ -595,7 +595,7 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	size_str   = to_string(jtable["data"]["q"]);
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
-	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
+	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
 	size_str = to_string(size_int);
 
 	sprintf(netmsg, "01_ID=%s.BINANCE_F,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
@@ -649,7 +649,7 @@ void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, cl
 	size_str   = to_string(jtable["data"]["q"]);
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
-	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
+	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
 	size_str = to_string(size_int);
 
 	sprintf(netmsg, "01_ID=%s.BINANCE_FT,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",

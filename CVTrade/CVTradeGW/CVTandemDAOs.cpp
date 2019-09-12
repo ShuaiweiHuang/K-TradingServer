@@ -162,7 +162,6 @@ void CSKTandemDAOs::StartUpDAOs()//todo
 			cout << "DAOs is Full" << endl;
 		}
 	}
-	//CSKReplyDAO* m_pReplyDAO = new CSKReplyDAO(m_nNumberOfWriteQueueDAO, m_kWriteQueueDAOStartKey, m_kWriteQueueDAOEndKey);
 
 	char caTandemDAOCount[4];
 	sprintf(caTandemDAOCount, "%03d", m_vTandemDAO.size());

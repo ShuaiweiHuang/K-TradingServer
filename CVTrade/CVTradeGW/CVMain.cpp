@@ -14,6 +14,7 @@
 #include <glib.h>
 
 #include "CVTandemDAOs.h"
+#include "CVReplyDAO.h"
 #include "CVReadQueueDAOs.h"
 #include "CVTandem.h"
 
@@ -68,6 +69,7 @@ int main(int argc, char *argv[])
 	}
 
 	key_t kTIGNumberSharedMemoryKey;
+
 	ReadReadQueueDAOConfigFile("../ini/CVTrade.ini", strOTSID, nNumberOfReadQueueDAO, kReadQueueDAOStartKey, kReadQueueDAOEndKey, kTIGNumberSharedMemoryKey);
 
 	if(strlen(strOTSID.c_str()) > OTSIDLENTH)//try

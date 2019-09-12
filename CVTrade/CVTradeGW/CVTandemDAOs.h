@@ -5,9 +5,9 @@
 #include "CVPevents.h"
 
 #include "CVTandemDAO.h"
-#include "CVReplyDAO.h"
 
 using namespace neosmart;
+
 
 class CSKTandemDAOs: public CSKThread
 {
@@ -18,8 +18,6 @@ class CSKTandemDAOs: public CSKThread
 
 		vector<CSKTandemDAO*> m_vTandemDAO;
 
-		//string m_strHost;
-		//string m_strPort;
 		string m_strService;
 
 		int m_nDefaultNumberOfTandemDAO;

@@ -38,31 +38,17 @@ int CSKReplyDAO::HmacEncodeSHA256( const char * key, unsigned int key_length, co
 	return 0;
 }
 
-CSKReplyDAO::CSKReplyDAO(int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey)
+CSKReplyDAO::CSKReplyDAO(int nNumberOfquery)
 {
 	m_pHeartbeat = NULL;
-	m_TandemDAOStatus = tsNone;
-	m_bInuse = false;
 	m_pWriteQueueDAOs = CSKWriteQueueDAOs::GetInstance();
-
-	if(m_pWriteQueueDAOs == NULL)
-		m_pWriteQueueDAOs = new CSKWriteQueueDAOs(nNumberOfWriteQueueDAO, kWriteQueueDAOStartKey, kWriteQueueDAOEndKey);
-
 	assert(m_pWriteQueueDAOs);
-
 	pthread_mutex_init(&m_MutexLockOnSetStatus, NULL);
 	Start();
 }
 
 CSKReplyDAO::~CSKReplyDAO()
 {
-	if(m_pSocket)
-	{
-		m_pSocket->Disconnect();
-		delete m_pSocket;
-		m_pSocket = NULL;
-	}
-
 	if(m_pHeartbeat)
 	{
 		delete m_pHeartbeat;
@@ -79,7 +65,6 @@ CSKReplyDAO::~CSKReplyDAO()
 
 void* CSKReplyDAO::Run()
 {
-	SetStatus(tsServiceOn);
 	while(IsTerminated())
 	{
 		Bitmex_Transaction_Update();
@@ -87,11 +72,6 @@ void* CSKReplyDAO::Run()
 	}
 	return NULL;
 }
-TSKTandemDAOStatus CSKReplyDAO::GetStatus()
-{
-	return m_TandemDAOStatus;
-}
-
 
 void CSKReplyDAO::Bitmex_Transaction_Update()
 {
@@ -160,25 +140,6 @@ void CSKReplyDAO::Bitmex_Transaction_Update()
 	}
 	curl_global_cleanup();
 
-}
-
-void CSKReplyDAO::SetStatus(TSKTandemDAOStatus tsStatus)
-{
-	pthread_mutex_lock(&m_MutexLockOnSetStatus);//lock
-
-	m_TandemDAOStatus = tsStatus;
-
-	pthread_mutex_unlock(&m_MutexLockOnSetStatus);//unlock
-}
-
-void CSKReplyDAO::SetInuse(bool bInuse)
-{
-	m_bInuse = bInuse;
-}
-
-bool CSKReplyDAO::IsInuse()
-{
-	return m_bInuse;
 }
 
 static size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp)

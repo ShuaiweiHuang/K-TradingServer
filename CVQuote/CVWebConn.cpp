@@ -166,9 +166,9 @@ void CCVServer::OnConnect()
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Binance_FT,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BINANCE_F") {
-				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
+				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_MIN);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Binance_F,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
 
@@ -607,7 +607,7 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
-	//printf("%s\n", netmsg);
+	printf("%s\n", netmsg);
 }
 
 void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, client::message_ptr msg)

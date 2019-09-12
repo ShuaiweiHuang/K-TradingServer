@@ -2,7 +2,7 @@ CC = g++
 
 CFLAGS = -O2 -DIPVH_331 -std=c++11 -lcurl -lcrypto
 
-SRC = ./CVNet/CVSocket.cpp ./CVCommon/CVThread.cpp CVTandemDAO.cpp CVTandemDAOs.cpp CVPevents.cpp ./CVCommon/CVQueue.cpp CVReadQueueDAO.cpp CVWriteQueueDAO.cpp \
+SRC = ./CVNet/CVSocket.cpp ./CVCommon/CVThread.cpp CVReplyDAO.cpp CVTandemDAO.cpp CVTandemDAOs.cpp CVPevents.cpp ./CVCommon/CVQueue.cpp CVReadQueueDAO.cpp CVWriteQueueDAO.cpp \
 	CVReadQueueDAOs.cpp CVWriteQueueDAOs.cpp ./CVTIG/CVTandems.cpp ./CVTIG/CVTandem.cpp ./CVCommon/CVSharedMemory.cpp FprintfStderrLog.cpp
 
 OBJS = $(SRC:.cpp=.o) CVMain.o

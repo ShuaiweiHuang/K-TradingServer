@@ -1,14 +1,11 @@
 #ifndef SKTANDEMDAOS_H_
 #define SKTANDEMDAOS_H_
 
-#ifdef _WIN32
-#include <Windows.h>
-#endif
-
-#include "CVPevents.h"
 #include <vector>
+#include "CVPevents.h"
 
 #include "CVTandemDAO.h"
+#include "CVReplyDAO.h"
 
 using namespace neosmart;
 

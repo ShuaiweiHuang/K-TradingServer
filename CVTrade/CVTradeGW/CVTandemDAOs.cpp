@@ -6,6 +6,7 @@
 
 
 #include "CVTandemDAOs.h"
+
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
@@ -149,7 +150,7 @@ void CSKTandemDAOs::SetConfiguration(string strService, int nInitialConnection, 
 void CSKTandemDAOs::StartUpDAOs()//todo
 {
 
-	for(int i=0;i<m_nDefaultNumberOfTandemDAO;i++)
+	for(int i=0 ; i<m_nDefaultNumberOfTandemDAO ; i++)
 	{
 		if(!IsDAOsFull())
 		{
@@ -161,6 +162,7 @@ void CSKTandemDAOs::StartUpDAOs()//todo
 			cout << "DAOs is Full" << endl;
 		}
 	}
+	//CSKReplyDAO* m_pReplyDAO = new CSKReplyDAO(m_nNumberOfWriteQueueDAO, m_kWriteQueueDAOStartKey, m_kWriteQueueDAOEndKey);
 
 	char caTandemDAOCount[4];
 	sprintf(caTandemDAOCount, "%03d", m_vTandemDAO.size());
@@ -172,20 +174,3 @@ string& CSKTandemDAOs::GetService()
 {
 	return m_strService;
 }
-
-#ifdef MNTRMSG
-
-extern struct MNTRMSGS g_MNTRMSG;
-
-void CSKTandemDAOs::UpdateAvailableDAONum()
-{
-	g_MNTRMSG.num_of_service_Available = 0;
-	for(int count = 0; count < m_vTandemDAO.size(); count++)
-	{
-		if(m_vTandemDAO[m_nRoundRobinIndexOfTandemDAO]->IsInuse() == false)
-		{
-			g_MNTRMSG.num_of_service_Available++;
-		}
-	}
-}
-#endif

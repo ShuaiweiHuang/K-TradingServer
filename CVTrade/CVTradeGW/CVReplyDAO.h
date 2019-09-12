@@ -40,7 +40,7 @@ enum TSKTandemDAOStatus
 	tsMsgReady,
 };
 
-class CSKTandemDAO : public CSKThread
+class CSKReplyDAO : public CSKThread
 {
 private:
 	friend CSKHeartbeat;
@@ -70,25 +70,15 @@ protected:
 	void* Run();
 
 public:
-	CSKTandemDAO();
-	CSKTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
+	CSKReplyDAO();
+	CSKReplyDAO(int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
 	int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);
-	virtual ~CSKTandemDAO();
-
-	bool SendOrder(const unsigned char* pBuf, int nSize);
-	bool OrderSubmit(const unsigned char* pBuf, int nSize);
-	bool OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize);
-	bool OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nSize);
-	bool RiskControl();
-	bool FillRiskMsg(const unsigned char* pBuf, int nSize);
-	bool LogOrderReplyDB_Bitmex(json* jtable, int option);
+	virtual ~CSKReplyDAO();
 
 	TSKTandemDAOStatus GetStatus();
 	void SetStatus(TSKTandemDAOStatus tsStatus);
 	void RestoreStatus();
-	void SendLogout();
 	void Bitmex_Transaction_Update();
-	void SendNotify(char* pBuf);
 
 	void ReconnectSocket();
 	void CloseSocket();

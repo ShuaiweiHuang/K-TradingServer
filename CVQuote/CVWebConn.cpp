@@ -159,6 +159,13 @@ void CCVServer::OnConnect()
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Binance,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
+			else if(m_strName == "BINANCE_FT") {
+				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
+				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
+				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Binance_FT,&m_pClientSocket->m_cfd,::_1,::_2));
+			}
+
 			else {
 				
 			}
@@ -544,6 +551,59 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 #endif
 }
 
+void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
+{
+	printf("[on_message_binance_FT]\n");
+	static char netmsg[BUFFERSIZE];
+	static char timemsg[9];
+	string str = msg->get_payload();
+	string price_str, size_str, side_str, time_str, symbol_str;
+	json jtable = json::parse(str.c_str());
+
+	cout << setw(4) << jtable << endl;
+	cout << netmsg << endl;
+	static CCVClients* pClients = CCVClients::GetInstance();
+	static int tick_count_binance=0;
+
+	if(pClients == NULL)
+		throw "GET_CLIENTS_ERROR";
+
+	string strname = "BINANCE_FT";
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	pServer->m_heartbeat_count = 0;
+	if(pServer->GetStatus() == ssBreakdown) {
+		c->close(con,websocketpp::close::status::normal,"");
+		printf("Binance breakdown\n");
+		exit(-1);
+	}
+	pServer->m_pHeartbeat->TriggerGetReplyEvent();
+
+	memset(netmsg, 0, BUFFERSIZE);
+	memset(timemsg, 0, 8);
+
+	time_str   = "00000000";
+	symbol_str = to_string(jtable["data"]["s"]);
+	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
+	price_str  = to_string(jtable["data"]["p"]);
+	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
+	size_str   = to_string(jtable["data"]["q"]);
+	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
+
+	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
+	size_str = to_string(size_int);
+
+	sprintf(netmsg, "01_ID=%s.BINANCE_FT,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
+		symbol_str.c_str(), time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance++, pClients->m_strEPIDNum.c_str());
+
+	int msglen = strlen(netmsg);
+	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
+	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
+	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
+	assert(pClients);
+	pQueueDAO->SendData(netmsg, strlen(netmsg));
+	//printf("%s\n", netmsg);
+}
+
 void CCVServer::OnHeartbeatLost()
 {
 	FprintfStderrLog("HEARTBEAT LOST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
@@ -632,8 +692,21 @@ TCVServerStatus CCVServer::GetStatus()
 }
 
 context_ptr CCVServer::CB_TLS_Init(const char * hostname, websocketpp::connection_hdl) {
-    context_ptr ctx = websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::sslv23);
-    return ctx;
+printf("CB_TLS_Init\n");
+	context_ptr ctx = websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12 );
+#if 0
+	try {
+	ctx->set_options(boost::asio::ssl::context::default_workarounds |
+		 boost::asio::ssl::context::no_sslv2 |
+		 boost::asio::ssl::context::no_sslv3 |
+		 boost::asio::ssl::context::tlsv12  |
+		 boost::asio::ssl::context::single_dh_use);
+	} catch (std::exception &e) {
+		std::cout << "Error in context pointer: " << e.what() << std::endl;
+	}
+#endif
+printf("CB_TLS_Init\n");
+	return ctx;
 }
 
 void CCVServer::OnRequest()

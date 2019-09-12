@@ -144,7 +144,7 @@ bool CCVClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 				break;
 			}
 			else {
-				FprintfStderrLog("SEND_CV_RETRY", -1, 0, NULL, 0);
+				FprintfStderrLog("SEND_CV_RETRY", -1, errno, NULL, 0, reinterpret_cast<unsigned char*>(m_ClientAddrInfo.caIP), strlen(m_ClientAddrInfo.caIP));
 				sleep(1);
 			}
 
@@ -153,7 +153,7 @@ bool CCVClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 		if(nSend <= 0) // socket close or disconnect
 		{
 			SetStatus(csOffline);
-			FprintfStderrLog("SEND_CV_ERROR", -1, errno, NULL, 0, (unsigned char*)pBuf, nToSend, (unsigned char*)strerror(errno), strlen(strerror(errno)));
+			FprintfStderrLog("SEND_CV_ERROR", -1, errno, NULL, 0, reinterpret_cast<unsigned char*>(m_ClientAddrInfo.caIP), strlen(m_ClientAddrInfo.caIP), (unsigned char*)strerror(errno), strlen(strerror(errno)));
 			break;
 		}
 		else

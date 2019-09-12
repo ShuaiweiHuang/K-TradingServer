@@ -24,6 +24,8 @@ using json = nlohmann::json;
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
+static size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp);
+static size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userdata);
 
 int CSKTandemDAO::HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length) {
 	const EVP_MD * engine = EVP_sha256();
@@ -60,7 +62,6 @@ CSKTandemDAO::CSKTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t k
 	{
 		FprintfStderrLog("create TandemDAO object fail", 0, 0, 0);
 	}
-
 	m_nTandemNodeIndex = nTandemDAOID;
 	pthread_mutex_init(&m_MutexLockOnSetStatus, NULL);
 	sprintf(m_caTandemDAOID, "%03d", nTandemDAOID);
@@ -97,43 +98,86 @@ void* CSKTandemDAO::Run()
 	SetStatus(tsServiceOn);
 	while(IsTerminated())
 	{
-		if(GetStatus() == tsMsgReady)
-		{
-			CSKWriteQueueDAO* pWriteQueueDAO = NULL;
-
-			while(pWriteQueueDAO == NULL)
-			{
-				if(m_pWriteQueueDAOs)
-					pWriteQueueDAO = m_pWriteQueueDAOs->GetAvailableDAO();
-
-				if(pWriteQueueDAO)
-				{
-					FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
-					pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
-					pWriteQueueDAO->TriggerWakeUpEvent();
-					//Transaction_Bitmex();
-					SetStatus(tsServiceOn);
-					SetInuse(false);
-				}
-				else
-				{
-					FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
-					usleep(10000);
-				}
-			}
-			printf("request remain: %s\n", m_request_remain.c_str());
-			printf("time limit: %s\n", m_time_limit.c_str());
-		}
-		else
-		{
-			usleep(100000);
-		}
+		//Bitmex_Transaction_Update();
+		sleep(1);
 	}
 	return NULL;
 }
 TSKTandemDAOStatus CSKTandemDAO::GetStatus()
 {
 	return m_TandemDAOStatus;
+}
+
+#define APIKEY "f3-gObpGoi5ECeCjFozXMm4K"
+#define APISECRET "i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE"
+
+void CSKTandemDAO::Bitmex_Transaction_Update()
+{
+	CURLcode res;
+	unsigned char * mac = NULL;
+	unsigned int mac_length = 0;
+	int expires = (int)time(NULL)+100, ret;
+	char encrystr[256], macoutput[256], execution_str[256], apikey_str[256];
+	char qty[10], oprice[10], tprice[10];
+	double doprice = 0, dtprice = 0, dqty = 0;
+	struct HEADRESP headresponse;
+	string response;
+	json jtable;
+
+	CURL *m_curl = curl_easy_init();
+	curl_global_init(CURL_GLOBAL_ALL);
+	string order_url;
+	char apiSecret[] = APISECRET;
+	sprintf(apikey_str, "api-key: f3-gObpGoi5ECeCjFozXMm4K");
+	char commandstr[] = R"({"count":5,"symbol":"XBTUSD","reverse":true})";
+	sprintf(encrystr, "GET/api/v1/execution/tradeHistory%d%s", expires, commandstr);
+	printf("encrystr = %s\n", encrystr);
+	order_url = "https://testnet.bitmex.com/api/v1/execution/tradeHistory";
+	char api_secret[48];
+	memcpy(api_secret, "i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE", 48);
+	HmacEncodeSHA256(apiSecret, 64, encrystr, strlen(encrystr), mac, mac_length);
+
+	for(int i = 0; i < mac_length; i++)
+		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
+	printf("signature = %.64s\n", macoutput);
+
+	if(mac)
+		free(mac);
+
+	if(m_curl) {
+		curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
+		struct curl_slist *http_header;
+		http_header = curl_slist_append(http_header, "content-type: application/json");
+		http_header = curl_slist_append(http_header, "Accept: application/json");
+		http_header = curl_slist_append(http_header, "X-Requested-With: XMLHttpRequest");
+		http_header = curl_slist_append(http_header, apikey_str);
+		sprintf(execution_str, "api-signature: %.64s", macoutput);
+		http_header = curl_slist_append(http_header, execution_str);
+		sprintf(execution_str, "api-expires: %d", expires);
+		http_header = curl_slist_append(http_header, execution_str);
+		curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, http_header);
+		curl_easy_setopt(m_curl, CURLOPT_HEADER, true);
+		sprintf(execution_str, "%s", commandstr);
+		printf("body: %s\n", execution_str);
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE, strlen(execution_str));
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, execution_str);
+		curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "GET");
+		curl_easy_setopt(m_curl, CURLOPT_HEADERFUNCTION, parseHeader);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
+		res = curl_easy_perform(m_curl);
+		printf("===============\n%s\n==============\n", response.c_str());
+
+
+		if(res != CURLE_OK)
+			fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+		curl_slist_free_all(http_header);
+		curl_easy_cleanup(m_curl);
+	}
+	curl_global_cleanup();
+
 }
 
 void CSKTandemDAO::SetStatus(TSKTandemDAOStatus tsStatus)
@@ -185,13 +229,13 @@ bool CSKTandemDAO::FillRiskMsg(const unsigned char* pBuf, int nSize)
 	return true;
 }
 
-size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp)
+static size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp)
 {
 	((std::string*)userp)->append((char*)contents, size * nmemb);
 	return size * nmemb;
 }
 
-size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userdata)
+static size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userdata)
 {
 	if ( strncmp((char *)ptr, "X-RateLimit-Remaining:", 22) == 0 ) { // get Token
 		strtok((char *)ptr, " ");
@@ -247,119 +291,6 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 		//return OrderSubmit_Binance(cv_ts_order, nToSend);
 	}
 	SetInuse(false);
-	return true;
-}
-
-//GET --header 'Accept: application/json' --header 'X-Requested-With: XMLHttpRequest' 'https://testnet.bitmex.com/api/v1/execution/tradeHistory?symbol=XBTUSD&count=10&reverse=true'
-bool CSKTandemDAO::Transaction_Bitmex()
-{
-	CURLcode res;
-	string buysell_str;
-	unsigned char * mac = NULL;
-	unsigned int mac_length = 0;
-	int expires = (int)time(NULL)+1000, ret;
-	char encrystr[256], commandstr[256], macoutput[256], execution_str[256], apikey_str[256];
-	char qty[10], oprice[10], tprice[10];
-	double doprice = 0, dtprice = 0, dqty = 0;
-	struct HEADRESP headresponse;
-	string response;
-	json jtable;
-
-	memset(commandstr, 0, sizeof(commandstr));
-	memset((void*)m_trade_reply, 0 , sizeof(m_trade_reply));
-	CURL *m_curl = curl_easy_init();
-	curl_global_init(CURL_GLOBAL_ALL);
-	string order_url, order_all_url;
-#if 0
-	if(!strcmp(exchange_name.c_str(), "BITMEX_T"))
-#endif
-	{
-		order_url = "https://testnet.bitmex.com/api/v1/execution";
-		order_all_url = "https://testnet.bitmex.com/api/v1/order/all";
-	}
-#if 0	
-	if(!strcmp(exchange_name.c_str(), "BITMEX"))
-	{
-		order_url = "https://www.bitmex.com/api/v1/order";
-		order_all_url = "https://www.bitmex.com/api/v1/order/all";
-	}
-#endif
-	sprintf(commandstr, "tradeHistory?symbol=XBTUSD&count=10&reverse=true");
-	sprintf(encrystr, "GET/api/v1/execution/%s%d", commandstr, expires);
-	ret = HmacEncodeSHA256("i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE", 48, encrystr, strlen(encrystr), mac, mac_length);
-	printf("encrystr = %s\n", encrystr);
-	printf("commandstr = %s\n", commandstr);
-	curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
-
-	for(int i = 0; i < mac_length; i++)
-		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
-
-	if(mac) free(mac);
-	sprintf(apikey_str, "api-key: f3-gObpGoi5ECeCjFozXMm4K");
-	if(m_curl) {
-		struct curl_slist *http_header;
-		http_header = curl_slist_append(http_header, "Accept: application/json");
-		http_header = curl_slist_append(http_header, "X-Requested-With: XMLHttpRequest");
-		http_header = curl_slist_append(http_header, apikey_str);
-		sprintf(execution_str, "api-signature: %.64s", macoutput);
-		http_header = curl_slist_append(http_header, execution_str);
-		sprintf(execution_str, "api-expires: %d", expires);
-		http_header = curl_slist_append(http_header, execution_str);
-		curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, http_header);
-		curl_easy_setopt(m_curl, CURLOPT_HEADER, true);
-		sprintf(execution_str, "%s", commandstr);
-		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE, strlen(execution_str));
-		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, execution_str);
-		curl_easy_setopt(m_curl, CURLOPT_HEADERFUNCTION, parseHeader);
-		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
-		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
-		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
-		printf("\n===================\n%s\n===================\n", response.c_str());
-		printf("keanu test 4\n");
-		res = curl_easy_perform(m_curl);
-		if(res != CURLE_OK)
-		fprintf(stderr, "curl_easy_perform() failed: %s\n",
-		curl_easy_strerror(res));
-		curl_slist_free_all(http_header);
-		printf("keanu test 5\n");
-		curl_easy_cleanup(m_curl);
-	}
-	curl_global_cleanup();
-#if 0
-	m_request_remain = headresponse.remain;
-	m_time_limit = headresponse.epoch;
-	string text;
-	for(int i=0 ; i<response.length() ; i++)
-	{
-		if(response[i] == '[') {
-			response = response.substr(i, response.length()-i);
-			FprintfStderrLog("GET_ORDER_REPLY", -1, (unsigned char*)response.c_str() ,response.length());
-			jtable = json::parse(response.c_str());
-			break;
-		}
-	}
-
-	for(int i=0 ; i<jtable.size() ; i++)
-	{
-		text = to_string(jtable[i]["error"]["message"]);
-
-		if(text != "null")
-		{
-			memcpy(m_tandem_reply.status_code, "1001", 4);
-			sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
-			SetStatus(tsMsgReady);
-		}
-		else
-		{
-			memcpy(m_tandem_reply.status_code, "1000", 4);
-			string orderbookNo = to_string(jtable[i]["orderID"]);
-			memcpy(m_tandem_reply.bookno, orderbookNo.c_str()+1, 36);
-			sprintf(m_tandem_reply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandem_reply.bookno);
-			LogOrderReplyDB_Bitmex(&jtable[i], OPT_DELETE);
-			SetStatus(tsMsgReady);
-		}
-	}
-#endif
 	return true;
 }
 
@@ -501,7 +432,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	}
 
 
-#if 0//test
+#if 1//test
 	sprintf(encrystr, "message=%s:%.6s:%1f", buysell_str.c_str(), cv_ts_order.symbol_name, doprice);
 	SendNotify(encrystr);
 #endif
@@ -565,7 +496,6 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 				memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 				memcpy(m_tandem_reply.status_code, "1001", 4);
 				sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
-				SetStatus(tsMsgReady);
 			}
 			else
 			{
@@ -576,8 +506,8 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 				memcpy(m_tandem_reply.bookno, orderbookNo.c_str()+1, 36);
 				sprintf(m_tandem_reply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandem_reply.bookno);
 				LogOrderReplyDB_Bitmex(&jtable, OPT_ADD);
-				SetStatus(tsMsgReady);
 			}
+			SetStatus(tsMsgReady);
 			break;
 		case '1'://old
 		case '2':
@@ -601,7 +531,6 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 					memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 					memcpy(m_tandem_reply.status_code, "1001", 4);
 					sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
-					SetStatus(tsMsgReady);
 				}
 				else
 				{
@@ -612,14 +541,39 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 					memcpy(m_tandem_reply.bookno, orderbookNo.c_str()+1, 36);
 					sprintf(m_tandem_reply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandem_reply.bookno);
 					LogOrderReplyDB_Bitmex(&jtable[i], OPT_DELETE);
-					SetStatus(tsMsgReady);
 				}
 			}
+			SetStatus(tsMsgReady);
 			break;
 		default:
 			break;
 
 	}
+
+	CSKWriteQueueDAO* pWriteQueueDAO = NULL;
+	while(pWriteQueueDAO == NULL)
+	{
+		if(m_pWriteQueueDAOs)
+			pWriteQueueDAO = m_pWriteQueueDAOs->GetAvailableDAO();
+
+		if(pWriteQueueDAO)
+		{
+			FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
+			pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
+			pWriteQueueDAO->TriggerWakeUpEvent();
+			SetStatus(tsServiceOn);
+			SetInuse(false);
+		}
+		else
+		{
+			FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
+			usleep(500000);
+		}
+	}
+
+	printf("request remain: %s\n", m_request_remain.c_str());
+	printf("time limit: %s\n", m_time_limit.c_str());
+
 	return true;
 }
 

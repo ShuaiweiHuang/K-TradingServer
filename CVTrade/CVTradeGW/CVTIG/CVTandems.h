@@ -1,23 +1,23 @@
-#ifndef SKTANDEMS_H_
-#define SKTANDEMS_H_
+#ifndef CVTANDEMS_H_
+#define CVTANDEMS_H_
 
 #include "CVTandem.h"
 
-class CSKTandems
+class CCVTandems
 {
 	private:
-		CSKTandems();
-		virtual ~CSKTandems();
-		static CSKTandems* instance;
+		CCVTandems();
+		virtual ~CCVTandems();
+		static CCVTandems* instance;
 		static pthread_mutex_t ms_mtxInstance;
 
-		CSKTandem* m_pTandemBitmex;
+		CCVTandem* m_pTandemBitmex;
 
 	protected:
 
 	public:
-		static CSKTandems* GetInstance();
+		static CCVTandems* GetInstance();
 
-		CSKTandem* GetTandemBitmex();
+		CCVTandem* GetTandemBitmex();
 };
 #endif

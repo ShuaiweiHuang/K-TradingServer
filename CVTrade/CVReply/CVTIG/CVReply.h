@@ -8,7 +8,7 @@
 
 using namespace std;
 
-class CCVTandem
+class CCVReply
 {
 	private:
 		vector<struct TCVTIGNode*> m_vNode;
@@ -19,8 +19,8 @@ class CCVTandem
 		int GetServiceFirstIndex(char* pService);
 
 	public:
-		CCVTandem();
-		virtual ~CCVTandem();
+		CCVReply();
+		virtual ~CCVReply();
 
 		const TCVTIGNode* GetNode(int nIndex);
 		const TCVTIGService* GetService(int nIndex, char* pService);

@@ -5,16 +5,16 @@
 #include <cstdio>
 
 
-#include "CVTandemDAOs.h"
+#include "CVReplyDAOs.h"
 
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKTandemDAOs* CSKTandemDAOs::instance = NULL;
-pthread_mutex_t CSKTandemDAOs::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
+CCVReplyDAOs* CCVReplyDAOs::instance = NULL;
+pthread_mutex_t CCVReplyDAOs::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
 
-CSKTandemDAOs::CSKTandemDAOs()
+CCVReplyDAOs::CCVReplyDAOs()
 {
 	m_PEvent = CreateEvent();
 
@@ -27,7 +27,7 @@ CSKTandemDAOs::CSKTandemDAOs()
 	m_nToSetTandemDAOID = 0;
 }
 
-CSKTandemDAOs::~CSKTandemDAOs() 
+CCVReplyDAOs::~CCVReplyDAOs() 
 {
 	DestroyEvent(m_PEvent);
 	pthread_mutex_destroy(&m_MutexLockOnAddAvailableDAO);
@@ -35,11 +35,11 @@ CSKTandemDAOs::~CSKTandemDAOs()
 	pthread_mutex_destroy(&m_MutexLockOnTriggerAddAvailableDAOEvent);
 }
 
-void CSKTandemDAOs::AddAvailableDAO()
+void CCVReplyDAOs::AddAvailableDAO()
 {
 	pthread_mutex_lock(&m_MutexLockOnAddAvailableDAO);//lock
 	m_nToSetTandemDAOID += 1;
-	CSKTandemDAO *pNewDAO = new CSKTandemDAO(m_nToSetTandemDAOID, m_nNumberOfWriteQueueDAO, m_kWriteQueueDAOStartKey, m_kWriteQueueDAOEndKey);
+	CCVReplyDAO *pNewDAO = new CCVReplyDAO(m_nToSetTandemDAOID, m_nNumberOfWriteQueueDAO, m_kWriteQueueDAOStartKey, m_kWriteQueueDAOEndKey);
 
 	m_vTandemDAO.push_back(pNewDAO);
 
@@ -50,10 +50,10 @@ void CSKTandemDAOs::AddAvailableDAO()
 	pthread_mutex_unlock(&m_MutexLockOnAddAvailableDAO);//unlock
 }
 
-CSKTandemDAO* CSKTandemDAOs::GetAvailableDAO()
+CCVReplyDAO* CCVReplyDAOs::GetAvailableDAO()
 {
 	pthread_mutex_lock(&m_MutexLockOnGetAvailableDAO);//lock
-	CSKTandemDAO* pTandemDAO = NULL;
+	CCVReplyDAO* pTandemDAO = NULL;
 	for(int count = 0; count < m_vTandemDAO.size(); count++)
 	{
 		if(m_vTandemDAO[m_nRoundRobinIndexOfTandemDAO]->IsInuse() == false)
@@ -71,7 +71,7 @@ CSKTandemDAO* CSKTandemDAOs::GetAvailableDAO()
 	return pTandemDAO;
 }
 
-bool CSKTandemDAOs::IsDAOsFull()
+bool CCVReplyDAOs::IsDAOsFull()
 {
 	pthread_mutex_lock(&m_MutexLockOnAddAvailableDAO);
 	int tandemDAOsize = m_vTandemDAO.size();
@@ -80,7 +80,7 @@ bool CSKTandemDAOs::IsDAOsFull()
 	return (tandemDAOsize >= m_nMaxNumberOfTandemDAO);
 }
 
-void* CSKTandemDAOs::Run()
+void* CCVReplyDAOs::Run()
 {
 	while(IsTerminated())
 	{
@@ -90,7 +90,7 @@ void* CSKTandemDAOs::Run()
 		{
 			bool bAvailableDAO = false;
 
-			for(vector<CSKTandemDAO*>::iterator iter = m_vTandemDAO.begin(); iter != m_vTandemDAO.end(); iter++)
+			for(vector<CCVReplyDAO*>::iterator iter = m_vTandemDAO.begin(); iter != m_vTandemDAO.end(); iter++)
 			{
 				bAvailableDAO = true;
 				break;
@@ -108,7 +108,7 @@ void* CSKTandemDAOs::Run()
 	return NULL;
 }
 
-CSKTandemDAOs* CSKTandemDAOs::GetInstance()
+CCVReplyDAOs* CCVReplyDAOs::GetInstance()
 {
 	if(instance == NULL)
 	{
@@ -116,7 +116,7 @@ CSKTandemDAOs* CSKTandemDAOs::GetInstance()
 
 		if(instance == NULL)
 		{
-			instance = new CSKTandemDAOs();
+			instance = new CCVReplyDAOs();
 			cout << "TandemDAOs One" << endl;
 		}
 
@@ -126,7 +126,7 @@ CSKTandemDAOs* CSKTandemDAOs::GetInstance()
 	return instance;
 }
 
-void CSKTandemDAOs::TriggerAddAvailableDAOEvent()
+void CCVReplyDAOs::TriggerAddAvailableDAOEvent()
 {
 	pthread_mutex_lock(&m_MutexLockOnTriggerAddAvailableDAOEvent);//lock
 
@@ -135,7 +135,7 @@ void CSKTandemDAOs::TriggerAddAvailableDAOEvent()
 	pthread_mutex_unlock(&m_MutexLockOnTriggerAddAvailableDAOEvent);//unlock
 }
 
-void CSKTandemDAOs::SetConfiguration(string strService, int nInitialConnection, int nMaximumConnection, int nNumberOfWriteQueueDAO,
+void CCVReplyDAOs::SetConfiguration(string strService, int nInitialConnection, int nMaximumConnection, int nNumberOfWriteQueueDAO,
 					key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey)
 {
 	m_strService = strService;
@@ -147,7 +147,7 @@ void CSKTandemDAOs::SetConfiguration(string strService, int nInitialConnection, 
 	m_kWriteQueueDAOEndKey = kWriteQueueDAOEndKey;
 }
 
-void CSKTandemDAOs::StartUpDAOs()//todo
+void CCVReplyDAOs::StartUpDAOs()//todo
 {
 
 	for(int i=0 ; i<m_nDefaultNumberOfTandemDAO ; i++)
@@ -169,7 +169,7 @@ void CSKTandemDAOs::StartUpDAOs()//todo
 	Start();
 }
 
-string& CSKTandemDAOs::GetService()
+string& CCVReplyDAOs::GetService()
 {
 	return m_strService;
 }

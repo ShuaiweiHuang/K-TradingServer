@@ -1,5 +1,5 @@
-#ifndef SKTANDEMDAO_H_
-#define SKTANDEMDAO_H_
+#ifndef CVTANDEMDAO_H_
+#define CVTANDEMDAO_H_
 
 #include <vector>
 
@@ -15,8 +15,8 @@
 
 using json = nlohmann::json;
 
-class CSKHeartbeat;
-class CSKTandem;
+class CCVHeartbeat;
+class CCVReply;
 
 struct HEADRESP
 {
@@ -30,7 +30,7 @@ struct APIKEY
 	string api_secret;
 };
 
-enum TSKTandemDAOStatus
+enum TCVReplyDAOStatus
 {
 	tsNone,
 	tsServiceOff,
@@ -40,24 +40,24 @@ enum TSKTandemDAOStatus
 	tsMsgReady,
 };
 
-class CSKTandemDAO : public CSKThread
+class CCVReplyDAO : public CCVThread
 {
 private:
-	friend CSKHeartbeat;
-	friend CSKWriteQueueDAOs;
+	friend CCVHeartbeat;
+	friend CCVWriteQueueDAOs;
 
 	vector<struct APIKEY> m_vApikeyTable;
 
-	CSKSocket* m_pSocket;
-	CSKHeartbeat* m_pHeartbeat;
+	CCVSocket* m_pSocket;
+	CCVHeartbeat* m_pHeartbeat;
 
 	string m_strHost;
 	string m_strPort;
 	string m_request_remain;
 	string m_time_limit;
-	TSKTandemDAOStatus m_TandemDAOStatus;
-	CSKWriteQueueDAOs* m_pWriteQueueDAOs;
-	CSKTandem* m_pTandem;
+	TCVReplyDAOStatus m_TandemDAOStatus;
+	CCVWriteQueueDAOs* m_pWriteQueueDAOs;
+	CCVReply* m_pTandem;
 	pthread_mutex_t m_MutexLockOnSetStatus;
 
 	unsigned int m_nTandemNodeIndex;
@@ -74,13 +74,13 @@ protected:
 	void* Run();
 
 public:
-	CSKTandemDAO();
-	CSKTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
+	CCVReplyDAO();
+	CCVReplyDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
 	int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);
-	virtual ~CSKTandemDAO();
+	virtual ~CCVReplyDAO();
 
-	TSKTandemDAOStatus GetStatus();
-	void SetStatus(TSKTandemDAOStatus tsStatus);
+	TCVReplyDAOStatus GetStatus();
+	void SetStatus(TCVReplyDAOStatus tsStatus);
 	void RestoreStatus();
 	void SendLogout();
 	void Bitmex_Transaction_Update(int, string, struct APIKEY);

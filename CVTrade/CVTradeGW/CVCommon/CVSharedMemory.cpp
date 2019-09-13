@@ -3,7 +3,7 @@
 
 #include "CVSharedMemory.h"
 
-CSKSharedMemory::CSKSharedMemory(key_t kKey, int nSize): m_pSharedMemory(NULL), m_nDetached(0)
+CCVSharedMemory::CCVSharedMemory(key_t kKey, int nSize): m_pSharedMemory(NULL), m_nDetached(0)
 {
 	m_nShmid = shmget(kKey, nSize, 0666 | IPC_CREAT);
 
@@ -13,7 +13,7 @@ CSKSharedMemory::CSKSharedMemory(key_t kKey, int nSize): m_pSharedMemory(NULL), 
 	}
 }
 
-CSKSharedMemory::~CSKSharedMemory() 
+CCVSharedMemory::~CCVSharedMemory() 
 {
 	if ( m_nDetached == 0) 
 	{
@@ -21,7 +21,7 @@ CSKSharedMemory::~CSKSharedMemory()
 	}
 }
 
-void CSKSharedMemory::AttachSharedMemory()
+void CCVSharedMemory::AttachSharedMemory()
 {
 	m_pSharedMemory = shmat(m_nShmid, NULL, 0);
 
@@ -35,7 +35,7 @@ void CSKSharedMemory::AttachSharedMemory()
 	}
 }
 
-int CSKSharedMemory::DetachSharedMemory()
+int CCVSharedMemory::DetachSharedMemory()
 {
 	int nResult = shmdt(m_pSharedMemory);
 
@@ -49,7 +49,7 @@ int CSKSharedMemory::DetachSharedMemory()
 	}
 }
 
-int CSKSharedMemory::RemoveSharedMemory()
+int CCVSharedMemory::RemoveSharedMemory()
 {
 	int nResult = shmctl(m_nShmid, IPC_RMID, 0);
 
@@ -59,7 +59,7 @@ int CSKSharedMemory::RemoveSharedMemory()
 	}
 }
 
-void* CSKSharedMemory::GetSharedMemory()
+void* CCVSharedMemory::GetSharedMemory()
 {
 	return m_pSharedMemory;
 }

@@ -56,5 +56,5 @@ fi
 
     BIN_DIR=../bin
 
-$BIN_DIR/CVSetTickNumber $SERIALKEY $NUM
+$BIN_DIR/CVSetShareNumber $SERIALKEY $NUM
 echo set tick number as $NUM at key $SERIALKEY

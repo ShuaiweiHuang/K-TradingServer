@@ -27,7 +27,7 @@ extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMes
 static size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp);
 static size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userdata);
 
-int CSKTandemDAO::HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length) {
+int CCVTandemDAO::HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length) {
 	const EVP_MD * engine = EVP_sha256();
 	output = (unsigned char*)malloc(EVP_MAX_MD_SIZE);
 	HMAC_CTX ctx;
@@ -39,24 +39,24 @@ int CSKTandemDAO::HmacEncodeSHA256( const char * key, unsigned int key_length, c
 	return 0;
 }
 
-CSKTandemDAO::CSKTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey)
+CCVTandemDAO::CCVTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey)
 {
 	m_pHeartbeat = NULL;
 	m_TandemDAOStatus = tsNone;
 	m_bInuse = false;
-	m_pWriteQueueDAOs = CSKWriteQueueDAOs::GetInstance();
+	m_pWriteQueueDAOs = CCVWriteQueueDAOs::GetInstance();
 
 	if(m_pWriteQueueDAOs == NULL)
-		m_pWriteQueueDAOs = new CSKWriteQueueDAOs(nNumberOfWriteQueueDAO, kWriteQueueDAOStartKey, kWriteQueueDAOEndKey);
+		m_pWriteQueueDAOs = new CCVWriteQueueDAOs(nNumberOfWriteQueueDAO, kWriteQueueDAOStartKey, kWriteQueueDAOEndKey);
 
 	assert(m_pWriteQueueDAOs);
 
 	m_pTandem = NULL;
-	CSKTandemDAOs* pTandemDAOs = CSKTandemDAOs::GetInstance();
+	CCVTandemDAOs* pTandemDAOs = CCVTandemDAOs::GetInstance();
 	assert(pTandemDAOs);
 	if(pTandemDAOs->GetService().compare("TS") == 0)
 	{
-		m_pTandem = CSKTandems::GetInstance()->GetTandemBitmex();
+		m_pTandem = CCVTandems::GetInstance()->GetTandemBitmex();
 	}
 	else
 	{
@@ -68,7 +68,7 @@ CSKTandemDAO::CSKTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t k
 	Start();
 }
 
-CSKTandemDAO::~CSKTandemDAO()
+CCVTandemDAO::~CCVTandemDAO()
 {
 	if(m_pSocket)
 	{
@@ -93,7 +93,7 @@ CSKTandemDAO::~CSKTandemDAO()
 	pthread_mutex_destroy(&m_MutexLockOnSetStatus);
 }
 
-void* CSKTandemDAO::Run()
+void* CCVTandemDAO::Run()
 {
 	SetStatus(tsServiceOn);
 	while(IsTerminated())
@@ -103,7 +103,7 @@ void* CSKTandemDAO::Run()
 	}
 	return NULL;
 }
-TSKTandemDAOStatus CSKTandemDAO::GetStatus()
+TCVTandemDAOStatus CCVTandemDAO::GetStatus()
 {
 	return m_TandemDAOStatus;
 }
@@ -111,7 +111,7 @@ TSKTandemDAOStatus CSKTandemDAO::GetStatus()
 #define APIKEY "f3-gObpGoi5ECeCjFozXMm4K"
 #define APISECRET "i9NmdIydRSa300ZGKP_JHwqnZUpP7S3KB4lf-obHeWgOOOUE"
 
-void CSKTandemDAO::Bitmex_Transaction_Update()
+void CCVTandemDAO::Bitmex_Transaction_Update()
 {
 	CURLcode res;
 	unsigned char * mac = NULL;
@@ -180,7 +180,7 @@ void CSKTandemDAO::Bitmex_Transaction_Update()
 
 }
 
-void CSKTandemDAO::SetStatus(TSKTandemDAOStatus tsStatus)
+void CCVTandemDAO::SetStatus(TCVTandemDAOStatus tsStatus)
 {
 	pthread_mutex_lock(&m_MutexLockOnSetStatus);//lock
 
@@ -189,17 +189,17 @@ void CSKTandemDAO::SetStatus(TSKTandemDAOStatus tsStatus)
 	pthread_mutex_unlock(&m_MutexLockOnSetStatus);//unlock
 }
 
-void CSKTandemDAO::SetInuse(bool bInuse)
+void CCVTandemDAO::SetInuse(bool bInuse)
 {
 	m_bInuse = bInuse;
 }
 
-bool CSKTandemDAO::IsInuse()
+bool CCVTandemDAO::IsInuse()
 {
 	return m_bInuse;
 }
 
-bool CSKTandemDAO::RiskControl()
+bool CCVTandemDAO::RiskControl()
 {
 #if 0
 	if(limit <10)
@@ -208,7 +208,7 @@ bool CSKTandemDAO::RiskControl()
 	return false;
 }
 
-bool CSKTandemDAO::SendOrder(const unsigned char* pBuf, int nSize)
+bool CCVTandemDAO::SendOrder(const unsigned char* pBuf, int nSize)
 {
 	if(RiskControl())
 		return FillRiskMsg(pBuf, nSize);
@@ -216,7 +216,7 @@ bool CSKTandemDAO::SendOrder(const unsigned char* pBuf, int nSize)
 		return OrderSubmit(pBuf, nSize);
 }
 
-bool CSKTandemDAO::FillRiskMsg(const unsigned char* pBuf, int nSize)
+bool CCVTandemDAO::FillRiskMsg(const unsigned char* pBuf, int nSize)
 {
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nSize);
@@ -249,7 +249,7 @@ static size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP 
 }
 
 
-void CSKTandemDAO::SendNotify(char* pBuf)
+void CCVTandemDAO::SendNotify(char* pBuf)
 {
 		CURL *curl;
 		CURLcode res;
@@ -275,7 +275,7 @@ void CSKTandemDAO::SendNotify(char* pBuf)
 }
 
 
-bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
+bool CCVTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 {
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nToSend);
@@ -294,7 +294,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	return true;
 }
 
-bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
+bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
 {
 	CURLcode res;
 	string buysell_str;
@@ -550,7 +550,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 
 	}
 
-	CSKWriteQueueDAO* pWriteQueueDAO = NULL;
+	CCVWriteQueueDAO* pWriteQueueDAO = NULL;
 	while(pWriteQueueDAO == NULL)
 	{
 		if(m_pWriteQueueDAOs)
@@ -577,7 +577,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	return true;
 }
 
-bool CSKTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
+bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 {
 	char insert_str[MAXDATA], delete_str[MAXDATA];
 

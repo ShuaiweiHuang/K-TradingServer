@@ -1,9 +1,9 @@
-#ifndef SKCOMMON_SKSHAREDMEMORY_H_
-#define SKCOMMON_SKSHAREDMEMORY_H_
+#ifndef CVCOMMON_CVSHAREDMEMORY_H_
+#define CVCOMMON_CVSHAREDMEMORY_H_
 
 #include <sys/shm.h>
 
-class CSKSharedMemory
+class CCVSharedMemory
 {
 	private:
 		void* 	m_pSharedMemory;
@@ -11,8 +11,8 @@ class CSKSharedMemory
 		int 	m_nDetached;
 
 	public:
-		CSKSharedMemory(key_t kKey, int nSize);
-		virtual ~CSKSharedMemory();
+		CCVSharedMemory(key_t kKey, int nSize);
+		virtual ~CCVSharedMemory();
 
 		//int GetSharedMemory();
 		void AttachSharedMemory();

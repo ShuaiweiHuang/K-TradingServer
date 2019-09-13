@@ -7,10 +7,10 @@ pthread_mutex_t mtxThreadCount = PTHREAD_MUTEX_INITIALIZER;
 
 static void *ThreadExecution(void* pArg)////////////
 {
-	return ((CSKThread*)pArg)->Run();
+	return ((CCVThread*)pArg)->Run();
 }
 
-CSKThread::CSKThread(): m_tid(0), m_nRunning(0), m_nDetached(0)
+CCVThread::CCVThread(): m_tid(0), m_nRunning(0), m_nDetached(0)
 {
 #ifdef MNTRMSG
 	pthread_mutex_lock(&mtxThreadCount);
@@ -20,7 +20,7 @@ CSKThread::CSKThread(): m_tid(0), m_nRunning(0), m_nDetached(0)
 #endif
 }
 
-CSKThread::~CSKThread()
+CCVThread::~CCVThread()
 {
 #ifdef MNTRMSG
 	pthread_mutex_lock(&mtxThreadCount);
@@ -38,7 +38,7 @@ CSKThread::~CSKThread()
 	}
 }
 
-int CSKThread::Start()
+int CCVThread::Start()
 {
 	int result = pthread_create(&m_tid, NULL, ThreadExecution, this);
 
@@ -49,7 +49,7 @@ int CSKThread::Start()
 	return result;
 }
 
-int CSKThread::Join()
+int CCVThread::Join()
 {
 	int result = -1;
 
@@ -65,7 +65,7 @@ int CSKThread::Join()
 	return result;
 }
 
-int CSKThread::Detach()
+int CCVThread::Detach()
 {
 	int result = -1;
 
@@ -81,12 +81,12 @@ int CSKThread::Detach()
 	return result;
 }
 
-pthread_t CSKThread::Self()//pthread_self();
+pthread_t CCVThread::Self()//pthread_self();
 {
 	return m_tid;
 }
 
-bool CSKThread::IsTerminated()
+bool CCVThread::IsTerminated()
 {
 	return (m_nRunning==1)? true:false;
 }

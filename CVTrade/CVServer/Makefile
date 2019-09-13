@@ -23,7 +23,7 @@ CVMain.o: CVMain.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	@rm -f ${SERVER_OBJS} ${OUTPUT_PATH}/CVTrade
+	@rm -f ${SERVER_OBJS} ${OUTPUT_PATH}/CVServer
 
 #########################################
 # Socket Server Section

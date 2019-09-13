@@ -1,5 +1,5 @@
-#ifndef SKWRITEQUEUEDAO_H_
-#define SKWRITEQUEUEDAO_H_
+#ifndef CVWRITEQUEUEDAO_H_
+#define CVWRITEQUEUEDAO_H_
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -14,7 +14,7 @@
 
 using namespace neosmart;
 
-enum TSKWriteQueueDAOStatus 
+enum TCVWriteQueueDAOStatus 
 {
 	wsNone,
 	//wsSleeping,
@@ -26,21 +26,21 @@ enum TSKWriteQueueDAOStatus
 	wsBreakdown,
 };
 
-class CSKWriteQueueDAO: public CSKThread
+class CCVWriteQueueDAO: public CCVThread
 {
 	private:
 		char m_caWriteQueueDAOID[4];
 
 		key_t m_kWriteKey;
 
-		CSKQueue* m_pWriteQueue;
+		CCVQueue* m_pWriteQueue;
 
 		neosmart_event_t m_PEvent;
 
 		unsigned char m_uncaReplyMessage[BUFSIZE];
 		int m_nReplyMessageSize;
 
-		TSKWriteQueueDAOStatus m_WriteQueueDAOStatus;
+		TCVWriteQueueDAOStatus m_WriteQueueDAOStatus;
 
 		struct timeval m_timevalStart;//us
 
@@ -50,8 +50,8 @@ class CSKWriteQueueDAO: public CSKThread
 		void* Run();
 
 	public:
-		CSKWriteQueueDAO(int nWriteQueueDAOID, key_t key);
-		virtual ~CSKWriteQueueDAO();
+		CCVWriteQueueDAO(int nWriteQueueDAOID, key_t key);
+		virtual ~CCVWriteQueueDAO();
 
 		void SetReplyMessage(unsigned char* pReplyMessage, int nReplyMessageSize);
 
@@ -59,8 +59,8 @@ class CSKWriteQueueDAO: public CSKThread
 
 		char* GetWriteQueueDAOID();
 
-		void SetStatus(TSKWriteQueueDAOStatus wsStatus);
-		TSKWriteQueueDAOStatus GetStatus();
+		void SetStatus(TCVWriteQueueDAOStatus wsStatus);
+		TCVWriteQueueDAOStatus GetStatus();
 
 		struct timeval& GetStartTimeval();
 

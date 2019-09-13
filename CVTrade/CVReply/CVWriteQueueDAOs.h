@@ -1,5 +1,5 @@
-#ifndef SKWRITEQUEUEDAOS_H_
-#define SKWRITEQUEUEDAOS_H_
+#ifndef CVWRITEQUEUEDAOS_H_
+#define CVWRITEQUEUEDAOS_H_
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -13,14 +13,14 @@
 
 using namespace std;
 
-class CSKTandemDAO;
+class CCVReplyDAO;
 
-class CSKWriteQueueDAOs: public CSKThread
+class CCVWriteQueueDAOs: public CCVThread
 {
 	private:
-		vector<CSKWriteQueueDAO*> m_vWriteQueueDAO;
+		vector<CCVWriteQueueDAO*> m_vWriteQueueDAO;
 
-		static CSKWriteQueueDAOs* instance;
+		static CCVWriteQueueDAOs* instance;
 
 		int m_nWriteQueueDAOCount;
 		int m_nWriteQueueDAORoundRobinIndex;
@@ -42,15 +42,15 @@ class CSKWriteQueueDAOs: public CSKThread
 		void* Run();
 
 	public:
-		static CSKWriteQueueDAOs* GetInstance();
-		CSKWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
-		virtual ~CSKWriteQueueDAOs();
+		static CCVWriteQueueDAOs* GetInstance();
+		CCVWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
+		virtual ~CCVWriteQueueDAOs();
 
-		CSKWriteQueueDAO* GetAvailableDAO();
+		CCVWriteQueueDAO* GetAvailableDAO();
 		bool IsAllWriteQueueDAOBreakdown();
 		void ReConstructWriteQueueDAO();
 		void SetAlarm(bool bAlarm);
-		bool IsRunningTimeReasonable(CSKWriteQueueDAO* pWriteQueueDAO);
-		void ReSendReplyMessage(CSKWriteQueueDAO* pWriteQueueDAO);
+		bool IsRunningTimeReasonable(CCVWriteQueueDAO* pWriteQueueDAO);
+		void ReSendReplyMessage(CCVWriteQueueDAO* pWriteQueueDAO);
 };
 #endif

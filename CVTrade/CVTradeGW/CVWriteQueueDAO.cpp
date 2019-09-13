@@ -19,13 +19,13 @@ using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKWriteQueueDAO::CSKWriteQueueDAO(int nWriteQueueDAOID, key_t key)
+CCVWriteQueueDAO::CCVWriteQueueDAO(int nWriteQueueDAOID, key_t key)
 {
 	sprintf(m_caWriteQueueDAOID, "%03d", nWriteQueueDAOID);
 
 	m_kWriteKey = key;
 
-	m_pWriteQueue = new CSKQueue;
+	m_pWriteQueue = new CCVQueue;
 	m_pWriteQueue->Create(m_kWriteKey);
 
 	m_PEvent = CreateEvent();
@@ -39,7 +39,7 @@ CSKWriteQueueDAO::CSKWriteQueueDAO(int nWriteQueueDAOID, key_t key)
 	Start();
 }
 
-CSKWriteQueueDAO::~CSKWriteQueueDAO() 
+CCVWriteQueueDAO::~CCVWriteQueueDAO() 
 {
 	if(m_pWriteQueue != NULL) 
 	{
@@ -53,7 +53,7 @@ CSKWriteQueueDAO::~CSKWriteQueueDAO()
 	pthread_mutex_destroy(&m_MutexLockOnSetStatus);
 }
 
-void* CSKWriteQueueDAO::Run()
+void* CCVWriteQueueDAO::Run()
 {
 	SetStatus(wsReadyForLooping);
 	while(m_pWriteQueue)
@@ -97,24 +97,24 @@ void* CSKWriteQueueDAO::Run()
 	return NULL;
 }
 
-void CSKWriteQueueDAO::SetReplyMessage(unsigned char* pReplyMessage, int nReplyMessageSize)
+void CCVWriteQueueDAO::SetReplyMessage(unsigned char* pReplyMessage, int nReplyMessageSize)
 {
 	memset(m_uncaReplyMessage, 0, sizeof(m_uncaReplyMessage));
 	memcpy(m_uncaReplyMessage, pReplyMessage, nReplyMessageSize);
 	m_nReplyMessageSize = nReplyMessageSize;	
 }
 
-void CSKWriteQueueDAO::TriggerWakeUpEvent()
+void CCVWriteQueueDAO::TriggerWakeUpEvent()
 {
 	SetEvent(m_PEvent);
 }
 
-char* CSKWriteQueueDAO::GetWriteQueueDAOID()
+char* CCVWriteQueueDAO::GetWriteQueueDAOID()
 {
 	return m_caWriteQueueDAOID;
 }
 
-void CSKWriteQueueDAO::SetStatus(TSKWriteQueueDAOStatus wsStatus)
+void CCVWriteQueueDAO::SetStatus(TCVWriteQueueDAOStatus wsStatus)
 {
 	pthread_mutex_lock(&m_MutexLockOnSetStatus);//lock
 
@@ -123,22 +123,22 @@ void CSKWriteQueueDAO::SetStatus(TSKWriteQueueDAOStatus wsStatus)
 	pthread_mutex_unlock(&m_MutexLockOnSetStatus);//unlock
 }
 
-struct timeval& CSKWriteQueueDAO::GetStartTimeval()
+struct timeval& CCVWriteQueueDAO::GetStartTimeval()
 {
 	return m_timevalStart;
 }
 
-unsigned char* CSKWriteQueueDAO::GetReplyMessage()
+unsigned char* CCVWriteQueueDAO::GetReplyMessage()
 {
 	return m_uncaReplyMessage;
 }
 
-TSKWriteQueueDAOStatus CSKWriteQueueDAO::GetStatus()
+TCVWriteQueueDAOStatus CCVWriteQueueDAO::GetStatus()
 {
 	return m_WriteQueueDAOStatus;
 }
 
-int CSKWriteQueueDAO::GetReplyMessageLength()
+int CCVWriteQueueDAO::GetReplyMessageLength()
 {
 	return m_nReplyMessageSize;	
 }

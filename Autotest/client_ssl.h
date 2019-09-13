@@ -8,7 +8,7 @@
 #define MAXDATA   1024
 #define ORDER_LENGTH 400
 
-struct SK_TS_ORDER
+struct CV_TS_ORDER
 {
         char prefix[2];
         char broker[4];

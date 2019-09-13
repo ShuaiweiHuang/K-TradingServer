@@ -1,5 +1,5 @@
-#ifndef SKTANDEMDAOS_H_
-#define SKTANDEMDAOS_H_
+#ifndef CVTANDEMDAOS_H_
+#define CVTANDEMDAOS_H_
 
 #include <vector>
 #include "CVPevents.h"
@@ -9,14 +9,14 @@
 using namespace neosmart;
 
 
-class CSKTandemDAOs: public CSKThread
+class CCVTandemDAOs: public CCVThread
 {
 	private:
-		CSKTandemDAOs();
-		static CSKTandemDAOs* instance;
+		CCVTandemDAOs();
+		static CCVTandemDAOs* instance;
 		static pthread_mutex_t ms_mtxInstance;
 
-		vector<CSKTandemDAO*> m_vTandemDAO;
+		vector<CCVTandemDAO*> m_vTandemDAO;
 
 		string m_strService;
 
@@ -40,10 +40,10 @@ class CSKTandemDAOs: public CSKThread
 		void AddAvailableDAO();
 
 	public:
-		static CSKTandemDAOs* GetInstance();
-		virtual ~CSKTandemDAOs();
+		static CCVTandemDAOs* GetInstance();
+		virtual ~CCVTandemDAOs();
 
-		CSKTandemDAO* GetAvailableDAO();
+		CCVTandemDAO* GetAvailableDAO();
 		bool IsDAOsFull();
 		void TriggerAddAvailableDAOEvent();
 

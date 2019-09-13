@@ -1,7 +1,7 @@
-#ifndef INCLUDE_SKTIGMESSAGE_H_
-#define INCLUDE_SKTIGMESSAGE_H_
+#ifndef INCLUDE_CVTIGMESSAGE_H_
+#define INCLUDE_CVTIGMESSAGE_H_
 
-struct TSKTIGMessage 
+struct TCVTIGMessage 
 {
 	char caLength[4];
 	char caType[4];

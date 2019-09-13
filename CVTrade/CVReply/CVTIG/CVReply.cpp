@@ -1,4 +1,4 @@
-#include "CVTandem.h"
+#include "CVReply.h"
 #include <cstring>
 #include <fstream>
 #include <assert.h>
@@ -6,21 +6,21 @@
 #include<iostream>
 using namespace std;
 
-CSKTandem::CSKTandem() 
+CCVReply::CCVReply() 
 {
 }
 
-CSKTandem::~CSKTandem() 
+CCVReply::~CCVReply() 
 {
 }
 
-const TSKTIGNode* CSKTandem::GetNode(int nIndex)
+const TCVTIGNode* CCVReply::GetNode(int nIndex)
 {
 	nIndex %= m_vNode.size();
 	return m_vNode[nIndex];
 }
 
-const TSKTIGService* CSKTandem::GetService(int nIndex, char* pService)//todo overhead
+const TCVTIGService* CCVReply::GetService(int nIndex, char* pService)//todo overhead
 {
 	int nCount = GetServiceCount(pService);
 	int nFirstIndex = GetServiceFirstIndex(pService);
@@ -28,11 +28,11 @@ const TSKTIGService* CSKTandem::GetService(int nIndex, char* pService)//todo ove
 	return m_vService[nFirstIndex + nIndex % nCount];
 }
 
-int CSKTandem::GetServiceCount(char* pService)
+int CCVReply::GetServiceCount(char* pService)
 {
 	int nCount = 0;
 
-	for(vector<struct TSKTIGService*>::iterator iter = m_vService.begin(); iter != m_vService.end(); iter++)
+	for(vector<struct TCVTIGService*>::iterator iter = m_vService.begin(); iter != m_vService.end(); iter++)
 	{
 		if(memcmp((*iter)->uncaServiceID, pService, strlen(pService)) == 0)
 		{
@@ -43,11 +43,11 @@ int CSKTandem::GetServiceCount(char* pService)
 	return nCount;
 }
 
-int CSKTandem::GetServiceFirstIndex(char* pService)
+int CCVReply::GetServiceFirstIndex(char* pService)
 {
 	int nFirstIndex = 0;
 
-	for(vector<struct TSKTIGService*>::iterator iter = m_vService.begin(); iter != m_vService.end(); iter++)
+	for(vector<struct TCVTIGService*>::iterator iter = m_vService.begin(); iter != m_vService.end(); iter++)
 	{
 		if(memcmp((*iter)->uncaServiceID, pService, strlen(pService)) == 0)
 		{

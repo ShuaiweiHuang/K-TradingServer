@@ -1,5 +1,5 @@
-#ifndef INCLUDE_SKTIGNODE_H_
-#define INCLUDE_SKTIGNODE_H_
+#ifndef INCLUDE_CVTIGNODE_H_
+#define INCLUDE_CVTIGNODE_H_
 
 /*
 TCPIP Process Name(8Bytes)
@@ -14,7 +14,7 @@ TIG Process Name  (8Bytes)
 EOL               (2Bytes)
 */
 
-struct TSKTIGNode{
+struct TCVTIGNode{
 	unsigned char uncaTCPIPProcessName[8];
 	unsigned char uncaComma1[1];
 	unsigned char uncaIP[20];

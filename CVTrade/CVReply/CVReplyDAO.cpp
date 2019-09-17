@@ -214,6 +214,7 @@ void CSKTandemDAO::Bitmex_Transaction_Update(int count, string symbol, struct AP
 		sprintf(apikey_str, "api-key: %s", apikeynode.api_id.c_str());
 		sprintf(encrystr, "GET/api/v1/execution%d%s", expires, commandstr);
 		HmacEncodeSHA256(apisecret_str, 64, encrystr, strlen(encrystr), mac, mac_length);
+
 		for(int i = 0; i < mac_length; i++)
 			sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
 
@@ -250,9 +251,11 @@ void CSKTandemDAO::Bitmex_Transaction_Update(int count, string symbol, struct AP
 		printf("===============\n%s\n==============\n", response.c_str());
 #endif
 	}
+
 	m_request_remain = headresponse.remain;
 	m_time_limit = headresponse.epoch;
 	string text;
+
 	for(int i=0 ; i<response.length() ; i++)
 	{
 		if(response[i] == '[') {
@@ -268,6 +271,33 @@ void CSKTandemDAO::Bitmex_Transaction_Update(int count, string symbol, struct AP
 		text = to_string(jtable[i]["error"]);
 		LogOrderReplyDB_Bitmex(&jtable[i]);
 	}
+
+        CSKWriteQueueDAO* pWriteQueueDAO = NULL;
+
+        while(pWriteQueueDAO == NULL)
+        {
+                if(m_pWriteQueueDAOs)
+                        pWriteQueueDAO = m_pWriteQueueDAOs->GetAvailableDAO();
+
+                if(pWriteQueueDAO)
+                {
+                        FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_trade_reply ,sizeof(m_trade_reply));
+                        pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_trade_reply, sizeof(m_trade_reply));
+                        pWriteQueueDAO->TriggerWakeUpEvent();
+                        SetStatus(tsServiceOn);
+                        SetInuse(false);
+                }
+                else
+                {
+                        FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
+                        usleep(500000);
+                }
+        }
+
+        printf("request remain: %s\n", m_request_remain.c_str());
+        printf("time limit: %s\n", m_time_limit.c_str());
+
+
 }
 
 bool CSKTandemDAO::LogOrderReplyDB_Bitmex(json* jtable)

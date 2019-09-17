@@ -64,7 +64,6 @@ private:
 	int  m_numberOfkey;
 	bool m_bInuse;
 	char m_caTandemDAOID[4];
-	struct CV_StructTSOrderReply m_tandem_reply;
 	struct CV_StructTSOrderReply m_trade_reply[MAXHISTORY];
 private:
 	char* GetReplyMsgOffsetPointer(const unsigned char *pMessageBuf);

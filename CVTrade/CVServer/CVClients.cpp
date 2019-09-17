@@ -21,7 +21,7 @@ CCVClients::CCVClients()
 	pthread_mutex_init(&m_MutexLockOnSerialNumber, NULL);
 	pthread_mutex_init(&m_MutexLockOnOnlineClientVector, NULL);
 	pthread_mutex_init(&m_MutexLockOnOfflineClientVector, NULL);
-#if 1
+#if 0
 	ifstream NodeFile("../ini/CVProxy.ini");
 
 	assert(NodeFile);

@@ -70,7 +70,13 @@ struct CV_StructOrderReply
 	char header_bit[2];
 	struct CV_StructOrder original;
 	char error_code[4];
-	char reply_msg[250];
+	char price[10];
+	char avgPx[10];
+	char orderQty[10];
+	char leaveQty[10];
+	char cumQty[10];
+	char transactTime[24];	
+	char reply_msg[176];
 };
 
 struct CV_StructConfig
@@ -139,8 +145,15 @@ struct CV_StructTSOrderReply
 	char status_code[4];
 	char key_id[13];
 	char bookno[36];
-	struct CV_StructTSOrder original;
-	char reply_msg[191];
+	char price[10];
+	char avgPx[10];
+	char orderQty[10];
+	char leaveQty[10];
+	char cumQty[10];
+	char transactTime[24];	
+	//char timestamp[24];
+	//struct CV_StructTSOrder original;
+	char reply_msg[129];
 };
 
 union CV_ORDER

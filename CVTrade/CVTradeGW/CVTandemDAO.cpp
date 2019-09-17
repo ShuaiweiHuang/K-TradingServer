@@ -221,7 +221,7 @@ bool CSKTandemDAO::FillRiskMsg(const unsigned char* pBuf, int nSize)
 	struct CV_StructTSOrder cv_ts_order;
 	memcpy(&cv_ts_order, pBuf, nSize);
 	//add reply message
-	memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
+	//memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
 	memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 	memcpy(m_tandem_reply.status_code, "1002", 4);
 	sprintf(m_tandem_reply.reply_msg, "submit fail, due to risk control issue");
@@ -284,7 +284,7 @@ bool CSKTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	{
 		return OrderSubmit_Bitmex(cv_ts_order, nToSend);
 	}
-	if(!strcmp(cv_ts_order.exchange_id, "BINANCE_T") || !strcmp(cv_ts_order.exchange_id, "BINANCE"))
+	if(!strcmp(cv_ts_order.exchange_id, "BINANCE_FT") || !strcmp(cv_ts_order.exchange_id, "BINANCE") || !strcmp(cv_ts_order.exchange_id, "BINANCE_F"))
 	{
 		SetInuse(false);
 		return true;
@@ -492,7 +492,7 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 
 			if(text != "null")
 			{
-				memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
+				//memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
 				memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 				memcpy(m_tandem_reply.status_code, "1001", 4);
 				sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
@@ -500,11 +500,16 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 			else
 			{
 				memcpy(m_tandem_reply.status_code, "1000", 4);
-				memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
+				//memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
 				memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
-				string orderbookNo = to_string(jtable["orderID"]);
-				memcpy(m_tandem_reply.bookno, orderbookNo.c_str()+1, 36);
-				sprintf(m_tandem_reply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandem_reply.bookno);
+				memcpy(m_tandem_reply.bookno, to_string(jtable["orderID"]).c_str()+1, 36);
+				memcpy(m_tandem_reply.price, to_string(jtable["price"]).c_str(), 10);
+				memcpy(m_tandem_reply.avgPx, to_string(jtable["avgPx"]).c_str(), 10);
+				memcpy(m_tandem_reply.orderQty, to_string(jtable["orderQty"]).c_str(), 10);
+				memcpy(m_tandem_reply.leaveQty, to_string(jtable["leaveQty"]).c_str(), 10);
+				memcpy(m_tandem_reply.cumQty, to_string(jtable["cumQty"]).c_str(), 10);
+				memcpy(m_tandem_reply.transactTime, to_string(jtable["transactTime"]).c_str()+1, 24);
+				sprintf(m_tandem_reply.reply_msg, "submit success");
 				LogOrderReplyDB_Bitmex(&jtable, OPT_ADD);
 			}
 			SetStatus(tsMsgReady);
@@ -520,28 +525,31 @@ bool CSKTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 					break;
 				}
 			}
-
 			for(int i=0 ; i<jtable.size() ; i++)
 			{
 				text = to_string(jtable[i]["error"]);
 
+				memcpy(m_tandem_reply.bookno, to_string(jtable[i]["orderID"]).c_str()+1, 36);
 				if(text != "null")
 				{
-					memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
-					memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
+					//memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
 					memcpy(m_tandem_reply.status_code, "1001", 4);
 					sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
 				}
 				else
 				{
 					memcpy(m_tandem_reply.status_code, "1000", 4);
-					memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
-					memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
-					string orderbookNo = to_string(jtable[i]["orderID"]);
-					memcpy(m_tandem_reply.bookno, orderbookNo.c_str()+1, 36);
+					//memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
 					sprintf(m_tandem_reply.reply_msg, "submit success, orderID(BookNo):%.36s", m_tandem_reply.bookno);
 					LogOrderReplyDB_Bitmex(&jtable[i], OPT_DELETE);
 				}
+				memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
+				memcpy(m_tandem_reply.price, to_string(jtable[i]["price"]).c_str(), 10);
+				memcpy(m_tandem_reply.avgPx, to_string(jtable[i]["avgPx"]).c_str(), 10);
+				memcpy(m_tandem_reply.orderQty, to_string(jtable[i]["orderQty"]).c_str(), 10);
+				memcpy(m_tandem_reply.leaveQty, to_string(jtable[i]["leaveQty"]).c_str(), 10);
+				memcpy(m_tandem_reply.cumQty, to_string(jtable[i]["cumQty"]).c_str(), 10);
+				memcpy(m_tandem_reply.transactTime, to_string(jtable[i]["transactTime"]).c_str()+1, 24);
 			}
 			SetStatus(tsMsgReady);
 			break;

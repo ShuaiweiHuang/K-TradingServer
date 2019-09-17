@@ -5,7 +5,7 @@
 #include "../include/CVTIGService.h"
 #include <vector>
 
-class CCVTandem
+class CCVReply
 {
 	public:
 		vector<TCVTIGNode> m_vStockNode;

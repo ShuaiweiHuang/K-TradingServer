@@ -13,7 +13,7 @@
 
 using namespace std;
 
-CSKSocket::CSKSocket() 
+CCVSocket::CCVSocket() 
 {
 	m_pSocketCallback = NULL;
 
@@ -26,7 +26,7 @@ CSKSocket::CSKSocket()
 	memset( &m_AddrInfo, 0 , sizeof( struct addrinfo));
 }
 
-CSKSocket::CSKSocket( ISKSocketCallback* pSocketCallback)
+CCVSocket::CCVSocket( ICVSocketCallback* pSocketCallback)
 {
 	m_pSocketCallback = pSocketCallback;
 
@@ -39,12 +39,12 @@ CSKSocket::CSKSocket( ISKSocketCallback* pSocketCallback)
 	memset( &m_AddrInfo, 0 , sizeof( struct addrinfo));
 }
 
-CSKSocket::~CSKSocket() 
+CCVSocket::~CCVSocket() 
 {
 	// TODO Auto-generated destructor stub
 }
 
-void CSKSocket::Connect(string strHost, string strPort)
+void CCVSocket::Connect(string strHost, string strPort)
 {
 	m_SocketStatus = ssConnecting;
 
@@ -87,7 +87,7 @@ void CSKSocket::Connect(string strHost, string strPort)
 	}
 }
 
-void CSKSocket::Close()
+void CCVSocket::Close()
 {
 	if ( m_SocketStatus == ssConnected)
 	{
@@ -106,17 +106,17 @@ void CSKSocket::Close()
 	}
 }
 
-void CSKSocket::Disconnect()
+void CCVSocket::Disconnect()
 {
 	Close();
 }
 
-TSKSocketStatus CSKSocket::GetStatus()
+TCVSocketStatus CCVSocket::GetStatus()
 {
 	return m_SocketStatus;
 }
 
-int CSKSocket::Send(const unsigned char* pBuf, int nSize)
+int CCVSocket::Send(const unsigned char* pBuf, int nSize)
 {
 	if ( m_SocketStatus == ssConnected)
 	{
@@ -139,7 +139,7 @@ int CSKSocket::Send(const unsigned char* pBuf, int nSize)
 	return 0;
 }
 
-int CSKSocket::Recv( unsigned char* pBuf, int nSize)
+int CCVSocket::Recv( unsigned char* pBuf, int nSize)
 {
 	if ( m_SocketStatus == ssConnected)
 	{
@@ -166,7 +166,7 @@ int CSKSocket::Recv( unsigned char* pBuf, int nSize)
 	return 0;
 }
 
-int CSKSocket::Recv()
+int CCVSocket::Recv()
 {
 	unsigned char caBuf[1024];
 

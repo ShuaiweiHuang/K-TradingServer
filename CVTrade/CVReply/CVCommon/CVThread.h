@@ -1,9 +1,9 @@
-#ifndef SKCOMMON_SKTHREAD_H_
-#define SKCOMMON_SKTHREAD_H_
+#ifndef CVCOMMON_CVTHREAD_H_
+#define CVCOMMON_CVTHREAD_H_
 
 #include <pthread.h>
 
-class CSKThread 
+class CCVThread 
 {
 	private:
 		pthread_t  m_tid;
@@ -11,8 +11,8 @@ class CSKThread
 		int        m_nDetached;
 
 	public:
-		CSKThread();
-		virtual ~CSKThread();
+		CCVThread();
+		virtual ~CCVThread();
 
 		int Start();
 		int Join();
@@ -23,4 +23,4 @@ class CSKThread
 
 		virtual void* Run() = 0;
 };
-#endif /* SKCOMMON_SKTHREAD_H_ */
+#endif /* CVCOMMON_CVTHREAD_H_ */

@@ -1,14 +1,14 @@
-#ifndef SKINTERFACE_ISKSOCKETCALLBACK_H_
-#define SKINTERFACE_ISKSOCKETCALLBACK_H_
+#ifndef CVINTERFACE_ICVSOCKETCALLBACK_H_
+#define CVINTERFACE_ICVSOCKETCALLBACK_H_
 
-class ISKSocketCallback 
+class ICVSocketCallback 
 {
 	public:
 		virtual void OnConnect()=0;
 		virtual void OnDisconnect()=0;
 		virtual void OnData( unsigned char* pBuf, int nSize)=0;
 
-		virtual ~ISKSocketCallback(){};
+		virtual ~ICVSocketCallback(){};
 };
 
-#endif /* SKINTERFACE_ISKSOCKETCALLBACK_H_ */
+#endif /* CVINTERFACE_ICVSOCKETCALLBACK_H_ */

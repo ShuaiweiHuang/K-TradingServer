@@ -1,18 +1,18 @@
 #include <iostream>
 
-#include "CVTandems.h"
+#include "CVReplys.h"
 
 using namespace std;
 
-CSKTandems* CSKTandems::instance = NULL;
-pthread_mutex_t CSKTandems::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
+CCVReplys* CCVReplys::instance = NULL;
+pthread_mutex_t CCVReplys::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
 
-CSKTandems::CSKTandems()
+CCVReplys::CCVReplys()
 {
-	m_pTandemBitmex	= new CSKTandem();
+	m_pTandemBitmex	= new CCVReply();
 }
 
-CSKTandems::~CSKTandems()
+CCVReplys::~CCVReplys()
 {
 	if(m_pTandemBitmex)
 	{
@@ -21,12 +21,12 @@ CSKTandems::~CSKTandems()
 	}
 }
 
-CSKTandem* CSKTandems::GetTandemBitmex()
+CCVReply* CCVReplys::GetTandemBitmex()
 {
 	return m_pTandemBitmex;
 }
 
-CSKTandems* CSKTandems::GetInstance()
+CCVReplys* CCVReplys::GetInstance()
 {
 	if(instance == NULL)
 	{
@@ -34,7 +34,7 @@ CSKTandems* CSKTandems::GetInstance()
 
 		if(instance == NULL)
 		{
-			instance = new CSKTandems();
+			instance = new CCVReplys();
 			cout << "Tandems One" << endl;
 		}
 

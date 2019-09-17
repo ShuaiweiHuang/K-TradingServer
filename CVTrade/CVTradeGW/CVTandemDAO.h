@@ -1,5 +1,5 @@
-#ifndef SKTANDEMDAO_H_
-#define SKTANDEMDAO_H_
+#ifndef CVTANDEMDAO_H_
+#define CVTANDEMDAO_H_
 
 #include <vector>
 
@@ -15,8 +15,8 @@
 
 using json = nlohmann::json;
 
-class CSKHeartbeat;
-class CSKTandem;
+class CCVHeartbeat;
+class CCVTandem;
 
 struct HEADRESP
 {
@@ -30,7 +30,7 @@ enum TYPE_SELECT
 	OPT_DELETE
 };
 
-enum TSKTandemDAOStatus
+enum TCVTandemDAOStatus
 {
 	tsNone,
 	tsServiceOff,
@@ -40,22 +40,22 @@ enum TSKTandemDAOStatus
 	tsMsgReady,
 };
 
-class CSKTandemDAO : public CSKThread
+class CCVTandemDAO : public CCVThread
 {
 private:
-	friend CSKHeartbeat;
-	friend CSKWriteQueueDAOs;
+	friend CCVHeartbeat;
+	friend CCVWriteQueueDAOs;
 
-	CSKSocket* m_pSocket;
-	CSKHeartbeat* m_pHeartbeat;
+	CCVSocket* m_pSocket;
+	CCVHeartbeat* m_pHeartbeat;
 
 	string m_strHost;
 	string m_strPort;
 	string m_request_remain;
 	string m_time_limit;
-	TSKTandemDAOStatus m_TandemDAOStatus;
-	CSKWriteQueueDAOs* m_pWriteQueueDAOs;
-	CSKTandem* m_pTandem;
+	TCVTandemDAOStatus m_TandemDAOStatus;
+	CCVWriteQueueDAOs* m_pWriteQueueDAOs;
+	CCVTandem* m_pTandem;
 	pthread_mutex_t m_MutexLockOnSetStatus;
 
 	unsigned int m_nTandemNodeIndex;
@@ -70,10 +70,10 @@ protected:
 	void* Run();
 
 public:
-	CSKTandemDAO();
-	CSKTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
+	CCVTandemDAO();
+	CCVTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
 	int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);
-	virtual ~CSKTandemDAO();
+	virtual ~CCVTandemDAO();
 
 	bool SendOrder(const unsigned char* pBuf, int nSize);
 	bool OrderSubmit(const unsigned char* pBuf, int nSize);
@@ -83,8 +83,8 @@ public:
 	bool FillRiskMsg(const unsigned char* pBuf, int nSize);
 	bool LogOrderReplyDB_Bitmex(json* jtable, int option);
 
-	TSKTandemDAOStatus GetStatus();
-	void SetStatus(TSKTandemDAOStatus tsStatus);
+	TCVTandemDAOStatus GetStatus();
+	void SetStatus(TCVTandemDAOStatus tsStatus);
 	void RestoreStatus();
 	void SendLogout();
 	void Bitmex_Transaction_Update();

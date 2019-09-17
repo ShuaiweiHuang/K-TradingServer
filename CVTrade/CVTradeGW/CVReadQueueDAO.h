@@ -1,5 +1,5 @@
-#ifndef SKREADQUEUEDAO_H_
-#define SKREADQUEUEDAO_H_
+#ifndef CVREADQUEUEDAO_H_
+#define CVREADQUEUEDAO_H_
 
 #include <string>
 
@@ -8,12 +8,12 @@
 
 using namespace std;
 
-class CSKTandem;
+class CCVTandem;
 
-class CSKReadQueueDAO: public CSKThread
+class CCVReadQueueDAO: public CCVThread
 {
 	private:
-		CSKQueue* m_pReadQueue;
+		CCVQueue* m_pReadQueue;
 
 		key_t m_kReadKey;
 
@@ -21,7 +21,7 @@ class CSKReadQueueDAO: public CSKThread
 
 		string m_strOTSID;
 
-		CSKTandem* m_pTandem;
+		CCVTandem* m_pTandem;
 		int m_nTandemServiceIndex;
 		char m_caTandemService[20];
 
@@ -29,8 +29,8 @@ class CSKReadQueueDAO: public CSKThread
 		void* Run();
 
 	public:
-		CSKReadQueueDAO(key_t key, string strService, string strOTSID);
-		virtual ~CSKReadQueueDAO();
+		CCVReadQueueDAO(key_t key, string strService, string strOTSID);
+		virtual ~CCVReadQueueDAO();
 
 		key_t GetReadKey();
 

@@ -1,5 +1,5 @@
-#ifndef SKREADQUEUEDAOS_H_
-#define SKREADQUEUEDAOS_H_
+#ifndef CVREADQUEUEDAOS_H_
+#define CVREADQUEUEDAOS_H_
 
 #include <vector>
 
@@ -10,27 +10,27 @@ using namespace std;
 
 #define AMOUNT_OF_HASH_SIZE 10000
 
-struct TSKOrderNumberHash//to delete
+struct TCVOrderNumberHash//to delete
 {
 	unsigned char uncaOrderNumber[13];
 	bool bAvailable;
 };
 
-class CSKReadQueueDAOs: public CSKThread
+class CCVReadQueueDAOs: public CCVThread
 {
 	private:
-		CSKReadQueueDAOs();
-		static CSKReadQueueDAOs* instance;
+		CCVReadQueueDAOs();
+		static CCVReadQueueDAOs* instance;
 		static pthread_mutex_t ms_mtxInstance;
 
-		vector<CSKReadQueueDAO*> m_vReadQueueDAO;
+		vector<CCVReadQueueDAO*> m_vReadQueueDAO;
 
 		string m_strService;
 		string m_strOTSID;
 
-		struct TSKOrderNumberHash m_OrderNumberHash[AMOUNT_OF_HASH_SIZE];
+		struct TCVOrderNumberHash m_OrderNumberHash[AMOUNT_OF_HASH_SIZE];
 
-		CSKSharedMemory* m_pSharedMemoryOfSerialNumber;
+		CCVSharedMemory* m_pSharedMemoryOfSerialNumber;
 		long* m_pSerialNumber;
 		key_t m_kTIGNumberSharedMemoryKey;
 
@@ -45,13 +45,13 @@ class CSKReadQueueDAOs: public CSKThread
 		void* Run();
 
 	public:
-		static CSKReadQueueDAOs* GetInstance();
-		virtual ~CSKReadQueueDAOs();
+		static CCVReadQueueDAOs* GetInstance();
+		virtual ~CCVReadQueueDAOs();
 
 		void AddDAO(key_t key);
 		void RemoveDAO(key_t key);
 
-		CSKReadQueueDAO* GetDAO(key_t key);
+		CCVReadQueueDAO* GetDAO(key_t key);
 
 		void InsertOrderNumberToHash(long lTIGNumber, unsigned char* pOrderNumber);
 		bool GetOrderNumberHashStatus(long lTIGNumber);

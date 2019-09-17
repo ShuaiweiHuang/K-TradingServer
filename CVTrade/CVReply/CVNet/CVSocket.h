@@ -1,5 +1,5 @@
-#ifndef CSKSOCKET_H_
-#define CSKSOCKET_H_
+#ifndef CCVSOCKET_H_
+#define CCVSOCKET_H_
 
 #include <string>
 #include <sys/socket.h>
@@ -9,7 +9,7 @@
 
 using namespace std;
 
-enum TSKSocketStatus 
+enum TCVSocketStatus 
 {
 	ssNone,
 	ssConnecting,
@@ -17,17 +17,17 @@ enum TSKSocketStatus
 	ssDisconnect
 };
 
-class ISKSocketCallback;
+class ICVSocketCallback;
 
-class CSKSocket 
+class CCVSocket 
 {
 	private:
 
-		ISKSocketCallback* m_pSocketCallback;
+		ICVSocketCallback* m_pSocketCallback;
 
 		int m_nSocket;
 
-		TSKSocketStatus m_SocketStatus;
+		TCVSocketStatus m_SocketStatus;
 
 		struct addrinfo m_AddrInfo;
 		struct addrinfo* m_AddrRes;
@@ -36,9 +36,9 @@ class CSKSocket
 		void Close();
 
 	public:
-		CSKSocket();
-		CSKSocket( ISKSocketCallback* pSocketCallback);
-		virtual ~CSKSocket();
+		CCVSocket();
+		CCVSocket( ICVSocketCallback* pSocketCallback);
+		virtual ~CCVSocket();
 
 		void Connect(string strHost, string strPort);
 		void Disconnect();
@@ -48,6 +48,6 @@ class CSKSocket
 
 		int Recv();
 
-		TSKSocketStatus GetStatus();
+		TCVSocketStatus GetStatus();
 };
-#endif /* CSKSOCKET_H_ */
+#endif /* CCVSOCKET_H_ */

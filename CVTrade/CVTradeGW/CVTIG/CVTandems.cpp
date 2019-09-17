@@ -4,15 +4,15 @@
 
 using namespace std;
 
-CSKTandems* CSKTandems::instance = NULL;
-pthread_mutex_t CSKTandems::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
+CCVTandems* CCVTandems::instance = NULL;
+pthread_mutex_t CCVTandems::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
 
-CSKTandems::CSKTandems()
+CCVTandems::CCVTandems()
 {
-	m_pTandemBitmex	= new CSKTandem();
+	m_pTandemBitmex	= new CCVTandem();
 }
 
-CSKTandems::~CSKTandems()
+CCVTandems::~CCVTandems()
 {
 	if(m_pTandemBitmex)
 	{
@@ -21,12 +21,12 @@ CSKTandems::~CSKTandems()
 	}
 }
 
-CSKTandem* CSKTandems::GetTandemBitmex()
+CCVTandem* CCVTandems::GetTandemBitmex()
 {
 	return m_pTandemBitmex;
 }
 
-CSKTandems* CSKTandems::GetInstance()
+CCVTandems* CCVTandems::GetInstance()
 {
 	if(instance == NULL)
 	{
@@ -34,7 +34,7 @@ CSKTandems* CSKTandems::GetInstance()
 
 		if(instance == NULL)
 		{
-			instance = new CSKTandems();
+			instance = new CCVTandems();
 			cout << "Tandems One" << endl;
 		}
 

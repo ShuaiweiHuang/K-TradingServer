@@ -18,11 +18,11 @@ using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKReadQueueDAO::CSKReadQueueDAO(key_t key, string strService, string strOTSID)
+CCVReadQueueDAO::CCVReadQueueDAO(key_t key, string strService, string strOTSID)
 {
 	m_kReadKey = key;
 
-	m_pReadQueue = new CSKQueue;
+	m_pReadQueue = new CCVQueue;
 	m_pReadQueue->Create(m_kReadKey);
 
 	m_strService = strService;
@@ -30,7 +30,7 @@ CSKReadQueueDAO::CSKReadQueueDAO(key_t key, string strService, string strOTSID)
 	Start();
 }
 
-CSKReadQueueDAO::~CSKReadQueueDAO()
+CCVReadQueueDAO::~CCVReadQueueDAO()
 {
 	if(m_pReadQueue != NULL)
 	{
@@ -40,25 +40,25 @@ CSKReadQueueDAO::~CSKReadQueueDAO()
 	}
 }
 
-void* CSKReadQueueDAO::Run()
+void* CCVReadQueueDAO::Run()
 {
 	struct CV_StructTSOrder cv_ts_order;
 	unsigned char uncaRecvBuf[BUFSIZE];
 	unsigned char uncaTIGMessage[BUFSIZE];
 	unsigned char uncaOrderNumber[13];
 
-	struct TSKTIGMessage TIGMessage;
+	struct TCVTIGMessage TIGMessage;
 
 	int nUserDataSize = 0;
 	int nPositionOfSeqnoNumber = 0;
 
-	CSKTandemDAO* pTandemDAO = NULL;
-	CSKTandemDAOs* pTandemDAOs = CSKTandemDAOs::GetInstance();
+	CCVTandemDAO* pTandemDAO = NULL;
+	CCVTandemDAOs* pTandemDAOs = CCVTandemDAOs::GetInstance();
 	assert(pTandemDAOs);
-	CSKReadQueueDAOs* pReadQueueDAOs = CSKReadQueueDAOs::GetInstance();
+	CCVReadQueueDAOs* pReadQueueDAOs = CCVReadQueueDAOs::GetInstance();
 	assert(pReadQueueDAOs);
 
-	memset(&TIGMessage, 0, sizeof(struct TSKTIGMessage));
+	memset(&TIGMessage, 0, sizeof(struct TCVTIGMessage));
 
 	if(m_strService.compare("TS") == 0)
 	{
@@ -75,7 +75,7 @@ void* CSKReadQueueDAO::Run()
 
 	char caLength[5];
 	memset(caLength, 0, sizeof(caLength));
-	sprintf(caLength, "%04d", sizeof(struct TSKTIGMessage) + nUserDataSize);
+	sprintf(caLength, "%04d", sizeof(struct TCVTIGMessage) + nUserDataSize);
 
 	while(m_pReadQueue)
 	{
@@ -109,9 +109,9 @@ void* CSKReadQueueDAO::Run()
 				++m_nTandemServiceIndex;
 			}
 
-			memcpy(uncaTIGMessage, &TIGMessage, sizeof(struct TSKTIGMessage));
-			memcpy(uncaTIGMessage + sizeof(struct TSKTIGMessage), uncaRecvBuf, nUserDataSize);
-			int nTIGMessageSize = sizeof(struct TSKTIGMessage) + nUserDataSize;
+			memcpy(uncaTIGMessage, &TIGMessage, sizeof(struct TCVTIGMessage));
+			memcpy(uncaTIGMessage + sizeof(struct TCVTIGMessage), uncaRecvBuf, nUserDataSize);
+			int nTIGMessageSize = sizeof(struct TCVTIGMessage) + nUserDataSize;
 
 			while(1)
 			{
@@ -167,7 +167,7 @@ void* CSKReadQueueDAO::Run()
 	return NULL;
 }
 
-key_t CSKReadQueueDAO::GetReadKey()
+key_t CCVReadQueueDAO::GetReadKey()
 {
 	return m_kReadKey;
 }

@@ -10,19 +10,19 @@
 
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
-CSKWriteQueueDAOs* CSKWriteQueueDAOs::instance = NULL;
+CCVWriteQueueDAOs* CCVWriteQueueDAOs::instance = NULL;
 
-CSKWriteQueueDAOs* CSKWriteQueueDAOs::GetInstance()
+CCVWriteQueueDAOs* CCVWriteQueueDAOs::GetInstance()
 {
 	return instance;
 }
 
-CSKWriteQueueDAOs::CSKWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey)
+CCVWriteQueueDAOs::CCVWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey)
 {
 	key_t kKey = kWriteQueueDAOStartKey;
 	for(int i=0;i<nWriteQueueDAOCount;i++)
 	{
-		CSKWriteQueueDAO* pNewDAO = new CSKWriteQueueDAO(i+1, kKey);
+		CCVWriteQueueDAO* pNewDAO = new CCVWriteQueueDAO(i+1, kKey);
 		m_vWriteQueueDAO.push_back(pNewDAO);
 
 		if(kKey < kWriteQueueDAOEndKey)
@@ -54,9 +54,9 @@ CSKWriteQueueDAOs::CSKWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueD
 	Start();
 }
 
-CSKWriteQueueDAOs::~CSKWriteQueueDAOs()
+CCVWriteQueueDAOs::~CCVWriteQueueDAOs()
 {
-	for(vector<CSKWriteQueueDAO*>::iterator iter = m_vWriteQueueDAO.begin(); iter != m_vWriteQueueDAO.end(); iter++)
+	for(vector<CCVWriteQueueDAO*>::iterator iter = m_vWriteQueueDAO.begin(); iter != m_vWriteQueueDAO.end(); iter++)
 	{
 		if(*iter)
 			delete *iter;
@@ -71,14 +71,14 @@ CSKWriteQueueDAOs::~CSKWriteQueueDAOs()
 	DestroyEvent(m_PEvent);
 }
 
-void* CSKWriteQueueDAOs::Run()
+void* CCVWriteQueueDAOs::Run()
 {
 	while(IsTerminated())
 	{
 		int nResult = WaitForEvent(m_PEvent, 500);
 		if(nResult == WAIT_TIMEOUT)
 		{
-			for(vector<CSKWriteQueueDAO*>::iterator iter = m_vWriteQueueDAO.begin(); iter != m_vWriteQueueDAO.end(); iter++)
+			for(vector<CCVWriteQueueDAO*>::iterator iter = m_vWriteQueueDAO.begin(); iter != m_vWriteQueueDAO.end(); iter++)
 			{
 				switch((*iter)->GetStatus())
 				{
@@ -137,9 +137,9 @@ void* CSKWriteQueueDAOs::Run()
 	return NULL;
 }
 
-CSKWriteQueueDAO* CSKWriteQueueDAOs::GetAvailableDAO()
+CCVWriteQueueDAO* CCVWriteQueueDAOs::GetAvailableDAO()
 {
-	CSKWriteQueueDAO* pWriteQueueDAO = NULL;
+	CCVWriteQueueDAO* pWriteQueueDAO = NULL;
 	pthread_mutex_lock(&m_MutexLockOnWriteQueueDAO);
 	for(int nCount = 0; nCount < m_vWriteQueueDAO.size(); nCount++)
 	{
@@ -188,11 +188,11 @@ CSKWriteQueueDAO* CSKWriteQueueDAOs::GetAvailableDAO()
 	return pWriteQueueDAO;
 }
 
-bool CSKWriteQueueDAOs::IsAllWriteQueueDAOBreakdown()
+bool CCVWriteQueueDAOs::IsAllWriteQueueDAOBreakdown()
 {
 	bool bIsAllWriteQueueDAOBreakdown = true;
 
-	for(vector<CSKWriteQueueDAO*>::iterator iter = m_vWriteQueueDAO.begin(); iter != m_vWriteQueueDAO.end(); iter++)
+	for(vector<CCVWriteQueueDAO*>::iterator iter = m_vWriteQueueDAO.begin(); iter != m_vWriteQueueDAO.end(); iter++)
 	{
 		if((*iter)->GetStatus() != 	wsBreakdown)
 		{
@@ -204,11 +204,11 @@ bool CSKWriteQueueDAOs::IsAllWriteQueueDAOBreakdown()
 	return bIsAllWriteQueueDAOBreakdown;
 }
 
-void CSKWriteQueueDAOs::ReConstructWriteQueueDAO()
+void CCVWriteQueueDAOs::ReConstructWriteQueueDAO()
 {
 	pthread_mutex_lock(&m_MutexLockOnWriteQueueDAO);//lock
 
-	for(vector<CSKWriteQueueDAO*>::iterator iter = m_vWriteQueueDAO.begin(); iter != m_vWriteQueueDAO.end(); iter++)
+	for(vector<CCVWriteQueueDAO*>::iterator iter = m_vWriteQueueDAO.begin(); iter != m_vWriteQueueDAO.end(); iter++)
 	{
 		if(*iter)
 			delete *iter;
@@ -220,7 +220,7 @@ void CSKWriteQueueDAOs::ReConstructWriteQueueDAO()
 	key_t kKey = m_kWriteQueueDAOStartKey;
 	for(int i=0;i<m_nWriteQueueDAOCount;i++)
 	{
-		CSKWriteQueueDAO* pNewDAO = new CSKWriteQueueDAO(i+1, kKey);
+		CCVWriteQueueDAO* pNewDAO = new CCVWriteQueueDAO(i+1, kKey);
 		m_vWriteQueueDAO.push_back(pNewDAO);
 
 		if(kKey < m_kWriteQueueDAOEndKey)
@@ -238,7 +238,7 @@ void CSKWriteQueueDAOs::ReConstructWriteQueueDAO()
 	pthread_mutex_unlock(&m_MutexLockOnWriteQueueDAO);//unlock
 }
 
-void CSKWriteQueueDAOs::SetAlarm(bool bAlarm)
+void CCVWriteQueueDAOs::SetAlarm(bool bAlarm)
 {
 	pthread_mutex_lock(&m_MutexLockOnAlarm);//lock
 
@@ -247,7 +247,7 @@ void CSKWriteQueueDAOs::SetAlarm(bool bAlarm)
 	pthread_mutex_unlock(&m_MutexLockOnAlarm);//unlock
 }
 
-bool CSKWriteQueueDAOs::IsRunningTimeReasonable(CSKWriteQueueDAO* pWriteQueueDAO)
+bool CCVWriteQueueDAOs::IsRunningTimeReasonable(CCVWriteQueueDAO* pWriteQueueDAO)
 {
 	bool bIsRunningTimeReasonable = false;
 
@@ -271,11 +271,11 @@ bool CSKWriteQueueDAOs::IsRunningTimeReasonable(CSKWriteQueueDAO* pWriteQueueDAO
 	return bIsRunningTimeReasonable;
 }
 
-void CSKWriteQueueDAOs::ReSendReplyMessage(CSKWriteQueueDAO* pWriteQueueDAO)
+void CCVWriteQueueDAOs::ReSendReplyMessage(CCVWriteQueueDAO* pWriteQueueDAO)
 {
 	while(pWriteQueueDAO)
 	{
-		CSKWriteQueueDAO* pAvailableWriteQueueDAO = GetAvailableDAO();
+		CCVWriteQueueDAO* pAvailableWriteQueueDAO = GetAvailableDAO();
 		if(pAvailableWriteQueueDAO)
 		{
 			pAvailableWriteQueueDAO->SetReplyMessage(pWriteQueueDAO->GetReplyMessage(), pWriteQueueDAO->GetReplyMessageLength());

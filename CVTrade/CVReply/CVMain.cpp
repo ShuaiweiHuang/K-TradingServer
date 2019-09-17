@@ -13,8 +13,8 @@
 #include <stdio.h>
 #include <glib.h>
 
-#include "CVTandemDAOs.h"
-#include "CVTandem.h"
+#include "CVReplyDAOs.h"
+#include "CVReply.h"
 
 using namespace std;
 
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	ReadTandemDAOConfigFile("../ini/CVReply.ini", strService, nInitialConnection, nMaximumConnection, nNumberOfWriteQueueDAO,
 							kWriteQueueDAOStartKey, kWriteQueueDAOEndKey);//todo check
 
-	CSKTandemDAOs* pTandemDAOs = CSKTandemDAOs::GetInstance();
+	CCVReplyDAOs* pTandemDAOs = CCVReplyDAOs::GetInstance();
 
 	if(pTandemDAOs)
 	{

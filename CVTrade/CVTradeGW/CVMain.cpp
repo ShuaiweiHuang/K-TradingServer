@@ -14,7 +14,6 @@
 #include <glib.h>
 
 #include "CVTandemDAOs.h"
-#include "CVReplyDAO.h"
 #include "CVReadQueueDAOs.h"
 #include "CVTandem.h"
 
@@ -60,7 +59,7 @@ int main(int argc, char *argv[])
 	ReadTandemDAOConfigFile("../ini/CVTrade.ini", strService, nInitialConnection, nMaximumConnection, nNumberOfWriteQueueDAO,
 							kWriteQueueDAOStartKey, kWriteQueueDAOEndKey);//todo check
 
-	CSKTandemDAOs* pTandemDAOs = CSKTandemDAOs::GetInstance();
+	CCVTandemDAOs* pTandemDAOs = CCVTandemDAOs::GetInstance();
 
 	if(pTandemDAOs)
 	{
@@ -77,7 +76,7 @@ int main(int argc, char *argv[])
 		cout << "The length of OTSID cannot exceed 12!" << endl;
 	}
 
-	CSKReadQueueDAOs* pReadQueueDAOs = CSKReadQueueDAOs::GetInstance();
+	CCVReadQueueDAOs* pReadQueueDAOs = CCVReadQueueDAOs::GetInstance();
 
 	if(pReadQueueDAOs)
 	{

@@ -258,9 +258,10 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 
 	for(int i=0 ; i<response.length() ; i++)
 	{
-		if(response[i] == '[') {
+		if(response[i] == '[')
+		{
 			response = response.substr(i, response.length()-i);
-			FprintfStderrLog("GET_TRANSACTION_REPLY", -1, (unsigned char*)response.c_str() ,response.length());
+			FprintfStderrLog("GET_ORDER_REPLY", -1, (unsigned char*)response.c_str() ,response.length());
 			jtable = json::parse(response.c_str());
 			break;
 		}
@@ -269,10 +270,32 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 	for(int i=0 ; i<jtable.size() ; i++)
 	{
 		text = to_string(jtable[i]["error"]);
-		LogOrderReplyDB_Bitmex(&jtable[i]);
+
+		printf("\n\n\ntext = %s\n", text.c_str());
+
+		memcpy(m_trade_reply[i].bookno, to_string(jtable[i]["orderID"]).c_str()+1, 36);
+
+		if(text != "null")
+		{
+			memcpy(m_trade_reply[i].status_code, "1001", 4);
+			sprintf(m_trade_reply[i].reply_msg, "reply fail, error message:%s", text.c_str());
+		}
+		else
+		{
+			memcpy(m_trade_reply[i].status_code, "1000", 4);
+			sprintf(m_trade_reply[i].reply_msg, "reply success, orderID(BookNo):%.36s", m_trade_reply[i].bookno);
+			LogOrderReplyDB_Bitmex(&jtable[i]);
+		}
+		memcpy(m_trade_reply[i].key_id, to_string(jtable[i]["clOrdID"]).c_str(), 13);
+		memcpy(m_trade_reply[i].price, to_string(jtable[i]["price"]).c_str(), 10);
+		memcpy(m_trade_reply[i].avgPx, to_string(jtable[i]["avgPx"]).c_str(), 10);
+		memcpy(m_trade_reply[i].orderQty, to_string(jtable[i]["orderQty"]).c_str(), 10);
+		memcpy(m_trade_reply[i].leaveQty, to_string(jtable[i]["leaveQty"]).c_str(), 10);
+		memcpy(m_trade_reply[i].cumQty, to_string(jtable[i]["cumQty"]).c_str(), 10);
+		memcpy(m_trade_reply[i].transactTime, to_string(jtable[i]["transactTime"]).c_str()+1, 24);
 	}
 
-        CSKWriteQueueDAO* pWriteQueueDAO = NULL;
+        CCVWriteQueueDAO* pWriteQueueDAO = NULL;
 
         while(pWriteQueueDAO == NULL)
         {
@@ -281,9 +304,12 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 
                 if(pWriteQueueDAO)
                 {
-                        FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_trade_reply ,sizeof(m_trade_reply));
-                        pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_trade_reply, sizeof(m_trade_reply));
-                        pWriteQueueDAO->TriggerWakeUpEvent();
+			for(int i=0 ; i<jtable.size() ; i++)
+			{
+                        	FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_trade_reply[i] ,sizeof(m_trade_reply[i]));
+	                        pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_trade_reply[i], sizeof(m_trade_reply[i]));
+        	                pWriteQueueDAO->TriggerWakeUpEvent();
+			}
                         SetStatus(tsServiceOn);
                         SetInuse(false);
                 }

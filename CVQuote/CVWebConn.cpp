@@ -607,7 +607,7 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
-	printf("%s\n", netmsg);
+	//printf("%s\n", netmsg);
 }
 
 void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
@@ -752,7 +752,6 @@ TCVServerStatus CCVServer::GetStatus()
 }
 
 context_ptr CCVServer::CB_TLS_Init(const char * hostname, websocketpp::connection_hdl) {
-printf("CB_TLS_Init\n");
 	context_ptr ctx = websocketpp::lib::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12 );
 #if 0
 	try {
@@ -765,7 +764,6 @@ printf("CB_TLS_Init\n");
 		std::cout << "Error in context pointer: " << e.what() << std::endl;
 	}
 #endif
-printf("CB_TLS_Init\n");
 	return ctx;
 }
 

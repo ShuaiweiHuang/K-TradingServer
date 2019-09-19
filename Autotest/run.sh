@@ -19,4 +19,5 @@ rm -rf ./Report/*.txt;
 mkdir -p ./Report
 
 #		ID	PASSWORD	ISLOGIN		LOOPNUM		ORDERNUM	THREADEXP	ACCOUNT		TESTPATH	IP	PORT	EXEC_RESULT
+./sslconnect $USERID	$PASSWORD	1		0		0		$THREADEXP	$USERACC 	S		$IP     $PORT	;Result[3]=$?;
 ./sslconnect $USERID	$PASSWORD	1		1		1		$THREADEXP	$USERACC 	S		$IP     $PORT	;Result[3]=$?;

@@ -634,7 +634,11 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 	if(curl) {
 		char query_str[512];
 		//sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20accounting_no,exchange_no,broker_no%%20from%%20employee,accounting%20where%%20account%20=%20%27%s%%27%%20and%%20password%%20=%%20%%27%s%%27%%20and%%20accounting.trader_no=employee.trader_no", pID, ppassword);
-		sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", pID, ppassword);
+		sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,\
+			acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20\
+			from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20\
+			and%%20acv_trader.emp_no=acv_employee.emp_no)", pID, ppassword);
+
 		printf("================\n%s\n===============\n", query_str);
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);

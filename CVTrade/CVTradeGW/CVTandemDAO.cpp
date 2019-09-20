@@ -229,7 +229,6 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 	struct timeval  tv;
 	gettimeofday(&tv, NULL);
 	double expires = (tv.tv_sec) * 1000 ;
-	printf("\n\n\n\n%.0lf\n\n\n\n", expires);
 	char encrystr[256], commandstr[256], macoutput[256], execution_str[256], apikey_str[256];
 	char qty[10], oprice[10], tprice[10];
 	double doprice = 0, dtprice = 0, dqty = 0;
@@ -290,10 +289,10 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 	string order_url, order_all_url;
 	if(!strcmp(cv_ts_order.exchange_id, "BINANCE_FT"))
 	{
-		order_url = "https://testnet.bitmex.com/api/v1/order";
-		order_all_url = "https://testnet.bitmex.com/api/v1/allOrders";
+		order_url = "https://testnet.binancefuture.com/fapi/v1/order";
+		order_all_url = "https://testnet.binancefuture.com/fapi/v1/allOrders";
 	}
-	
+
 	if(!strcmp(cv_ts_order.exchange_id, "BINANCE_F"))
 	{
 		order_url = "https://fapi.binance.com/fapi/v1/order";
@@ -304,7 +303,7 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 	{
 		case '0'://new order
 #ifdef DEBUG
-			printf("Receive new order\n");
+			printf("Binance: receive new order\n");
 #endif
 			sprintf(apikey_str, "X-MBX-APIKEY: %.64s", cv_ts_order.apiKey_order);
 			switch(cv_ts_order.order_mark[0])
@@ -346,10 +345,10 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			break;
 		case '1'://delete specific order
 #ifdef DEBUG
-			printf("Receive delete order\n");
+			printf("Binance: receive delete order\n");
 #endif
 			sprintf(apikey_str, "X-MBX-APIKEY: %s", cv_ts_order.apiKey_order);
-			sprintf(commandstr, "orderID=%.36s", cv_ts_order.order_bookno);
+			sprintf(commandstr, "orderID=%.8s", cv_ts_order.order_bookno);
 			sprintf(encrystr, "DELETE/fapi/v1/order%s", commandstr);
 			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_order, strlen(cv_ts_order.apiSecret_order), encrystr, strlen(encrystr), mac, mac_length);
 			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
@@ -357,7 +356,7 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			break;
 		case '2'://delete all order
 #ifdef DEBUG
-			printf("Receive delete order\n");
+			printf("Binance: receive delete order\n");
 #endif
 			sprintf(apikey_str, "X-MBX-APIKEY: %s", cv_ts_order.apiKey_order);
 			sprintf(commandstr, "symbol=%.6s", cv_ts_order.symbol_name); 
@@ -374,7 +373,7 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 
 
 #if 0	//test
-	sprintf(encrystr, "message=%s:%.6s:%1f", buysell_str.c_str(), cv_ts_order.symbol_name, doprice);
+	sprintf(encrystr, "Binance %s %.6s at price %1f.", buysell_str.c_str(), cv_ts_order.symbol_name, doprice);
 	SendNotify(encrystr);
 #endif
 	for(int i = 0; i < mac_length; i++) {
@@ -428,14 +427,14 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 				}
 			}
 
-			text = to_string(jtable["error"]["message"]);
+			text = to_string(jtable["msg"]);
 
 			memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 
 			if(text != "null")
 			{
 				memcpy(m_tandem_reply.status_code, "1001", 4);
-				sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
+				sprintf(m_tandem_reply.reply_msg, "submit fail, error message - [%s]", text.c_str());
 #ifdef DEBUG
 				printf("\n\n\ntext = %s\n", text.c_str());
 #endif
@@ -443,19 +442,19 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			else
 			{
 				memcpy(m_tandem_reply.status_code, "1000", 4);
-				memcpy(m_tandem_reply.bookno, to_string(jtable["orderID"]).c_str()+1, 36);
-				memcpy(m_tandem_reply.price, to_string(jtable["price"]).c_str(), 10);
-				memcpy(m_tandem_reply.avgPx, to_string(jtable["avgPx"]).c_str(), 10);
-				memcpy(m_tandem_reply.orderQty, to_string(jtable["orderQty"]).c_str(), 10);
-				memcpy(m_tandem_reply.leaveQty, to_string(jtable["leaveQty"]).c_str(), 10);
-				memcpy(m_tandem_reply.cumQty, to_string(jtable["cumQty"]).c_str(), 10);
-				memcpy(m_tandem_reply.transactTime, to_string(jtable["transactTime"]).c_str()+1, 24);
+				memcpy(m_tandem_reply.bookno,	to_string(jtable["orderID"]).c_str(), to_string(jtable["orderID"]).length());
+				memcpy(m_tandem_reply.price,	to_string(jtable["price"]).c_str(), to_string(jtable["price"]).length());
+				memcpy(m_tandem_reply.avgPx,	to_string(jtable["avgPx"]).c_str(), to_string(jtable["avgPx"]).length());
+				memcpy(m_tandem_reply.orderQty,	to_string(jtable["origQty"]).c_str()+1, to_string(jtable["origQty"]).length()-2);
+				//memcpy(m_tandem_reply.leaveQty,	to_string(jtable["leaveQty"]).c_str(), to_string(jtable["leaveQty"]).length());
+				memcpy(m_tandem_reply.cumQty,	to_string(jtable["cumQty"]).c_str(), to_string(jtable["cumQty"]).length());
+				memcpy(m_tandem_reply.transactTime, to_string(jtable["updateTime"]).c_str()+1, to_string(jtable["updateTime"]).length());
 				sprintf(m_tandem_reply.reply_msg, "submit order success");
 #ifdef DEBUG
 				printf("==============================\nsubmit order success\n");
 				printf("orderID = %s\n=======================\n", m_tandem_reply.bookno);
 #endif
-				LogOrderReplyDB_Bitmex(&jtable, OPT_ADD);
+				LogOrderReplyDB_Binance(&jtable, OPT_ADD);
 			}
 			SetStatus(tsMsgReady);
 			break;
@@ -501,19 +500,13 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 					memcpy(m_tandem_reply.status_code, "1000", 4);
 					sprintf(m_tandem_reply.reply_msg, "submit order success.");
 					if(jarray)
-						LogOrderReplyDB_Bitmex(&jtable[i], OPT_DELETE);
+						LogOrderReplyDB_Binance(&jtable[i], OPT_DELETE);
 				}
 				memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 
 				if(!jarray)
 					break;
 
-				memcpy(m_tandem_reply.price, to_string(jtable[i]["price"]).c_str(), 10);
-				memcpy(m_tandem_reply.avgPx, to_string(jtable[i]["avgPx"]).c_str(), 10);
-				memcpy(m_tandem_reply.orderQty, to_string(jtable[i]["orderQty"]).c_str(), 10);
-				memcpy(m_tandem_reply.leaveQty, to_string(jtable[i]["leaveQty"]).c_str(), 10);
-				memcpy(m_tandem_reply.cumQty, to_string(jtable[i]["cumQty"]).c_str(), 10);
-				memcpy(m_tandem_reply.transactTime, to_string(jtable[i]["transactTime"]).c_str()+1, 24);
 			}
 			SetStatus(tsMsgReady);
 			break;
@@ -766,7 +759,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 			if(text != "null")
 			{
 				memcpy(m_tandem_reply.status_code, "1001", 4);
-				sprintf(m_tandem_reply.reply_msg, "submit fail, error message:%s", text.c_str());
+				sprintf(m_tandem_reply.reply_msg, "submit order fail - [%s]", text.c_str());
 #ifdef DEBUG
 				printf("\n\n\ntext = %s\n", text.c_str());
 #endif
@@ -885,74 +878,73 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 {
 	char insert_str[MAXDATA], delete_str[MAXDATA];
 
-	string response, bitmex_data[30];
+	string response, exchange_data[30];
 
 	string orderID, clOrdID, account, symbol, side, orderQty, price, ordStatus, transactTime, stopPx, avgPx, leavesQty, currency, settlCurrency, text;
 
-	bitmex_data[0] = to_string((*jtable)["account"]);
-	bitmex_data[0] = bitmex_data[0].substr(0, bitmex_data[0].length());
+	exchange_data[0] = to_string((*jtable)["account"]);
+	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
 
-	bitmex_data[1] = to_string((*jtable)["orderID"]);
-	bitmex_data[1] = bitmex_data[1].substr(1, bitmex_data[1].length()-2);
+	exchange_data[1] = to_string((*jtable)["orderID"]);
+	exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
 
-	bitmex_data[2] = to_string((*jtable)["symbol"]);
-	bitmex_data[2] = bitmex_data[2].substr(1, bitmex_data[2].length()-2);
+	exchange_data[2] = to_string((*jtable)["symbol"]);
+	exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
 
-	bitmex_data[3] = to_string((*jtable)["side"]);
-	bitmex_data[3] = bitmex_data[3].substr(1, bitmex_data[3].length()-2);
+	exchange_data[3] = to_string((*jtable)["side"]);
+	exchange_data[3] = exchange_data[3].substr(1, exchange_data[3].length()-2);
 
-	bitmex_data[4] = to_string((*jtable)["price"]);
-	bitmex_data[4] = bitmex_data[4].substr(0, bitmex_data[4].length());
+	exchange_data[4] = to_string((*jtable)["price"]);
+	exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
 
-	bitmex_data[5] = to_string((*jtable)["orderQty"]);
-	bitmex_data[5] = bitmex_data[5].substr(0, bitmex_data[5].length());
+	exchange_data[5] = to_string((*jtable)["orderQty"]);
+	exchange_data[5] = exchange_data[5].substr(0, exchange_data[5].length());
 
-	bitmex_data[6] = to_string((*jtable)["ordType"]);
-	bitmex_data[6] = bitmex_data[6].substr(1, bitmex_data[6].length()-2);
+	exchange_data[6] = to_string((*jtable)["ordType"]);
+	exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
 
-	bitmex_data[7] = to_string((*jtable)["ordStatus"]);
-	bitmex_data[7] = bitmex_data[7].substr(1, bitmex_data[7].length()-2);
+	exchange_data[7] = to_string((*jtable)["ordStatus"]);
+	exchange_data[7] = exchange_data[7].substr(1, exchange_data[7].length()-2);
 
-	bitmex_data[8] = to_string((*jtable)["transactTime"]);
-	bitmex_data[8] = bitmex_data[8].substr(1, 19);
+	exchange_data[8] = to_string((*jtable)["transactTime"]);
+	exchange_data[8] = exchange_data[8].substr(1, 19);
 
-	bitmex_data[9] = to_string((*jtable)["stopPx"]);
-	bitmex_data[9] = bitmex_data[9].substr(0, bitmex_data[9].length());
+	exchange_data[9] = to_string((*jtable)["stopPx"]);
+	exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
 
-	bitmex_data[10] = to_string((*jtable)["avgPx"]);
-	bitmex_data[10] = bitmex_data[10].substr(0, bitmex_data[10].length());
+	exchange_data[10] = to_string((*jtable)["avgPx"]);
+	exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
 
-	bitmex_data[11] = to_string((*jtable)["cumQty"]);
-	bitmex_data[11] = bitmex_data[11].substr(0, bitmex_data[11].length());
+	exchange_data[11] = to_string((*jtable)["cumQty"]);
+	exchange_data[11] = exchange_data[11].substr(0, exchange_data[11].length());
 
-	bitmex_data[12] = to_string((*jtable)["leavesQty"]);
-	bitmex_data[12] = bitmex_data[12].substr(0, bitmex_data[12].length());
+	exchange_data[12] = to_string((*jtable)["leavesQty"]);
+	exchange_data[12] = exchange_data[12].substr(0, exchange_data[12].length());
 
-	bitmex_data[13] = to_string((*jtable)["currency"]);
-	bitmex_data[13] = bitmex_data[13].substr(1, bitmex_data[13].length()-2);
+	exchange_data[13] = to_string((*jtable)["currency"]);
+	exchange_data[13] = exchange_data[13].substr(1, exchange_data[13].length()-2);
 
-	bitmex_data[14] = to_string((*jtable)["settlCurrency"]);
-	bitmex_data[14] = bitmex_data[14].substr(1, bitmex_data[14].length()-2);
+	exchange_data[14] = to_string((*jtable)["settlCurrency"]);
+	exchange_data[14] = exchange_data[14].substr(1, exchange_data[14].length()-2);
 
-	bitmex_data[15] = to_string((*jtable)["clOrdID"]);
-		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[1].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[13].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str());
-		if(bitmex_data[4] != "null")
-			sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, bitmex_data[4].c_str());
-		if(bitmex_data[9] != "null")
-			sprintf(insert_str, "%s,stop_price=%%27%s%%27", insert_str, bitmex_data[9].c_str());
-		if(bitmex_data[10] != "null")
-			sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, bitmex_data[10].c_str());
+	exchange_data[15] = to_string((*jtable)["clOrdID"]);
+		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
+		if(exchange_data[4] != "null")
+			sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, exchange_data[4].c_str());
+		if(exchange_data[9] != "null")
+			sprintf(insert_str, "%s,stop_price=%%27%s%%27", insert_str, exchange_data[9].c_str());
+		if(exchange_data[10] != "null")
+			sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, exchange_data[10].c_str());
 
 	if(option == OPT_DELETE) {
-//		sprintf(delete_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=delete%%20from%%20bitmex_order_history%20where%%20order_no%%20=%%20%%27%s%%27", bitmex_data[1].c_str());
-		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=update%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[13].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str());
-		if(bitmex_data[4] != "null")
-			sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, bitmex_data[4].c_str());
-		if(bitmex_data[9] != "null")
-			sprintf(insert_str, "%s,stop_price=%%27%s%%27", insert_str, bitmex_data[9].c_str());
-		if(bitmex_data[10] != "null")
-			sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, bitmex_data[10].c_str());
-		sprintf(insert_str, "%s%%20where order_no=%%27%s%%27", insert_str, bitmex_data[1].c_str());
+		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=update%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
+		if(exchange_data[4] != "null")
+			sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, exchange_data[4].c_str());
+		if(exchange_data[9] != "null")
+			sprintf(insert_str, "%s,stop_price=%%27%s%%27", insert_str, exchange_data[9].c_str());
+		if(exchange_data[10] != "null")
+			sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, exchange_data[10].c_str());
+		sprintf(insert_str, "%s%%20where order_no=%%27%s%%27", insert_str, exchange_data[1].c_str());
 	}
 
 	for(int i=0 ; i<strlen(insert_str) ; i++)
@@ -961,22 +953,105 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 			insert_str[i] = '+';
 	}
 
-	for(int i=0 ; i<strlen(delete_str) ; i++)
-	{
-		if(delete_str[i] == ' ')
-			delete_str[i] = '+';
-	}
 
 	CURL *curl = curl_easy_init();
-	curl_easy_setopt(curl, CURLOPT_URL, delete_str);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-	curl_easy_perform(curl);
 	curl_easy_setopt(curl, CURLOPT_URL, insert_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 	curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
 	//printf("================response\n%s\n===============\n", response.c_str());
+	return true;
+}
+
+bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, int option)
+{
+	char insert_str[MAXDATA], delete_str[MAXDATA];
+
+	string response, exchange_data[30];
+
+	string orderID, clOrdID, account, symbol, side, orderQty, price, ordStatus, transactTime, stopPx, avgPx, leavesQty, currency, settlCurrency, text;
+
+	exchange_data[0] = to_string((*jtable)["orderID"]);
+	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
+
+	exchange_data[1] = to_string((*jtable)["symbol"]);
+	exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
+
+	exchange_data[2] = to_string((*jtable)["accountID"]);
+	exchange_data[2] = exchange_data[2].substr(0, exchange_data[2].length());
+
+	exchange_data[3] = to_string((*jtable)["status"]);
+	exchange_data[3] = exchange_data[3].substr(1, exchange_data[3].length()-2);
+
+	exchange_data[4] = to_string((*jtable)["clientOrderId"]);
+	exchange_data[4] = exchange_data[4].substr(1, exchange_data[4].length()-2);
+
+	exchange_data[5] = to_string((*jtable)["price"]);
+	exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
+
+	exchange_data[6] = to_string((*jtable)["origQty"]);
+	exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
+
+	exchange_data[7] = to_string((*jtable)["executedQty"]);
+	exchange_data[7] = exchange_data[7].substr(1, exchange_data[7].length()-2);
+
+	exchange_data[8] = to_string((*jtable)["cumQty"]);
+	exchange_data[8] = exchange_data[8].substr(1, exchange_data[8].length()-2);
+
+	exchange_data[9] = to_string((*jtable)["cumQuote"]);
+	exchange_data[9] = exchange_data[9].substr(1, exchange_data[9].length()-2);
+
+	exchange_data[10] = to_string((*jtable)["timeInForce"]);
+	exchange_data[10] = exchange_data[10].substr(1, exchange_data[10].length()-2);
+
+	exchange_data[11] = to_string((*jtable)["type"]);
+	exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
+
+	exchange_data[12] = to_string((*jtable)["reduceOnly"]);
+	exchange_data[12] = exchange_data[12].substr(0, exchange_data[12].length());
+
+	exchange_data[13] = to_string((*jtable)["side"]);
+	exchange_data[13] = exchange_data[13].substr(1, exchange_data[13].length()-2);
+
+	exchange_data[14] = to_string((*jtable)["stopPrice"]);
+	exchange_data[14] = exchange_data[14].substr(1, exchange_data[14].length()-2);
+
+	exchange_data[15] = to_string((*jtable)["updateTime"]);
+	exchange_data[15] = exchange_data[15].substr(0, exchange_data[15].length());
+
+		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,\
+		account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,\
+		match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27",
+		exchange_data[2].c_str(), exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[13].c_str(),
+		exchange_data[6].c_str(), exchange_data[11].c_str(), exchange_data[3].c_str(), exchange_data[15].c_str(),
+		exchange_data[7].c_str(), exchange_data[4].c_str(), exchange_data[14].c_str());
+
+	if(option == OPT_DELETE) {
+		sprintf(insert_str, "http://192.168.101.209:19487/mysql?db=Cryptovix_test&query=update%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,\
+		account=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,\
+		match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27",
+		exchange_data[2].c_str(), exchange_data[1].c_str(), exchange_data[13].c_str(), exchange_data[6].c_str(),
+		exchange_data[11].c_str(), exchange_data[3].c_str(), exchange_data[15].c_str(), exchange_data[7].c_str(),
+		exchange_data[4].c_str(), exchange_data[14].c_str());
+		sprintf(insert_str, "%s%%20where order_no=%%27%s%%27", insert_str, exchange_data[0].c_str());
+	}
+
+	for(int i=0 ; i<strlen(insert_str) ; i++)
+	{
+		if(insert_str[i] == ' ')
+			insert_str[i] = '+';
+	}
+
+	CURL *curl = curl_easy_init();
+	curl_easy_setopt(curl, CURLOPT_URL, insert_str);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+	curl_easy_perform(curl);
+	curl_easy_cleanup(curl);
+#ifdef DEBUG
+	printf("================insert_str\n%s\n==============", insert_str);
+	printf("================response\n%s\n===============\n", response.c_str());
+#endif
 	return true;
 }

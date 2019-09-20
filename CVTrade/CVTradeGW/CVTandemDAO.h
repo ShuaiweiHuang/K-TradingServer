@@ -79,9 +79,10 @@ public:
 	bool OrderSubmit(const unsigned char* pBuf, int nSize);
 	bool OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nSize);
+	bool LogOrderReplyDB_Bitmex(json* jtable, int option);
+	bool LogOrderReplyDB_Binance(json* jtable, int option);
 	bool RiskControl();
 	bool FillRiskMsg(const unsigned char* pBuf, int nSize);
-	bool LogOrderReplyDB_Bitmex(json* jtable, int option);
 
 	TCVTandemDAOStatus GetStatus();
 	void SetStatus(TCVTandemDAOStatus tsStatus);

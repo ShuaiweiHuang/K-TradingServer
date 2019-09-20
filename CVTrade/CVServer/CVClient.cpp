@@ -446,7 +446,9 @@ bool CCVClient::SendAll(const unsigned char* pBuf, int nToSend)
 {
 	int nSend = 0;
 	int nSended = 0;
-
+#ifdef DEBUG
+	printf("reply client with length %d\n", nToSend);
+#endif
 	do
 	{
 		nToSend -= nSend;
@@ -545,36 +547,30 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 void CCVClient::ReplyAccountContents()
 {
 	char AcclistReplyBuf[1024];
-	AcclistReplyBuf[0] = ESCAPE;
-	AcclistReplyBuf[1] = ACCLISTREP;
-#if 0
-	map<string, struct AccountData> m_mBranchAccount;
-	
-	struct AccountData
-	{
-		string api_id;
-		string api_key;
-		string broker_id;
-		string exchange_name;
-	};
-#endif
 	map<string, struct AccountData>::iterator iter;
 	memset(AcclistReplyBuf, 0, 1024);
-
+	AcclistReplyBuf[0] = ESCAPE;
+	AcclistReplyBuf[1] = ACCLISTREP;
 	int i = 0, len ;
 	for(iter = m_mBranchAccount.begin(); iter != m_mBranchAccount.end() ; iter++, i++)
 	{
 		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2), iter->second.broker_id.c_str(), iter->second.broker_id.length());
-		//printf("keanu test (%s) (%s), %d\n", iter->second.broker_id.c_str(), 
-		//		AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2), 2 + i*(sizeof(struct CV_StructAcclistReply)-2));
 		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, iter->first.c_str(), iter->first.length());
-		//printf("keanu test (%s) (%s), %d\n", iter->first.c_str(),
-		//		AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4);
 		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, iter->second.exchange_name.c_str(), iter->second.exchange_name.length());
-		//printf("keanu test (%s) (%s), %d\n", iter->second.exchange_name.c_str(),
-		//		AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11);
-		len = 2+(i+1)*(sizeof(struct CV_StructAcclistReply)-2); 
+#ifdef DEBUG
+		printf("(%s) (%s), %d\n", iter->second.broker_id.c_str(), 
+				AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2), 2 + i*(sizeof(struct CV_StructAcclistReply)-2));
+		printf("(%s) (%s), %d\n", iter->first.c_str(),
+				AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4);
+		printf("(%s) (%s), %d\n", iter->second.exchange_name.c_str(),
+				AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11);
+#endif
 	}
+
+	len = 2+(i)*(sizeof(struct CV_StructAcclistReply)-2);
+#ifdef DEBUG
+	printf("account contents len = %d\n", len);
+#endif
 	int nSendData = SendData((unsigned char*)AcclistReplyBuf, len);
 
 	if(nSendData)
@@ -654,6 +650,9 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			return false;
 		}
 
+#ifdef DEBUG
+			printf("%s\n", readBuffer1.c_str());
+#endif
 		for(int i=0 ; i<jtable_query_account.size() ; i++) {
 			readBuffer2 = "";
 			acno = to_string(jtable_query_account[i]["accounting_no"]);
@@ -664,7 +663,7 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			brno = brno.substr(1, brno.length()-2);
 			sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 #ifdef DEBUG
-			printf("%s\n", readBuffer1.c_str());
+			printf("============================\n%s\n============================\n", query_str);
 #endif
 			curl_easy_setopt(curl, CURLOPT_URL, query_str);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -681,7 +680,7 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			acdata.broker_id = brno;
 			m_mBranchAccount.insert(pair<string, struct AccountData>(acno, acdata));
 #ifdef DEBUG
-			printf("%s, %s, %s, %s\n", acdata.api_id.c_str(), acdata.api_key.c_str(), acdata.exchange_name.c_str(), acdata.broker_id.c_str());
+			printf("%s, %s, %s, %s\n==================\n", acdata.api_id.c_str(), acdata.api_key.c_str(), acdata.exchange_name.c_str(), acdata.broker_id.c_str());
 #endif
 		}
 		memcpy(logon_reply.status_code, "OK", 2);//to do

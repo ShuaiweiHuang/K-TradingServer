@@ -129,7 +129,12 @@ void* CCVQueueDAO::Run()
 					bool bSendData = false;
 
 					if(pClient->GetStatus() == csOnline)//weird if(pClient) not working
+					{
+#ifdef DEBUG
+						printf("\nqueue send data length = %d\n\n", nSizeOfSendSocket);
+#endif
 						bSendData = pClient->SendData(uncaSendBuf, nSizeOfSendSocket);
+					}
 					else
 					{
 						FprintfStderrLog("CLIENT_NOT_ONLINE", -1, uncaRecvBuf, nGetMessage);

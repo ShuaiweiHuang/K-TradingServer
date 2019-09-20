@@ -5,10 +5,10 @@
 #define ESCAPE		0x1b
 #define LOGREQ		0x00
 #define LOGREP		0x01
+//#define ACCNUMREQ	0x02
 #define ACCNUMREP	0x02
+//#define ACCLISTREQ	0x04
 #define ACCLISTREP	0x03
-#define STRATEGYREP	0x04
-#define STRATEGYREQ	0x05
 #define HEARTBEATREQ	0x06
 #define HEARTBEATREP	0x07
 #define ORDERREQ	0x40

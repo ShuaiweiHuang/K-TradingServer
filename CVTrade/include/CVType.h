@@ -134,10 +134,8 @@ struct CV_StructTSOrder
 	char qty_mark[1];
 	char order_qty[9];
 	char order_kind[2];
-	char apiKey_order[25];
-	char apiKey_cancel[25];
-	char apiSecret_order[49];
-	char apiSecret_cancel[49];
+	char apiKey_order[65];
+	char apiSecret_order[65];
 };
 
 struct CV_StructTSOrderReply
@@ -151,8 +149,6 @@ struct CV_StructTSOrderReply
 	char leaveQty[10];
 	char cumQty[10];
 	char transactTime[24];	
-	//char timestamp[24];
-	//struct CV_StructTSOrder original;
 	char reply_msg[129];
 };
 

@@ -70,12 +70,12 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 		if(!memcmp(iter->first.c_str(), ucvts.cv_ts_order.sub_acno_id, iter->first.length()))
 		{
 			account_check = true;
+			memset(ucvts.cv_ts_order.apiKey_order, 0, sizeof(ucvts.cv_ts_order.apiKey_order));
+			memset(ucvts.cv_ts_order.apiSecret_order, 0, sizeof(ucvts.cv_ts_order.apiSecret_order));
 			memcpy(ucvts.cv_ts_order.apiKey_order, iter->second.api_id.c_str(), iter->second.api_id.length());
 			printf("api id (%d): %s\n", iter->second.api_id.length(), iter->second.api_id.c_str());
 			memcpy(ucvts.cv_ts_order.apiSecret_order, iter->second.api_key.c_str(), iter->second.api_key.length());
 			printf("api key (%d): %s\n", iter->second.api_key.length(), iter->second.api_key.c_str());
-			memcpy(ucvts.cv_ts_order.apiKey_cancel, iter->second.api_id.c_str(), iter->second.api_id.length());
-			memcpy(ucvts.cv_ts_order.apiSecret_cancel, iter->second.api_key.c_str(), iter->second.api_key.length());
 			break;
 		}
 	}

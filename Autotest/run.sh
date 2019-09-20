@@ -3,9 +3,8 @@ IP=192.168.101.211
 PORT=2001
 
 #ACCOUNT SETTING
-PASSWORD=cryptovix
 USERID=keanu.huang
-USERACC=A000012
+PASSWORD=cryptovix
 
 #RUNNING PARAMETERS
 BEGIN=0
@@ -19,5 +18,5 @@ rm -rf ./Report/*.txt;
 mkdir -p ./Report
 
 #		ID	PASSWORD	ISLOGIN		LOOPNUM		ORDERNUM	THREADEXP	ACCOUNT		TESTPATH	IP	PORT	EXEC_RESULT
-./sslconnect $USERID	$PASSWORD	1		0		0		$THREADEXP	$USERACC 	S		$IP     $PORT	;Result[3]=$?;
-./sslconnect $USERID	$PASSWORD	1		1		1		$THREADEXP	$USERACC 	S		$IP     $PORT	;Result[3]=$?;
+./connect_bm $USERID	$PASSWORD	1		1		1		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
+#./connect_bn $USERID	$PASSWORD	1		1		1		$THREADEXP	A000038 	S		$IP     $PORT	;Result[0]=$?;

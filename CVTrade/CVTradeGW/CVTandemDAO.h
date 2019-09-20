@@ -87,7 +87,6 @@ public:
 	void SetStatus(TCVTandemDAOStatus tsStatus);
 	void RestoreStatus();
 	void SendLogout();
-	void Bitmex_Transaction_Update();
 	void SendNotify(char* pBuf);
 
 	void ReconnectSocket();

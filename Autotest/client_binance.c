@@ -181,59 +181,29 @@ void* test_run(void *arg)
 
 
 				if(data[1] == 0x02) {
-					account_num = data[2];
+					account_num = (data[2] );
 					printf("account num: packet len=%d, %x, %x, %x\n", len, data[0], data[1], data[2]);
 				}
-printf("keanu test 1\n");
-				if ((len=read(server, data, 44)) <= 0) 
+				if ((len=read(server, data, 2+account_num*21)) <= 0) 
 				{
 					perror ("read from aptrader_server error !");
 					ret = -1;
 					is_conn = 0;
 					break;
 				}
-
-printf("keanu test 2\n");
-				printf("account: packet len=%d, %x, %x, %.4s, %.7s, %.10s, %.4s, %.7s, %.10s\n", len, data[0], data[1], data+2, data+6, data+13, data+23, data+27, data+34);
+				int j;
+				for(j=0 ; j<account_num ; j++)
+					printf("account: packet len=%d, %x, %x, %.4s, %.7s, %.10s\n", len, data[0], data[1], data+2+21*j, data+6+21*j, data+13+21*j);
 			}
-#endif
-#if 0
-			data[0] = 0x1b;
-			data[1] = 0x02;
-			write(server, data, 2);
-			len = read(server, data, 4);
-			printf("account num: packet len=%d, %x, %x, %.2s\n", len, data[0], data[1], data+2);
-#endif
-#if 0
-			data[0] = 0x1b;
-			data[1] = 0x06;
-			memcpy(data+2,	"HBRQ", 4);
-			if (write(server, data, 6) <= 0) 
-			{
-				perror("write to server error !");
-				ret = -1;
-				is_conn = 0;
-				break;
-			}
-			packs = 1;
-                        while(packs--)
-                        {
-                                if ((len=read(server, data, 6)) <= 0)
-                                {
-                                        perror ("read from aptrader_server error !");
-                                        ret = -1;
-                                        is_conn = 0;
-                                        break;
-                                }
-                                if(data[1] == 0x07)
-                                        printf("HTBT: len=%d,%x,%x,%.4s\n", len, data[0], data[1], data+2);
-				else
-                                        printf("HTBTERROR: len=%d,%x,%x,%.4s\n", len, data[0], data[1], data+2);
-					
-                        }
 #endif
 			if(!is_conn)
 				break;
+			time_t t = time(NULL);
+			struct tm tm = *localtime(&t);
+			char date[9];
+			char time[9];
+			sprintf(date, "%d%d%d", tm.tm_year + 1900, tm.tm_mon + 1,tm.tm_mday);
+			sprintf(time, "%d%d%d00", tm.tm_hour, tm.tm_min, tm.tm_sec);
 
 			memset(&ts_order, ' ', sizeof(ts_order));
 			ts_order.header_bit[0] = 0x1b;
@@ -242,25 +212,25 @@ printf("keanu test 2\n");
 			memcpy(ts_order.strategy_name, "MACD-1234\0", 16);
 			memcpy(ts_order.agent_id, "MC", 2);
 			memcpy(ts_order.broker_id, "9801", 4);
-			memcpy(ts_order.exchange_id, "BITMEX_T\0", 10);
-			memcpy(ts_order.seq_id, "9487943123456", 13);
-			memcpy(ts_order.symbol_name, "XBTUSD\0", 7);
+			memcpy(ts_order.exchange_id, "BINANCE_F\0", 10);
+			memcpy(ts_order.seq_id, "1234567890123", 13);
+			memcpy(ts_order.symbol_name, "BTCUSDT\0",10);
 			memcpy(ts_order.symbol_type, "F", 1);
 			memcpy(ts_order.symbol_mark, "0", 1);
 			memcpy(ts_order.order_offset, "0", 1);
 			memcpy(ts_order.order_dayoff, "N", 1);
-			memcpy(ts_order.order_date, "20190821", 8);
-			memcpy(ts_order.order_time, "17160301", 8);
+			memcpy(ts_order.order_date, date, 8);
+			memcpy(ts_order.order_time, time, 8);
 			memcpy(ts_order.order_buysell, "B", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
-			memcpy(ts_order.order_mark, "0", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
+			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
-			memcpy(ts_order.order_price, "100000000", 9);
+			memcpy(ts_order.order_price, "098000000", 9);
 			memcpy(ts_order.touch_price, "106005000", 9);
-			memcpy(ts_order.qty_mark, "0", 1);
-			memcpy(ts_order.order_qty, "000000001", 9);
+			memcpy(ts_order.qty_mark, "2", 1);
+			memcpy(ts_order.order_qty, "000000100", 9);
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
 			for(order_loop=0 ; order_loop<order_num && is_conn ; order_loop++)
@@ -286,12 +256,13 @@ printf("keanu test 2\n");
 					break;
 				}
 				printf("keanu read success\n");
-				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+262);
-#if 1
+				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+336);
+
+#if 0// delete order
 				memcpy(ts_order.order_bookno, data1+100, 36);
 				memcpy(ts_order.key_id, data1+56, 13);
 				memcpy(ts_order.trade_type, "1", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
-				printf("send order %d: %.1s %.9s %s\n", order_loop, ts_order.order_buysell, ts_order.order_price, ts_order.order_mark=='0'?"MARKET":"Limit");
+				printf("send order delete %d: %.1s %.9s %s\n", order_loop, ts_order.order_buysell, ts_order.order_price, ts_order.order_mark=='0'?"MARKET":"Limit");
 				if (write(server, (&ts_order.header_bit[0]), 256) <= 0) {
 					perror("write to server error !");
 					is_conn = 0;
@@ -308,7 +279,7 @@ printf("keanu test 2\n");
 					break;
 				}
 				printf("keanu read success\n");
-				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%.250s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+262);
+				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+336);
 #endif
 
 			}//end loop for order

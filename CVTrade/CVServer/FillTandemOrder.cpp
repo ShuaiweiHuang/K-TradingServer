@@ -41,8 +41,9 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 	memcpy(ucvts.cv_ts_order.client_ip, pIP, IPLEN);
 	memcpy(ucvts.cv_ts_order.seq_id, ucv.cv_order.seq_id, 13); 
 	memcpy(ucvts.cv_ts_order.username, pUsername, 20); 
-	
-	printf("ucv.cv_order.seq_id = %.13s\n", ucv.cv_order.seq_id);
+	memcpy(ucvts.cv_ts_order.exchange_id, ucv.cv_order.exchange_id, 10);
+
+
 //key id
 	if(ucv.cv_order.trade_type[0] == '0') {
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
@@ -53,12 +54,25 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
 		//memcpy(ucvts.cv_ts_order.key_id, ucv.cv_order.key_id, 13);
 		memcpy(ucvts.cv_ts_order.order_bookno, ucv.cv_order.order_bookno, 36);
+		if(ucv.cv_order.trade_type[0] >= '2') {
+			if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F"))
+				return TT_ERROR;
+		}
+		if(ucv.cv_order.trade_type[0] >= '3') {
+			if(!strcmp(ucvts.cv_ts_order.exchange_id, "BITMEX"))
+				return TT_ERROR;
+		}
+
 	}
 	else {
 		return TT_ERROR;
 	}
 	memcpy(ucvts.cv_ts_order.trade_type, ucv.cv_order.trade_type, 1);
 
+#ifdef DEBUG	
+	printf("ucv.cv_order.seq_id = %.13s\n", ucv.cv_order.seq_id);
+	printf("ucv.cv_order.key_id = %.13s\n", ucv.cv_order.key_id);
+#endif
 
 //Sub account id and strategy name
 	int i = 0, len ;
@@ -95,7 +109,6 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 
 //Broker ID
 	memcpy(ucvts.cv_ts_order.broker_id, ucv.cv_order.broker_id, 4);
-	memcpy(ucvts.cv_ts_order.exchange_id, ucv.cv_order.exchange_id, 10);
 	memcpy(ucvts.cv_ts_order.symbol_name, ucv.cv_order.symbol_name, 10);
 	memcpy(ucvts.cv_ts_order.symbol_type, ucv.cv_order.symbol_type, 1);
 	memcpy(ucvts.cv_ts_order.symbol_mark, ucv.cv_order.symbol_mark, 1);
@@ -163,10 +176,17 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 	{
 		case '0':
 		case '1':
-		case '2':
-		case '3':
 		case '4':
 			memcpy(ucvts.cv_ts_order.order_mark, ucv.cv_order.order_mark, 1);
+			break;
+		case '3':
+			if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F"))
+				return OM_ERROR;
+			memcpy(ucvts.cv_ts_order.order_mark, ucv.cv_order.order_mark, 1);
+			break;
+		case '2':
+			//if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F")) // add this if exchange support
+				return OM_ERROR;
 			break;
 		default:
 			return OM_ERROR;

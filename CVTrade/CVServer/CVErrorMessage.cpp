@@ -18,6 +18,7 @@ CCVErrorMessage::CCVErrorMessage()
 	string str1113 = "Order kind error";
 	string str1114 = "Please login first";
 	string str1115 = "Account invalid";
+	string str1116 = "key ID error";
 
 	m_mErrorMessage.insert(std::pair<int, string>(1100, str1100));
 	m_mErrorMessage.insert(std::pair<int, string>(1101, str1101));
@@ -35,6 +36,7 @@ CCVErrorMessage::CCVErrorMessage()
 	m_mErrorMessage.insert(std::pair<int, string>(1113, str1113));
 	m_mErrorMessage.insert(std::pair<int, string>(1114, str1114));
 	m_mErrorMessage.insert(std::pair<int, string>(1115, str1115));
+	m_mErrorMessage.insert(std::pair<int, string>(1116, str1116));
 }
 
 CCVErrorMessage::~CCVErrorMessage()

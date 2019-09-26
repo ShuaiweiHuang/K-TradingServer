@@ -16,7 +16,7 @@ struct CV_StructOrder
 {
         char header_bit[2];
         char sub_acno_id[7];
-        char strategy_name[16];
+        char strategy_name[30];
         char agent_id[2];
         char broker_id[4];
         char exchange_id[10];
@@ -161,7 +161,7 @@ void* test_run(void *arg)
 
 			while(packs--)
 			{
-				if ((len=read(server, data, 128)) <= 0) 
+				if ((len=read(server, data, 192)) <= 0) 
 				{
 					perror ("read from aptrader_server error !");
 					ret = -1;
@@ -169,7 +169,7 @@ void* test_run(void *arg)
 					break;
 				}
 
-				printf("login: len=%d,%x,%x,%.2s,%.40s,%.2s,%.82s\n", len, data[0], data[1], data+2, data+4, data+44, data+46);
+				printf("login: len=%d,%x,%x,%.2s,%.40s,%.2s,%.82s,%.64s\n", len, data[0], data[1], data+2, data+4, data+44, data+46, data+128);
 
 				if ((len=read(server, data, 3)) <= 0) 
 				{
@@ -215,14 +215,14 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_dayoff, "N", 1);
 			memcpy(ts_order.order_date, "20190821", 8);
 			memcpy(ts_order.order_time, "17160301", 8);
-			memcpy(ts_order.order_buysell, "B", 1);
+			memcpy(ts_order.order_buysell, "S", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
 			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
-			memcpy(ts_order.order_price, "097000000", 9);
-			memcpy(ts_order.touch_price, "106005000", 9);
+			memcpy(ts_order.order_price, "081440000", 9);
+			memcpy(ts_order.touch_price, "08344000", 9);
 			memcpy(ts_order.qty_mark, "0", 1);
 			memcpy(ts_order.order_qty, "000000001", 9);
 			memcpy(ts_order.order_kind,"0", 1);

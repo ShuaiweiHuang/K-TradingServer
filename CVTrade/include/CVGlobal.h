@@ -13,6 +13,7 @@
 #define HEARTBEATREP	0x07
 #define ORDERREQ	0x40
 #define ORDERREP	0x41
+#define DEALREP		0x50
 #define CONTROLREQ	0x60
 #define CONTROLREP	0x61
 #define DISCONNMSG	0x7F
@@ -33,6 +34,7 @@
 #define OK_ERROR	-1113
 #define LG_ERROR	-1114
 #define AC_ERROR	-1115
+#define KI_ERROR	-1116
 
 #define HEARTBEATVAL 	60
 

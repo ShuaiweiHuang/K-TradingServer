@@ -16,7 +16,7 @@ struct CV_StructOrder
 {
         char header_bit[2];
         char sub_acno_id[7];
-        char strategy_name[16];
+        char strategy_name[30];
         char agent_id[2];
         char broker_id[4];
         char exchange_id[10];
@@ -161,7 +161,7 @@ void* test_run(void *arg)
 
 			while(packs--)
 			{
-				if ((len=read(server, data, 128)) <= 0) 
+				if ((len=read(server, data, 192)) <= 0) 
 				{
 					perror ("read from aptrader_server error !");
 					ret = -1;
@@ -169,7 +169,7 @@ void* test_run(void *arg)
 					break;
 				}
 
-				printf("login: len=%d,%x,%x,%.2s,%.40s,%.2s,%.82s\n", len, data[0], data[1], data+2, data+4, data+44, data+46);
+				printf("login: len=%d,%x,%x,%.2s,%.40s,%.2s,%.82s,%.64s\n", len, data[0], data[1], data+2, data+4, data+44, data+46, data+128);
 
 				if ((len=read(server, data, 3)) <= 0) 
 				{
@@ -209,7 +209,7 @@ void* test_run(void *arg)
 			ts_order.header_bit[0] = 0x1b;
 			ts_order.header_bit[1] = 0x40;
 			memcpy(ts_order.sub_acno_id, cp_account, 7);
-			memcpy(ts_order.strategy_name, "MACD-1234\0", 16);
+			memcpy(ts_order.strategy_name, "MACD-1234\0", 30);
 			memcpy(ts_order.agent_id, "MC", 2);
 			memcpy(ts_order.broker_id, "9801", 4);
 			memcpy(ts_order.exchange_id, "BINANCE_F\0", 10);
@@ -223,11 +223,11 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_time, time, 8);
 			memcpy(ts_order.order_buysell, "S", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
-			memcpy(ts_order.order_mark, "4", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
+			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
-			memcpy(ts_order.order_price, "09700000000", 9);
+			memcpy(ts_order.order_price, "09050000000", 9);
 			memcpy(ts_order.touch_price, "098000000", 9);
 			memcpy(ts_order.qty_mark, "2", 1);
 			memcpy(ts_order.order_qty, "000000100", 9);
@@ -259,7 +259,7 @@ void* test_run(void *arg)
 				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+336);
 
 #if 1// delete order
-				memcpy(ts_order.order_bookno, data1+100, 18);
+				memcpy(ts_order.order_bookno, data1+114, 18);
 				printf("ORDERBOOK:%s\n", ts_order.order_bookno);
 				memcpy(ts_order.key_id, data1+56, 13);
 				memcpy(ts_order.trade_type, "1", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price

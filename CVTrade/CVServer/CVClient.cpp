@@ -9,6 +9,8 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 #include <iomanip>
+#include <algorithm>
+#include <openssl/hmac.h>
 
 #include "CVQueueDAOs.h"
 #include "CVClient.h"
@@ -24,6 +26,19 @@ using namespace std;
 typedef long (*FillTandemOrder)(string& strService, char* pUsername, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
 extern long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
+
+int CCVClient::HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length)
+{
+	const EVP_MD * engine = EVP_sha256();
+	output = (unsigned char*)malloc(EVP_MAX_MD_SIZE);
+	HMAC_CTX ctx;
+	HMAC_CTX_init(&ctx);
+	HMAC_Init_ex(&ctx, key, strlen(key), engine, NULL);
+	HMAC_Update(&ctx, (unsigned char*)input, strlen(input));
+	HMAC_Final(&ctx, output, &output_length);
+	HMAC_CTX_cleanup(&ctx);
+	return 0;
+}
 
 CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService)
 {
@@ -314,9 +329,11 @@ void* CCVClient::Run()
 				FprintfStderrLog("RECV_CV_DISCONNECT", 0, 0, 0);
 				break;
 			}
-
 			else if(uncaMessageBuf[1] == ORDERREQ)
 			{
+#ifdef DEBUG
+				printf("receive ORDERREQ\n\n\n");
+#endif
 				FprintfStderrLog("RECV_CV_ORDER", 0, uncaMessageBuf, nSizeOfRecvedCVMessage);
 
 				if(m_ClientStatus == csLogoning)
@@ -346,7 +363,9 @@ void* CCVClient::Run()
 					}
 					continue;
 				}
-
+#ifdef DEBUG
+				printf("get pQueueDAO\n\n\n");
+#endif
 				CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 
 				if(pQueueDAO)
@@ -355,11 +374,15 @@ void* CCVClient::Run()
 					memcpy(&cv_order, uncaMessageBuf, nSizeOfCVOrder);
 					memset(&cv_ts_order, 0, sizeof(union CV_TS_ORDER));
 					long lOrderNumber = 0;
+
 					lOrderNumber = fpFillTandemOrder(m_strService, m_username, m_ClientAddrInfo.caIP,
 									m_mBranchAccount, cv_order, cv_ts_order);
+#ifdef DEBUG
+					printf("lOrderNumber = %ld\n", lOrderNumber);
+#endif
 					if(lOrderNumber < 0)//error
 					{
-						int errorcode = -lOrderNumber;
+						int errorcode = -KI_ERROR;
 						struct CV_StructOrderReply replymsg;
 
 						memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
@@ -369,8 +392,8 @@ void* CCVClient::Run()
 						memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
 						sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
 
-						memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(lOrderNumber),
-							strlen(pErrorMessage->GetErrorMessage(lOrderNumber)));
+						memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(KI_ERROR),
+							strlen(pErrorMessage->GetErrorMessage(KI_ERROR)));
 
 						int nSendData = SendData((unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
 						if(nSendData)
@@ -626,16 +649,19 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 	string readBuffer1, readBuffer2, acno, exno, brno;
 	struct AccountData acdata;
 	CURL *curl = curl_easy_init();
+	unsigned char * mac = NULL;
+	unsigned int mac_length = 0;
+	char macoutput[256];
 
 	if(curl) {
 		char query_str[512];
-		//sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20accounting_no,exchange_no,broker_no%%20from%%20employee,accounting%20where%%20account%20=%20%27%s%%27%%20and%%20password%%20=%%20%%27%s%%27%%20and%%20accounting.trader_no=employee.trader_no", pID, ppassword);
 		sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,\
-			acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20\
-			from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20\
-			and%%20acv_trader.emp_no=acv_employee.emp_no)", pID, ppassword);
-
-		printf("================\n%s\n===============\n", query_str);
+acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20\
+from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20\
+and%%20acv_trader.emp_no=acv_employee.emp_no)", pID, ppassword);
+#ifdef DEBUG
+		printf("============================\nquery_str:%s\n============================\n", query_str);
+#endif
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer1);
@@ -661,9 +687,10 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			acno = acno.substr(1, acno.length()-2);
 			exno = exno.substr(1, exno.length()-2);
 			brno = brno.substr(1, brno.length()-2);
-			sprintf(query_str, "http://192.168.101.209:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
+
+			sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 #ifdef DEBUG
-			printf("============================\n%s\n============================\n", query_str);
+			printf("============================\nquery_str:%s\n============================\n", query_str);
 #endif
 			curl_easy_setopt(curl, CURLOPT_URL, query_str);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
@@ -683,6 +710,31 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 			printf("%s, %s, %s, %s\n==================\n", acdata.api_id.c_str(), acdata.api_key.c_str(), acdata.exchange_name.c_str(), acdata.broker_id.c_str());
 #endif
 		}
+		
+		int expires = (int)time(NULL);
+		char expire_str[20];
+		sprintf(expire_str, "%d", expires);
+		HmacEncodeSHA256(acdata.api_key.c_str(), acdata.api_key.length(), expire_str, strlen(expire_str), mac, mac_length);
+		
+		for(int i = 0; i < mac_length; i++) {
+			sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
+		}
+		if(mac)
+			free(mac);
+
+		memcpy(logon_reply.access_token, macoutput, 64);
+
+		sprintf(query_str, "http://192.168.101.209:19487/mysql?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27", macoutput, pID);
+		curl_easy_setopt(curl, CURLOPT_URL, query_str);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
+		res = curl_easy_perform(curl);
+
+#ifdef DEBUG
+		printf("macoutput = %s\n\n\n", macoutput);
+		printf("============================\nquery_str:%s\n============================\n", query_str);
+#endif
+
 		memcpy(logon_reply.status_code, "OK", 2);//to do
 		memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
 		memcpy(logon_reply.error_code, "00", 2);

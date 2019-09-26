@@ -1,6 +1,6 @@
 CC = g++ 
 
-CFLAGS = -O2 -DDEBUG  -std=c++11 -lcurl
+CFLAGS = -O2 -DDEBUG  -std=c++11 -lcurl -lcrypto
 
 SRC =	./CVNet/CVServerSocket.cpp ./CVCommon/CVThread.cpp CVClient.cpp CVClients.cpp ./CVCommon/CVQueue.cpp CVQueueDAO.cpp \
 	CVQueueDAOs.cpp FprintfStderrLog.cpp ./CVCommon/CVSharedMemory.cpp CVHeartbeat.cpp ./CVCommon/CVPevents.cpp ./CVNet/CVSocket.cpp CVErrorMessage.cpp \

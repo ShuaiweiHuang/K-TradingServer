@@ -55,7 +55,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 		//memcpy(ucvts.cv_ts_order.key_id, ucv.cv_order.key_id, 13);
 		memcpy(ucvts.cv_ts_order.order_bookno, ucv.cv_order.order_bookno, 36);
 		if(ucv.cv_order.trade_type[0] >= '2') {
-			if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F"))
+			if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F")||!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_FT"))
 				return TT_ERROR;
 		}
 		if(ucv.cv_order.trade_type[0] >= '3') {
@@ -97,7 +97,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 	if(!account_check)
 		return AC_ERROR;
 
-	memcpy(ucvts.cv_ts_order.strategy_name, ucv.cv_order.strategy_name, 16);
+	memcpy(ucvts.cv_ts_order.strategy_name, ucv.cv_order.strategy_name, 30);
 
 //Agent ID
 	if(strcmp(ucvts.cv_ts_order.agent_id, "MC") != 0 &&
@@ -259,5 +259,8 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 	char caSeqno[14];
 	memset(caSeqno, 0, sizeof(caSeqno));
 	memcpy(caSeqno, ucvts.cv_ts_order.key_id, 13);
+#ifdef DEBUG
+	printf("caSeqno = %s\n", caSeqno);
+#endif
 	return atol(caSeqno);
 }

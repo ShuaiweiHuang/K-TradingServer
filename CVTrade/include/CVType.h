@@ -14,6 +14,7 @@ struct CV_StructLogonReply
 	char backup_ip[40];
 	char error_code[2];
 	char error_message[82];
+	char access_token[64];
 };
 struct CV_StructLogout
 {
@@ -38,7 +39,7 @@ struct CV_StructOrder
 {
 	char header_bit[2];
 	char sub_acno_id[7];
-	char strategy_name[16];
+	char strategy_name[30];
 	char agent_id[2];
 	char broker_id[4];
 	char exchange_id[10];
@@ -62,7 +63,7 @@ struct CV_StructOrder
 	char qty_mark[1];
 	char order_qty[9];
 	char order_kind[2];
-	char reserved[88];
+	char reserved[74];
 };
 
 struct CV_StructOrderReply
@@ -110,7 +111,7 @@ struct CV_StructTSOrder
 	char client_ip[16];
 	char username[20];
 	char sub_acno_id[7];
-	char strategy_name[16];
+	char strategy_name[30];
 	char agent_id[2];
 	char broker_id[4];
 	char exchange_id[10];
@@ -150,6 +151,22 @@ struct CV_StructTSOrderReply
 	char cumQty[10];
 	char transactTime[24];	
 	char reply_msg[129];
+};
+
+struct CV_StructTSDealReply
+{
+	char status_code[4];
+	char key_id[13];
+	char orderID[36];
+	char execID[36];
+	char price[10];
+	char lastPx[10];
+	char lastQty[10];
+	char orderQty[10];
+	char leaveQty[10];
+	char cumQty[10];
+	char transactTime[24];	
+	char reply_msg[130];
 };
 
 union CV_ORDER

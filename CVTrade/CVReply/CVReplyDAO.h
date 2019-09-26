@@ -83,7 +83,7 @@ public:
 	void RestoreStatus();
 	void SendLogout();
 	void Bitmex_Transaction_Update(int, string, struct APIKEY);
-	void Bitmex_Getkey();
+	bool Bitmex_Getkey();
 	void SendNotify(char* pBuf);
 	void ReconnectSocket();
 	void CloseSocket();

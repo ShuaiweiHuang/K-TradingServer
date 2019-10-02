@@ -111,13 +111,20 @@ void* CCVReplyDAO::Run()
 {
 	SetStatus(tsServiceOn);
 	Bitmex_Getkey();
+	Binance_Getkey();
 	while(IsTerminated())
 	{
-		for(int i=0 ; i<m_numberOfkey ; i++)
+		for(int i=0 ; i<m_numberOfkey_Bitmex ; i++)
 		{
-			Bitmex_Transaction_Update(5, "XBTUSD", m_vApikeyTable[i]);
+			//Bitmex_Transaction_Update(5, "XBTUSD", m_vApikeyTable_Bitmex[i]);
+			//Bitmex_Order_Update(5, "XBTUSD", m_vApikeyTable_Bitmex[i]);
 		}
-		sleep(1);
+		for(int i=0 ; i<m_numberOfkey_Bitmex ; i++)
+		{
+			Binance_Transaction_Update(5, "BTCUSDT", m_vApikeyTable_Binance[i]);
+			//Binance_Order_Update(5, "XBTUSD", m_vApikeyTable_Binance[i]);
+			sleep(1);
+		}
 	}
 	return NULL;
 }
@@ -146,6 +153,44 @@ bool CCVReplyDAO::IsInuse()
 	return m_bInuse;
 }
 
+bool CCVReplyDAO::Binance_Getkey()
+{
+	CURLcode res;
+	CURL *curl = curl_easy_init();
+	char query_str[512];
+	string readBuffer;
+
+	if(curl) {
+		sprintf(query_str,"http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_name_en%%20=%%20%%27BINANCE_F%%27");
+		curl_easy_setopt(curl, CURLOPT_URL, query_str);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+		res = curl_easy_perform(curl);
+		json jtable_query_exchange = json::parse(readBuffer.c_str());
+
+		m_numberOfkey_Bitmex = jtable_query_exchange.size();
+		if(m_numberOfkey_Bitmex == 0)
+		{
+                        FprintfStderrLog("GET_BINANCE_KEY_ERROR", -1, 0, 0);
+		}
+		for(int i=0 ; i<m_numberOfkey_Bitmex ; i++)
+		{
+			struct APIKEY apikeynode;
+			apikeynode.api_id = to_string(jtable_query_exchange[i]["api_id"]);
+			apikeynode.api_secret = to_string(jtable_query_exchange[i]["api_secret"]);
+			apikeynode.api_id = apikeynode.api_id.substr(1, apikeynode.api_id.length()-2);
+			apikeynode.api_secret = apikeynode.api_secret.substr(1, apikeynode.api_secret.length()-2);
+#ifdef DEBUG
+			cout << setw(4) << jtable_query_exchange << endl;
+			printf("Binance - %d:apikeynode.api_id(%d) = %s\n", i, apikeynode.api_id.length(), apikeynode.api_id.c_str());
+			printf("Binance - %d:apikeynode.api_key(%d) = %s\n", i, apikeynode.api_secret.length(), apikeynode.api_secret.c_str());
+#endif
+			m_vApikeyTable_Binance.push_back(apikeynode);
+		}
+	}
+	curl_easy_cleanup(curl);
+}
+
 bool CCVReplyDAO::Bitmex_Getkey()
 {
 	CURLcode res;
@@ -161,12 +206,12 @@ bool CCVReplyDAO::Bitmex_Getkey()
 		res = curl_easy_perform(curl);
 		json jtable_query_exchange = json::parse(readBuffer.c_str());
 
-		m_numberOfkey = jtable_query_exchange.size();
-		if(m_numberOfkey == 0)
+		m_numberOfkey_Bitmex = jtable_query_exchange.size();
+		if(m_numberOfkey_Bitmex == 0)
 		{
-			//write error message
+                        FprintfStderrLog("GET_BITMEX_KEY_ERROR", -1, 0, 0);
 		}
-		for(int i=0 ; i<m_numberOfkey ; i++)
+		for(int i=0 ; i<m_numberOfkey_Bitmex ; i++)
 		{
 			struct APIKEY apikeynode;
 			apikeynode.api_id = to_string(jtable_query_exchange[i]["api_id"]);
@@ -175,10 +220,10 @@ bool CCVReplyDAO::Bitmex_Getkey()
 			apikeynode.api_secret = apikeynode.api_secret.substr(1, apikeynode.api_secret.length()-2);
 #ifdef DEBUG
 			cout << setw(4) << jtable_query_exchange << endl;
-			printf("%d:apikeynode.api_id(%d) = %s\n", i, apikeynode.api_id.length(), apikeynode.api_id.c_str());
-			printf("%d:apikeynode.api_key(%d) = %s\n", i, apikeynode.api_secret.length(), apikeynode.api_secret.c_str());
+			printf("Bitmex - %d:apikeynode.api_id(%d) = %s\n", i, apikeynode.api_id.length(), apikeynode.api_id.c_str());
+			printf("Bitmex - %d:apikeynode.api_key(%d) = %s\n", i, apikeynode.api_secret.length(), apikeynode.api_secret.c_str());
 #endif
-			m_vApikeyTable.push_back(apikeynode);
+			m_vApikeyTable_Bitmex.push_back(apikeynode);
 		}
 	}
 	curl_easy_cleanup(curl);
@@ -205,7 +250,7 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
 	if(m_curl) {
-		order_url = "https://testnet.bitmex.com/api/v1/order";
+		order_url = "https://testnet.bitmex.com/api/v1/execution";
 		curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
 		http_header = curl_slist_append(http_header, "content-type: application/json");
 		http_header = curl_slist_append(http_header, "Accept: application/json");
@@ -328,6 +373,151 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 
 
 }
+
+void CCVReplyDAO::Binance_Transaction_Update(int count, string symbol, struct APIKEY apikeynode)
+{
+	unsigned char * mac = NULL;
+	unsigned int mac_length = 0;
+        struct timeval  tv;
+        gettimeofday(&tv, NULL);
+        double expires = (tv.tv_sec) * 1000 ;
+	char encrystr[256], macoutput[256], execution_str[256], apikey_str[256], apisecret_str[49];
+	char qty[10], oprice[10], tprice[10];
+	double doprice = 0, dtprice = 0, dqty = 0;
+	struct HEADRESP headresponse;
+	string response;
+	json jtable;
+
+	struct curl_slist *http_header;
+	string order_url;
+
+	//char commandstr[] = R"({"symbol":"BTCUSDT","limit":500,},)";
+
+	CURL *m_curl = curl_easy_init();
+
+	curl_global_init(CURL_GLOBAL_ALL);
+
+	if(m_curl) {
+		order_url = "https://fapi.binance.com/fapi/v1/historicalTrades";
+		curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
+
+		sprintf(apisecret_str, "%.64s", apikeynode.api_secret.c_str());
+		sprintf(apikey_str, "X-MBX-APIKEY: %.64s", apikeynode.api_id.c_str());
+		sprintf(encrystr, "{\"symbol\":\"BTCUSDT\",\"limit\":\"500\",\"timestamp\":\"%0.1f\",\"recvWindow\":5000", expires);
+		HmacEncodeSHA256(apisecret_str, 64, encrystr, strlen(encrystr), mac, mac_length);
+
+		for(int i = 0; i < mac_length; i++)
+			sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
+
+		if(mac)
+			free(mac);
+
+		http_header = curl_slist_append(http_header, apikey_str);
+		curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, http_header);
+		curl_easy_setopt(m_curl, CURLOPT_HEADER, true);
+		//sprintf(execution_str, "%s&signature=%s", commandstr, macoutput);
+		sprintf(execution_str, "%s,\"signature\":\"%s\"}", encrystr, macoutput);
+		printf("execution_str = %s\n", execution_str);
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE, strlen(execution_str));
+		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, execution_str);
+		curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "GET");
+		curl_easy_setopt(m_curl, CURLOPT_HEADERFUNCTION, parseHeader);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
+		CURLcode res = curl_easy_perform(m_curl);
+		if(res != CURLE_OK)
+		fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+		curl_slist_free_all(http_header);
+		curl_easy_cleanup(m_curl);
+		curl_global_cleanup();
+#ifdef DEBUG
+		printf("apikey_str = %s\n", apikey_str);
+		printf("apisec_str = %s\n", apisecret_str);
+		printf("encrystr = %s\n", encrystr);
+		printf("signature = %.64s\n", macoutput);
+		printf("===============\n%s\n==============\n\n\n", response.c_str());
+#endif
+	}
+
+	m_request_remain = headresponse.remain;
+	m_time_limit = headresponse.epoch;
+	string text;
+
+	for(int i=0 ; i<response.length() ; i++)
+	{
+		if(response[i] == '[')
+		{
+			response = response.substr(i, response.length()-i);
+			FprintfStderrLog("GET_ORDER_REPLY", -1, (unsigned char*)response.c_str() ,response.length());
+			jtable = json::parse(response.c_str());
+			break;
+		}
+	}
+
+	for(int i=0 ; i<jtable.size() ; i++)
+	{
+		text = to_string(jtable[i]["error"]);
+
+		printf("\n\n\ntext = %s\n", text.c_str());
+
+		memcpy(m_trade_reply[i].bookno, to_string(jtable[i]["orderID"]).c_str()+1, 36);
+#ifdef DEBUG		
+		//cout << setw(4) << jtable[i] << endl;
+#endif
+		if(text != "null")
+		{
+			memcpy(m_trade_reply[i].status_code, "1001", 4);
+			sprintf(m_trade_reply[i].reply_msg, "reply fail, error message:%s", text.c_str());
+		}
+		else
+		{
+			memcpy(m_trade_reply[i].status_code, "1000", 4);
+			sprintf(m_trade_reply[i].reply_msg, "reply success - [%s]", to_string(jtable[i]["text"]).c_str());
+			LogOrderReplyDB_Bitmex(&jtable[i]);
+		}
+		memcpy(m_trade_reply[i].key_id, to_string(jtable[i]["clOrdID"]).c_str(), 13);
+		memcpy(m_trade_reply[i].price, to_string(jtable[i]["price"]).c_str(), 10);
+		memcpy(m_trade_reply[i].avgPx, to_string(jtable[i]["avgPx"]).c_str(), 10);
+		memcpy(m_trade_reply[i].orderQty, to_string(jtable[i]["orderQty"]).c_str(), 10);
+		memcpy(m_trade_reply[i].leaveQty, to_string(jtable[i]["leaveQty"]).c_str(), 10);
+		memcpy(m_trade_reply[i].cumQty, to_string(jtable[i]["cumQty"]).c_str(), 10);
+		memcpy(m_trade_reply[i].transactTime, to_string(jtable[i]["transactTime"]).c_str()+1, 24);
+	}
+
+        CCVWriteQueueDAO* pWriteQueueDAO = NULL;
+
+        while(pWriteQueueDAO == NULL)
+        {
+                if(m_pWriteQueueDAOs)
+                        pWriteQueueDAO = m_pWriteQueueDAOs->GetAvailableDAO();
+
+                if(pWriteQueueDAO)
+                {
+			for(int i=0 ; i<jtable.size() ; i++)
+			{
+                        	FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_trade_reply[i] ,sizeof(m_trade_reply[i]));
+	                        pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_trade_reply[i], sizeof(m_trade_reply[i]));
+        	                pWriteQueueDAO->TriggerWakeUpEvent();
+			}
+                        SetStatus(tsServiceOn);
+                        SetInuse(false);
+                }
+                else
+                {
+                        FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
+                        usleep(500000);
+                }
+        }
+
+        printf("request remain: %s\n", m_request_remain.c_str());
+        printf("time limit: %s\n", m_time_limit.c_str());
+
+
+}
+
+
 
 bool CCVReplyDAO::LogOrderReplyDB_Bitmex(json* jtable)
 {

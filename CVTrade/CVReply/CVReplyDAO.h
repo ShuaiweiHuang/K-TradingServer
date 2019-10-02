@@ -46,7 +46,8 @@ private:
 	friend CCVHeartbeat;
 	friend CCVWriteQueueDAOs;
 
-	vector<struct APIKEY> m_vApikeyTable;
+	vector<struct APIKEY> m_vApikeyTable_Bitmex;
+	vector<struct APIKEY> m_vApikeyTable_Binance;
 
 	CCVSocket* m_pSocket;
 	CCVHeartbeat* m_pHeartbeat;
@@ -61,10 +62,12 @@ private:
 	pthread_mutex_t m_MutexLockOnSetStatus;
 
 	unsigned int m_nTandemNodeIndex;
-	int  m_numberOfkey;
+	int  m_numberOfkey_Bitmex;
+	int  m_numberOfkey_Binance;
 	bool m_bInuse;
 	char m_caTandemDAOID[4];
 	struct CV_StructTSOrderReply m_trade_reply[MAXHISTORY];
+
 private:
 	char* GetReplyMsgOffsetPointer(const unsigned char *pMessageBuf);
 	bool LogOrderReplyDB_Bitmex(json*);
@@ -83,7 +86,11 @@ public:
 	void RestoreStatus();
 	void SendLogout();
 	void Bitmex_Transaction_Update(int, string, struct APIKEY);
+	void Bitmex_Order_Update(int, string, struct APIKEY);
+	void Binance_Transaction_Update(int, string, struct APIKEY);
+	void Binance_Order_Update(int, string, struct APIKEY);
 	bool Bitmex_Getkey();
+	bool Binance_Getkey();
 	void SendNotify(char* pBuf);
 	void ReconnectSocket();
 	void CloseSocket();

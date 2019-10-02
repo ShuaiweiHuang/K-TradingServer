@@ -415,17 +415,22 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 				}
 			}
 
-			text = to_string(jtable["msg"]);
-
-			if(text == "null")
-				text = to_string(jtable["rejectReason"]);
-
 			memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 
-			if(text != "null")
+
+			if(to_string(jtable["orderId"]) == "null")
 			{
 				memcpy(m_tandem_reply.status_code, "1001", 4);
-				sprintf(m_tandem_reply.reply_msg, "submit fail, error message - [%s]", text.c_str());
+
+				text = to_string(jtable["msg"]);
+
+				if(text == "null")
+					text = to_string(jtable["rejectReason"]);
+
+				if(text != "null")
+					sprintf(m_tandem_reply.reply_msg, "submit fail, error message - [%s]", text.c_str());
+				else
+					sprintf(m_tandem_reply.reply_msg, "submit fail, error message - [get order ID fail]");
 #ifdef DEBUG
 				printf("\n\n\ntext = %s\n", text.c_str());
 #endif
@@ -707,9 +712,6 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 			{
 				memcpy(m_tandem_reply.status_code, "1001", 4);
 				sprintf(m_tandem_reply.reply_msg, "submit order fail - [%s]", text.c_str());
-#ifdef DEBUG
-				printf("\n\n\ntext = %s\n", text.c_str());
-#endif
 			}
 			else
 			{
@@ -723,6 +725,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 				memcpy(m_tandem_reply.transactTime, to_string(jtable["transactTime"]).c_str()+1, to_string(jtable["transactTime"]).length()-2);
 				sprintf(m_tandem_reply.reply_msg, "submit order success - [%s]", to_string(jtable["text"]).c_str());
 #ifdef DEBUG
+				printf("\n\n\ntext = %s\n", text.c_str());
 				printf("==============================\nsubmit order success\n");
 				printf("orderID = %s\n=======================\n", m_tandem_reply.bookno);
 #endif
@@ -827,8 +830,6 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 
 	string response, exchange_data[30];
 
-	string orderID, clOrdID, account, symbol, side, orderQty, price, ordStatus, transactTime, stopPx, avgPx, leavesQty, currency, settlCurrency, text;
-
 	exchange_data[0] = to_string((*jtable)["account"]);
 	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
 
@@ -919,8 +920,6 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 	char insert_str[MAXDATA], delete_str[MAXDATA];
 
 	string response, exchange_data[30];
-
-	string orderID, clOrdID, account, symbol, side, orderQty, price, ordStatus, transactTime, stopPx, avgPx, leavesQty, currency, settlCurrency, text;
 
 	exchange_data[0] = to_string((*jtable)["orderId"]);
 	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());

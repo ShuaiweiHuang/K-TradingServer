@@ -173,6 +173,7 @@ void* CCVClient::Run()
 					nToRecv = sizeof(struct CV_StructOrder)-2;
 					break;
 				case DISCONNMSG:
+					FprintfStderrLog("RECV_CV_DISCONNECT", 0, 0, 0);
 					SetStatus(csOffline);
 					break;
 				default:
@@ -219,8 +220,12 @@ void* CCVClient::Run()
 					memset(m_uncaLogonID, 0, sizeof(m_uncaLogonID));
 					memcpy(m_uncaLogonID, logon_type.logon_id, sizeof(logon_type.logon_id));
 					memcpy(m_username, logon_type.logon_id, 20);
+					
+					FprintfStderrLog("LOGON_MESSAGE", 0, (unsigned char*)logon_type.logon_id, strlen(logon_type.logon_id),
+							(unsigned char*)logon_type.password, strlen(logon_type.password));
 
 					bLogon = LogonAuth(logon_type.logon_id, logon_type.password, logon_reply);//logon & get logon reply data
+
 					memset(uncaSendLogonBuf, 0, sizeof(uncaSendLogonBuf));
 
 					logon_reply.header_bit[0] = ESCAPE;
@@ -321,14 +326,7 @@ void* CCVClient::Run()
 					FprintfStderrLog("RECV_CV_HBRP_ERROR", -1, uncaMessageBuf + 2, 4);
 				}
 			}
-
 			
-			else if(uncaMessageBuf[1] == DISCONNMSG)
-			{
-				SetStatus(csOffline);
-				FprintfStderrLog("RECV_CV_DISCONNECT", 0, 0, 0);
-				break;
-			}
 			else if(uncaMessageBuf[1] == ORDERREQ)
 			{
 #ifdef DEBUG
@@ -382,7 +380,7 @@ void* CCVClient::Run()
 #endif
 					if(lOrderNumber < 0)//error
 					{
-						int errorcode = -KI_ERROR;
+						int errorcode = ((lOrderNumber >= KI_ERROR) && (lOrderNumber <= TT_ERROR)) ? (-lOrderNumber) : (-KI_ERROR);
 						struct CV_StructOrderReply replymsg;
 
 						memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
@@ -392,8 +390,8 @@ void* CCVClient::Run()
 						memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
 						sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
 
-						memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(KI_ERROR),
-							strlen(pErrorMessage->GetErrorMessage(KI_ERROR)));
+						memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(-errorcode),
+							strlen(pErrorMessage->GetErrorMessage(-errorcode)));
 
 						int nSendData = SendData((unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
 						if(nSendData)

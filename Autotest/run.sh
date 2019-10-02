@@ -19,4 +19,10 @@ mkdir -p ./Report
 
 #		ID	PASSWORD	ISLOGIN		LOOPNUM		ORDERNUM	THREADEXP	ACCOUNT		TESTPATH	IP	PORT	EXEC_RESULT
 #./connect_bm $USERID	$PASSWORD	1		1		1		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
-./connect_bn $USERID	$PASSWORD	1		1		1		$THREADEXP	A000038 	S		$IP     $PORT	;Result[0]=$?;
+#./connect_bn $USERID	$PASSWORD	1		1		1		$THREADEXP	A000038 	S		$IP     $PORT	;Result[0]=$?;
+./connect_srv $USERID	$PASSWORD	0		100		0		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
+./connect_srv $USERID	$PASSWORD	1		10		0		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
+./connect_srv $USERID	$PASSWORD	1		10		1		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
+./connect_srv $USERID	$PASSWORD	1		1		10		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
+./connect_srv $USERID	$PASSWORD	1		10		1		$THREADEXP	A000012 	T		$IP     $PORT	;Result[0]=$?;
+./connect_srv $USERID	$PASSWORD	1		1		10		$THREADEXP	A000012 	T		$IP     $PORT	;Result[0]=$?;

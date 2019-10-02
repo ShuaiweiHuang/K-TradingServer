@@ -45,11 +45,13 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 
 
 //key id
-	if(ucv.cv_order.trade_type[0] == '0') {
+	if(ucv.cv_order.trade_type[0] == '0')
+	{
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
 		memcpy(ucv.cv_order.key_id, ucvts.cv_ts_order.key_id, 13); 
 	}
-	else if(ucv.cv_order.trade_type[0] >= '1' && ucv.cv_order.trade_type[0] <= '3') {
+	else if(ucv.cv_order.trade_type[0] >= '1' && ucv.cv_order.trade_type[0] <= '3')
+	{
 		//todo : check key id valid
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
 		//memcpy(ucvts.cv_ts_order.key_id, ucv.cv_order.key_id, 13);
@@ -67,6 +69,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 	else {
 		return TT_ERROR;
 	}
+
 	memcpy(ucvts.cv_ts_order.trade_type, ucv.cv_order.trade_type, 1);
 
 #ifdef DEBUG	

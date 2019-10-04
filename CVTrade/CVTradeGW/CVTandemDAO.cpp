@@ -317,13 +317,13 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&price=%.1f&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=5000",
+					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&price=%.4lf&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=5000",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice,
 					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, expires);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '4'://stop limit
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&price=%.1f&stopPrice=%.1f&type=STOP&timestamp=%.0lf&recvWindow=5000",
+					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&price=%.4lf&stopPrice=%.4lf&type=STOP&timestamp=%.0lf&recvWindow=5000",
 					//&text=%.7s|%.30s|%.20s",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, dtprice,
 					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, expires);
@@ -339,8 +339,6 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			break;
 		case '1'://delete specific order
 #ifdef DEBUG
-			printf("encrystr = %s\n", encrystr);
-			printf("secret key = %s\n", cv_ts_order.apiSecret_order);
 			printf("Binance: receive delete order\n");
 #endif
 			sprintf(apikey_str, "X-MBX-APIKEY: %.64s", cv_ts_order.apiKey_order);
@@ -354,6 +352,10 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			FprintfStderrLog("ERROR_TRADE_TYPE", -1, 0, 0);
 			break;
 	}
+#ifdef DEBUG
+			printf("encrystr = %s\n", encrystr);
+			printf("secret key = %s\n", cv_ts_order.apiSecret_order);
+#endif
 
 
 #if 0	//test

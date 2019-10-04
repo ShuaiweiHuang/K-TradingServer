@@ -21,8 +21,19 @@ mkdir -p ./Report
 #./connect_bm $USERID	$PASSWORD	1		1		1		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
 #./connect_bn $USERID	$PASSWORD	1		1		1		$THREADEXP	A000038 	S		$IP     $PORT	;Result[0]=$?;
 ./connect_srv $USERID	$PASSWORD	0		100		0		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
-./connect_srv $USERID	$PASSWORD	1		10		0		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
-./connect_srv $USERID	$PASSWORD	1		10		1		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
-./connect_srv $USERID	$PASSWORD	1		1		10		$THREADEXP	A000012 	S		$IP     $PORT	;Result[0]=$?;
-./connect_srv $USERID	$PASSWORD	1		10		1		$THREADEXP	A000012 	T		$IP     $PORT	;Result[0]=$?;
-./connect_srv $USERID	$PASSWORD	1		1		10		$THREADEXP	A000012 	T		$IP     $PORT	;Result[0]=$?;
+./connect_srv $USERID	$PASSWORD	1		100		0		$THREADEXP	A000012 	S		$IP     $PORT	;Result[1]=$?;
+./connect_srv $USERID	$PASSWORD	1		100		1		$THREADEXP	A000012 	S		$IP     $PORT	;Result[2]=$?;
+./connect_srv $USERID	$PASSWORD	1		1		100		$THREADEXP	A000012 	S		$IP     $PORT	;Result[3]=$?;
+./connect_srv $USERID	$PASSWORD	1		50		1		$THREADEXP	A000012 	T		$IP     $PORT	;Result[4]=$?;
+./connect_srv $USERID	$PASSWORD	1		1		50		$THREADEXP	A000012 	T		$IP     $PORT	;Result[5]=$?;
+
+for i in {0..5};
+do
+	printf "Test item $i with thread exp $THREADEXP [status: " >> ./Report/Result_$THREADEXP.txt
+	if [ "${Result[$i]}" == "0" ]; 
+	then
+		echo "pass]" >> ./Report/Result_$THREADEXP.txt;
+	else
+		echo "fail]" >> ./Report/Result_$THREADEXP.txt;
+	fi
+done

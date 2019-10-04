@@ -187,10 +187,12 @@ void CCVClient::TriggerSendRequestEvent(CCVServer* pServer, unsigned char* pRequ
 
 bool CCVClient::SendRequestReply(unsigned char uncaSecondByte, unsigned char* unpRequestReplyMessage, int nRequestReplyMessageLength)
 {
+	return true;
 }
 
 bool CCVClient::SendRequestErrorReply(unsigned char uncaSecondByte, unsigned char* pOriginalRequstMessage, int nOriginalRequestMessageLength, const char* pErrorMessage, short nErrorCode)
 {
+	return true;
 }
 
 void CCVClient::SetStatus(TCVClientStauts csStatus)

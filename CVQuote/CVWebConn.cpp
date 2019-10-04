@@ -279,7 +279,7 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
-		price_str  = to_string(jtable["data"][i]["lastPrice"]);
+		price_str  = to_string(static_cast<float>(jtable["data"][i]["lastPrice"]));
 		size_str   = "0";//to_string(jtable["data"][i]["size"]);
 		if(price_str == "null")
 			return;
@@ -332,8 +332,8 @@ void CCVServer::OnData_Bitmex_Less(client* c, websocketpp::connection_hdl con, c
 		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
-		price_str  = to_string(jtable["data"][i]["price"]);
-		size_str   = to_string(jtable["data"][i]["size"]);
+		price_str  = to_string(static_cast<float>(jtable["data"][i]["price"]));
+		size_str   = to_string(static_cast<int>(jtable["data"][i]["size"]));
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
 		sprintf(netmsg, "01_ID=%s.BMEX,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
 			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
@@ -383,8 +383,8 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
-		price_str  = to_string(jtable["data"][i]["price"]);
-		size_str   = to_string(jtable["data"][i]["size"]);
+		price_str  = to_string(static_cast<float>(jtable["data"][i]["price"]));
+		size_str   = to_string(static_cast<int>(jtable["data"][i]["size"]));
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
 		sprintf(netmsg, "01_ID=%s.BITMEX_T,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
 			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
@@ -406,7 +406,7 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 
 void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
-//	printf("[on_message_bitmex]\n");
+	printf("[on_message_bitmex]\n");
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 
@@ -435,8 +435,8 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
-		price_str  = to_string(jtable["data"][i]["price"]);
-		size_str   = to_string(jtable["data"][i]["size"]);
+		price_str  = to_string(static_cast<float>(jtable["data"][i]["price"]));
+		size_str   = to_string(static_cast<int>(jtable["data"][i]["size"]));
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
 		sprintf(netmsg, "01_ID=%s.BMEX,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
 			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
@@ -485,8 +485,8 @@ void CCVServer::OnData_Bitstamp(client* c, websocketpp::connection_hdl con, clie
 		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
-		price_str  = to_string(jtable["data"][i]["price"]);
-		size_str   = to_string(jtable["data"][i]["size"]);
+		price_str  = to_string(static_cast<float>(jtable["data"][i]["price"]));
+		size_str   = to_string(static_cast<int>(jtable["data"][i]["size"]));
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
 		sprintf(netmsg, "01_ID=%s.BITSTAMP,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
 			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
@@ -531,11 +531,11 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	memset(timemsg, 0, 8);
 
 	time_str   = "00000000";
-	symbol_str = to_string(jtable["s"]);
+	symbol_str = jtable["s"];
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
-	price_str  = to_string(jtable["p"]);
+	price_str  = to_string(static_cast<float>(jtable["p"]));
 	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
-	size_str   = to_string(jtable["q"]);
+	size_str   = to_string(static_cast<float>(jtable["q"]));
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
@@ -588,11 +588,11 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	memset(timemsg, 0, 8);
 
 	time_str   = "00000000";
-	symbol_str = to_string(jtable["data"]["s"]);
+	symbol_str = jtable["data"]["s"];
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
-	price_str  = to_string(jtable["data"]["p"]);
+	price_str  = to_string(static_cast<float>(jtable["data"]["p"]));
 	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
-	size_str   = to_string(jtable["data"]["q"]);
+	size_str   = to_string(static_cast<float>(jtable["data"]["q"]));
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
@@ -642,11 +642,11 @@ void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, cl
 	memset(timemsg, 0, 8);
 
 	time_str   = "00000000";
-	symbol_str = to_string(jtable["data"]["s"]);
+	symbol_str = jtable["data"]["s"];
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
-	price_str  = to_string(jtable["data"]["p"]);
+	price_str  = to_string(static_cast<float>(jtable["data"]["p"]));
 	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
-	size_str   = to_string(jtable["data"]["q"]);
+	size_str   = to_string(static_cast<float>(jtable["data"]["q"]));
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;

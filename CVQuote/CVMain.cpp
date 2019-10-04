@@ -1,6 +1,6 @@
 #include <iostream>
-#include <cstring>
-#include <cstdio>
+#include <string>
+#include <stdio.h>
 #include <vector>
 #include <assert.h>
 #include <glib.h>
@@ -46,6 +46,7 @@ int main()
 	ReadClientConfigFile("../ini/CVQuote.ini", strListenPort, strHeartBeatTime, strEPIDNum);
 
 	int nService = 0;
+	printf("Quote program start\n");
 	ReadConfigFile("../ini/CVQuote.ini", "EXCHANGE", struTSConfig);
 
 	//Web connection service.
@@ -63,7 +64,7 @@ int main()
 	{
 		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
 	}
-
+	
 	//Queue init.
         ReadQueueDAOConfigFile("../ini/CVQuote.ini", strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
 	//printf("%d, %d, %d, %d\n", kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
@@ -114,7 +115,6 @@ void ReadConfigFile(string strConfigFileName, string strSection, struct TCVConfi
 	char caWeb[5];
 	char caQstr[7];
 	char caName[7];
-
 	for(int i=0;i<struConfig.nServerCount;i++)
 	{
 		memset(caWeb, 0, sizeof(caWeb));
@@ -125,14 +125,19 @@ void ReadConfigFile(string strConfigFileName, string strSection, struct TCVConfi
 		sprintf(caQstr, "QSTR%02d", i+1);
 		sprintf(caName, "NAME%02d", i+1);
 
-		struct TCVServerInfo* pstruServerInfo = new struct TCVServerInfo;//destruct
+		struct TCVServerInfo* pstruServerInfo = new struct TCVServerInfo;//destructor
+	try {
 		pstruServerInfo->strWeb  = g_key_file_get_string(keyfile, strSection.c_str(), caWeb, NULL);
+	}
+	catch (const char* pErrorMessage)
+	{
+		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
+	}
 		pstruServerInfo->strQstr = g_key_file_get_string(keyfile, strSection.c_str(), caQstr, NULL);
 		pstruServerInfo->strName = g_key_file_get_string(keyfile, strSection.c_str(), caName, NULL);
 		printf("Connect web: %s\n", pstruServerInfo->strWeb.c_str());
 		printf("Query strnig: %s\n", pstruServerInfo->strQstr.c_str());
 		printf("Exchange: %s\n", pstruServerInfo->strName.c_str());
-
 		struConfig.vServerInfo.push_back(pstruServerInfo);
 	}
 }

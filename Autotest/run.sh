@@ -12,8 +12,6 @@ END=0
 SILENT=0
 THREADEXP=0
 
-NOW=$(date +"%Y%m%d_%H%M%S")
-
 rm -rf ./Report/*.txt;
 mkdir -p ./Report
 
@@ -37,3 +35,7 @@ do
 		echo "fail]" >> ./Report/Result_$THREADEXP.txt;
 	fi
 done
+
+NOW=$(date +"%Y%m%d_%H%M%S")
+tar zcf Report_$NOW.tar.gz Report
+echo "Output Report File: Report_$NOW.tar.gz"

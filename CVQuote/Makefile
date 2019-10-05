@@ -9,7 +9,7 @@ SERVER_OBJS = $(SRC:.cpp=.o) CVMain.o
 
 INC = -I ./INCLUDE
 
-LIB = -lssl -lcrypto -pthread -lboost_system -lboost_random -lboost_chrono -L /usr/local/lib
+LIB = -lssl -lcrypto -pthread  -L /usr/local/lib libboost_system.so
 
 OUTPUT_PATH = ../bin
 

@@ -275,7 +275,11 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
+#ifdef AWSCODE
 		price_str  = to_string(static_cast<float>(jtable["data"][i]["lastPrice"]));
+#else
+		price_str  = to_string(jtable["data"][i]["lastPrice"]);
+#endif
 		size_str   = "0";
 		if(price_str == "null")
 			return;

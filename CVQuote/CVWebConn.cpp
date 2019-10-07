@@ -147,12 +147,6 @@ void CCVServer::OnConnect()
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitmex_Index,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
-			else if(m_strName == "BITSTAMP") {
-				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
-				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
-				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitstamp,&m_pClientSocket->m_cfd,::_1,::_2));
-			}
 			else if(m_strName == "BINANCE") {
 				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_SEC);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
@@ -251,7 +245,9 @@ void CCVServer::OnDisconnect()
 
 void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
-//	printf("[on_message_bitmexIndex]\n");
+#ifdef DEBUG
+	printf("[on_message_bitmexIndex]\n");
+#endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 
@@ -280,7 +276,7 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
 		price_str  = to_string(static_cast<float>(jtable["data"][i]["lastPrice"]));
-		size_str   = "0";//to_string(jtable["data"][i]["size"]);
+		size_str   = "0";
 		if(price_str == "null")
 			return;
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
@@ -292,7 +288,6 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
-//		printf("%s\n", netmsg);
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;
@@ -304,7 +299,9 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 
 void CCVServer::OnData_Bitmex_Less(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
-//	printf("[on_message_bitmexLess]\n");
+#ifdef DEBUG
+	printf("[on_message_bitmexLess]\n");
+#endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 
@@ -343,7 +340,6 @@ void CCVServer::OnData_Bitmex_Less(client* c, websocketpp::connection_hdl con, c
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
-//		printf("%s\n", netmsg);
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;
@@ -354,7 +350,9 @@ void CCVServer::OnData_Bitmex_Less(client* c, websocketpp::connection_hdl con, c
 
 void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
-	//printf("[on_message_bitmex_T]\n");
+#ifdef DEBUG
+	printf("[on_message_bitmex_T]\n");
+#endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 
@@ -394,7 +392,6 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
-		//printf("%s\n", netmsg);
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;
@@ -406,7 +403,9 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 
 void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
+#ifdef DEBUG
 	printf("[on_message_bitmex]\n");
+#endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 
@@ -446,7 +445,6 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
-		//printf("%s\n", netmsg);
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;
@@ -455,56 +453,11 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 
 }
 
-void CCVServer::OnData_Bitstamp(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
-{
-//	printf("[on_message_bitstamp]\n");
-	static char netmsg[BUFFERSIZE];
-	static char timemsg[9];
-
-	string str = msg->get_payload();
-	string price_str, size_str, side_str, time_str, symbol_str;
-	json jtable = json::parse(str.c_str());
-	static CCVClients* pClients = CCVClients::GetInstance();
-
-	if(pClients == NULL)
-		throw "GET_CLIENTS_ERROR";
-
-	string strname = "BITMEX";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
-	pServer->m_pHeartbeat->TriggerGetReplyEvent();
-	if(pServer->GetStatus() == ssBreakdown) {
-		c->close(con,websocketpp::close::status::normal,"");
-		printf("Bitstamp breakdown\n");
-		exit(-1);
-	}
-
-	for(int i=0 ; i<jtable["data"].size() ; i++)
-	{ 
-		memset(netmsg, 0, BUFFERSIZE);
-		memset(timemsg, 0, 8);
-		static int tick_count=0;
-		time_str   = jtable["data"][i]["timestamp"];
-		symbol_str = jtable["data"][i]["symbol"];
-		price_str  = to_string(static_cast<float>(jtable["data"][i]["price"]));
-		size_str   = to_string(static_cast<int>(jtable["data"][i]["size"]));
-		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BITSTAMP,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
-			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
-		int msglen = strlen(netmsg);
-		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
-		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
-		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-		assert(pClients);
-		pQueueDAO->SendData(netmsg, strlen(netmsg));
-		//printf("%s\n", netmsg);
-		cout << setw(4) << jtable << endl;
-		cout << netmsg << endl;
-	}
-
-}
 void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
-	//printf("[on_message_binance]\n");
+#ifdef DEBUG
+	printf("[on_message_binance]\n");
+#endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	string str = msg->get_payload();
@@ -533,9 +486,9 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	time_str   = "00000000";
 	symbol_str = jtable["s"];
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
-	price_str  = to_string(static_cast<float>(jtable["p"]));
+	price_str  = jtable["p"];
 	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
-	size_str   = to_string(static_cast<float>(jtable["q"]));
+	size_str   = jtable["q"];
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
@@ -550,24 +503,22 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
-	//printf("%s\n", netmsg);
-#if DEBUG
+#ifdef DEBUG
 	cout << setw(4) << jtable << endl;
 	cout << netmsg << endl;
 #endif
 }
 void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
-	//printf("[on_message_binance_F]\n");
+
+#ifdef DEBUG
+	printf("[on_message_binance_F]\n");
+#endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	string str = msg->get_payload();
 	string price_str, size_str, side_str, time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
-#if 0
-	cout << setw(4) << jtable << endl;
-	cout << netmsg << endl;
-#endif
 	static CCVClients* pClients = CCVClients::GetInstance();
 	static int tick_count_binance=0;
 
@@ -590,9 +541,9 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	time_str   = "00000000";
 	symbol_str = jtable["data"]["s"];
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
-	price_str  = to_string(static_cast<float>(jtable["data"]["p"]));
+	price_str  = jtable["data"]["p"];
 	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
-	size_str   = to_string(static_cast<float>(jtable["data"]["q"]));
+	size_str   = jtable["data"]["q"];
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
@@ -607,21 +558,22 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
-	//printf("%s\n", netmsg);
+#ifdef DEBUG
+	cout << setw(4) << jtable << endl;
+	cout << netmsg << endl;
+#endif
 }
 
 void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
-	//printf("[on_message_binance_FT]\n");
+#ifdef DEBUG
+	printf("[on_message_binance_FT]\n");
+#endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	string str = msg->get_payload();
 	string price_str, size_str, side_str, time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
-#if 0
-	cout << setw(4) << jtable << endl;
-	cout << netmsg << endl;
-#endif
 	static CCVClients* pClients = CCVClients::GetInstance();
 	static int tick_count_binance=0;
 
@@ -644,9 +596,9 @@ void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, cl
 	time_str   = "00000000";
 	symbol_str = jtable["data"]["s"];
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
-	price_str  = to_string(static_cast<float>(jtable["data"]["p"]));
+	price_str  = jtable["data"]["p"];
 	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
-	size_str   = to_string(static_cast<float>(jtable["data"]["q"]));
+	size_str   = jtable["data"]["q"];
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
@@ -661,7 +613,10 @@ void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, cl
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
-	//printf("%s\n", netmsg);
+#ifdef DEBUG
+	cout << setw(4) << jtable << endl;
+	cout << netmsg << endl;
+#endif
 }
 
 void CCVServer::OnHeartbeatLost()

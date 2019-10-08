@@ -37,6 +37,8 @@
 #define KI_ERROR	-1116
 
 #define HEARTBEATVAL 	60
+#define SCALE_TPYE_1	10000
+#define SCALE_TPYE_2	1000000000
 
 union U_ByteSint
 {

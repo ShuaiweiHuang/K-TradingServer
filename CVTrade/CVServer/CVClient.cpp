@@ -679,12 +679,12 @@ and%%20acv_trader.emp_no=acv_employee.emp_no)", pID, ppassword);
 #endif
 		for(int i=0 ; i<jtable_query_account.size() ; i++) {
 			readBuffer2 = "";
-			acno = to_string(jtable_query_account[i]["accounting_no"]);
-			exno = to_string(jtable_query_account[i]["exchange_no"]);
-			brno = to_string(jtable_query_account[i]["broker_no"]);
-			acno = acno.substr(1, acno.length()-2);
-			exno = exno.substr(1, exno.length()-2);
-			brno = brno.substr(1, brno.length()-2);
+			acno = jtable_query_account[i]["accounting_no"].dump();
+			exno = jtable_query_account[i]["exchange_no"].dump();
+			brno = jtable_query_account[i]["broker_no"].dump();
+			acno.erase(remove(acno.begin(), acno.end(), '\"'), acno.end());
+			exno.erase(remove(exno.begin(), exno.end(), '\"'), exno.end());
+			brno.erase(remove(brno.begin(), brno.end(), '\"'), brno.end());
 
 			sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 #ifdef DEBUG
@@ -696,12 +696,12 @@ and%%20acv_trader.emp_no=acv_employee.emp_no)", pID, ppassword);
 			res = curl_easy_perform(curl);
 			jtable_query_exchange = json::parse(readBuffer2.c_str());
 			memset(&acdata, sizeof(struct AccountData), 0);
-			acdata.exchange_name = to_string(jtable_query_exchange[0]["exchange_name_en"]);
-			acdata.api_id = to_string(jtable_query_exchange[0]["api_id"]);
-			acdata.api_key = to_string(jtable_query_exchange[0]["api_secret"]);
-			acdata.exchange_name = acdata.exchange_name.substr(1, acdata.exchange_name.length()-2);
-			acdata.api_id = acdata.api_id.substr(1, acdata.api_id.length()-2);
-			acdata.api_key = acdata.api_key.substr(1, acdata.api_key.length()-2);
+			acdata.exchange_name = jtable_query_exchange[0]["exchange_name_en"].dump();
+			acdata.api_id = jtable_query_exchange[0]["api_id"].dump();
+			acdata.api_key = jtable_query_exchange[0]["api_secret"].dump();
+			acdata.exchange_name.erase(remove(acdata.exchange_name.begin(), acdata.exchange_name.end(), '\"'), acdata.exchange_name.end());
+			acdata.api_id.erase(remove(acdata.api_id.begin(), acdata.api_id.end(), '\"'), acdata.api_id.end());
+			acdata.api_key.erase(remove(acdata.api_key.begin(), acdata.api_key.end(), '\"'), acdata.api_key.end());
 			acdata.broker_id = brno;
 			m_mBranchAccount.insert(pair<string, struct AccountData>(acno, acdata));
 #ifdef DEBUG

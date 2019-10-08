@@ -254,16 +254,16 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 	switch(cv_ts_order.price_mark[0])
 	{
 		case '0':
-			doprice = atof(oprice) / 10000;
-			dtprice = atof(tprice) / 10000;
+			doprice = atof(oprice) / SCALE_TPYE_1;
+			dtprice = atof(tprice) / SCALE_TPYE_1;
 			break;
 		case '1':
 			doprice = atoi(oprice);
 			dtprice = atoi(tprice);
 			break;
 		case '2':
-			doprice = atof(oprice) / 1000000000;
-			dtprice = atof(tprice) / 1000000000;
+			doprice = atof(oprice) / SCALE_TPYE_2;
+			dtprice = atof(tprice) / SCALE_TPYE_2;
 			break;
 		case '3':
 		default:
@@ -276,10 +276,10 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			dqty = atoi(qty);
 			break;
 		case '1':
-			dqty = atof(qty) / 1000000000;
+			dqty = atof(qty) / SCALE_TPYE_2;
 			break;
 		case '2':
-			dqty = atof(qty) / 10000;
+			dqty = atof(qty) / SCALE_TPYE_1;
 			break;
 		case '3':
 		default:
@@ -420,14 +420,14 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 
 
-			if(to_string(jtable["orderId"]) == "null")
+			if(jtable["orderId"].dump() == "null")
 			{
 				memcpy(m_tandem_reply.status_code, "1001", 4);
 
-				text = to_string(jtable["msg"]);
+				text = jtable["msg"].dump();
 
 				if(text == "null")
-					text = to_string(jtable["rejectReason"]);
+					text = jtable["rejectReason"].dump();
 
 				if(text != "null")
 					sprintf(m_tandem_reply.reply_msg, "submit fail, error message - [%s]", text.c_str());
@@ -440,13 +440,12 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			else
 			{
 				memcpy(m_tandem_reply.status_code, "1000", 4);
-				memcpy(m_tandem_reply.bookno,	to_string(jtable["orderId"]).c_str(), to_string(jtable["orderId"]).length());
-				memcpy(m_tandem_reply.price,	to_string(jtable["price"]).c_str(), to_string(jtable["price"]).length());
-				memcpy(m_tandem_reply.avgPx,	to_string(jtable["avgPx"]).c_str(), to_string(jtable["avgPx"]).length());
-				memcpy(m_tandem_reply.orderQty,	to_string(jtable["origQty"]).c_str()+1, to_string(jtable["origQty"]).length()-2);
-				//memcpy(m_tandem_reply.leaveQty,	to_string(jtable["leaveQty"]).c_str(), to_string(jtable["leaveQty"]).length());
-				memcpy(m_tandem_reply.cumQty,	to_string(jtable["cumQty"]).c_str(), to_string(jtable["cumQty"]).length());
-				memcpy(m_tandem_reply.transactTime, to_string(jtable["updateTime"]).c_str(), to_string(jtable["updateTime"]).length());
+				memcpy(m_tandem_reply.bookno,	jtable["orderId"].dump().c_str(), jtable["orderId"].dump().length());
+				memcpy(m_tandem_reply.price,	jtable["price"].dump().c_str(), jtable["price"].dump().length());
+				memcpy(m_tandem_reply.avgPx,	jtable["avgPx"].dump().c_str(), jtable["avgPx"].dump().length());
+				memcpy(m_tandem_reply.orderQty,	jtable["origQty"].dump().c_str()+1, jtable["origQty"].dump().length()-2);
+				memcpy(m_tandem_reply.cumQty, jtable["cumQty"].dump().c_str(), jtable["cumQty"].dump().length());
+				memcpy(m_tandem_reply.transactTime, jtable["updateTime"].dump().c_str(), jtable["updateTime"].dump().length());
 				tt_time = atol(m_tandem_reply.transactTime)/1000;
 				tm_time  = localtime(&tt_time);
 				strftime(m_tandem_reply.transactTime, sizeof(m_tandem_reply.transactTime), "%Y-%m-%d %H:%M:%S", tm_time);
@@ -527,16 +526,16 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	switch(cv_ts_order.price_mark[0])
 	{
 		case '0':
-			doprice = atof(oprice) / 10000;
-			dtprice = atof(tprice) / 10000;
+			doprice = atof(oprice) / SCALE_TPYE_1;
+			dtprice = atof(tprice) / SCALE_TPYE_1;
 			break;
 		case '1':
 			doprice = atoi(oprice);
 			dtprice = atoi(tprice);
 			break;
 		case '2':
-			doprice = atof(oprice) / 1000000000;
-			dtprice = atof(tprice) / 1000000000;
+			doprice = atof(oprice) / SCALE_TPYE_2;
+			dtprice = atof(tprice) / SCALE_TPYE_2;
 			break;
 		case '3':
 		default:
@@ -549,10 +548,10 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 			dqty = atoi(qty);
 			break;
 		case '1':
-			dqty = atof(qty) / 1000000000;
+			dqty = atof(qty) / SCALE_TPYE_2;
 			break;
 		case '2':
-			dqty = atof(qty) / 10000;
+			dqty = atof(qty) / SCALE_TPYE_1;
 			break;
 		case '3':
 		default:
@@ -706,7 +705,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 				}
 			}
 
-			text = to_string(jtable["error"]["message"]);
+			text = jtable["error"]["message"].dump();
 
 			memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
 
@@ -718,14 +717,14 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 			else
 			{
 				memcpy(m_tandem_reply.status_code, "1000", 4);
-				memcpy(m_tandem_reply.bookno, to_string(jtable["orderID"]).c_str()+1, 36);
-				memcpy(m_tandem_reply.price, to_string(jtable["price"]).c_str(), to_string(jtable["price"]).length());
-				memcpy(m_tandem_reply.avgPx, to_string(jtable["avgPx"]).c_str(), to_string(jtable["avgPx"]).length());
-				memcpy(m_tandem_reply.orderQty, to_string(jtable["orderQty"]).c_str(),  to_string(jtable["orderQty"]).length());
-				memcpy(m_tandem_reply.leaveQty, to_string(jtable["leaveQty"]).c_str(), to_string(jtable["leaveQty"]).length());
-				memcpy(m_tandem_reply.cumQty, to_string(jtable["cumQty"]).c_str(), to_string(jtable["cumQty"]).length());
-				memcpy(m_tandem_reply.transactTime, to_string(jtable["transactTime"]).c_str()+1, to_string(jtable["transactTime"]).length()-2);
-				sprintf(m_tandem_reply.reply_msg, "submit order success - [%s]", to_string(jtable["text"]).c_str());
+				memcpy(m_tandem_reply.bookno, jtable["orderID"].dump().c_str()+1, 36);
+				memcpy(m_tandem_reply.price, jtable["price"].dump().c_str(), jtable["price"].dump().length());
+				memcpy(m_tandem_reply.avgPx, jtable["avgPx"].dump().c_str(), jtable["avgPx"].dump().length());
+				memcpy(m_tandem_reply.orderQty, jtable["orderQty"].dump().c_str(), jtable["orderQty"].dump().length());
+				memcpy(m_tandem_reply.leaveQty, jtable["leaveQty"].dump().c_str(), jtable["leaveQty"].dump().length());
+				memcpy(m_tandem_reply.cumQty, jtable["cumQty"].dump().c_str(), jtable["cumQty"].dump().length());
+				memcpy(m_tandem_reply.transactTime, jtable["transactTime"].dump().c_str()+1, jtable["transactTime"].dump().length()-2);
+				sprintf(m_tandem_reply.reply_msg, "submit order success - [%s]", jtable["text"].dump().c_str());
 #ifdef DEBUG
 				printf("\n\n\ntext = %s\n", text.c_str());
 				printf("==============================\nsubmit order success\n");
@@ -756,13 +755,13 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 			for(int i=0 ; i<jtable.size() ; i++)
 			{
 				if(jarray)
-					text = to_string(jtable[i]["error"]);
+					text = jtable[i]["error"].dump();
 				else
-					text = to_string(jtable["error"]["message"]);
+					text = jtable["error"]["message"].dump();
 
 
 				if(jarray)
-					memcpy(m_tandem_reply.bookno, to_string(jtable[i]["orderID"]).c_str()+1, 36);
+					memcpy(m_tandem_reply.bookno, jtable[i]["orderID"].dump().c_str()+1, 36);
 
 				if(text != "null")
 				{
@@ -775,7 +774,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 				else
 				{
 					memcpy(m_tandem_reply.status_code, "1000", 4);
-					sprintf(m_tandem_reply.reply_msg, "delete order success - [%s]", to_string(jtable[i]["text"]).c_str());
+					sprintf(m_tandem_reply.reply_msg, "delete order success - [%s]", jtable[i]["text"].dump().c_str());
 					if(jarray)
 						LogOrderReplyDB_Bitmex(&jtable[i], OPT_DELETE);
 				}
@@ -784,12 +783,12 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 				if(!jarray)
 					break;
 #if 0
-				memcpy(m_tandem_reply.price,        to_string(jtable[i]["price"]).c_str(),          to_string([i]jtable["price"]).length());
-				memcpy(m_tandem_reply.avgPx,        to_string(jtable[i]["avgPx"]).c_str(),          to_string([i]jtable["avgPx"]).length());
-				memcpy(m_tandem_reply.orderQty,     to_string(jtable[i]["orderQty"]).c_str(),       to_string([i]jtable["orderQty"]).length());
-				memcpy(m_tandem_reply.leaveQty,     to_string(jtable[i]["leaveQty"]).c_str(),       to_string([i]jtable["leaveQty"]).length());
-				memcpy(m_tandem_reply.cumQty,       to_string(jtable[i]["cumQty"]).c_str(),         to_string([i]jtable["cumQty"]).length());
-				memcpy(m_tandem_reply.transactTime, to_string(jtable[i]["transactTime"]).c_str()+1, to_string(jtable[i]["transactTime"]).length()-2);
+				memcpy(m_tandem_reply.price,        jtable[i]["price"]).c_str(),          [i]jtable["price"]).length());
+				memcpy(m_tandem_reply.avgPx,        jtable[i]["avgPx"]).c_str(),          [i]jtable["avgPx"]).length());
+				memcpy(m_tandem_reply.orderQty,     jtable[i]["orderQty"]).c_str(),       [i]jtable["orderQty"]).length());
+				memcpy(m_tandem_reply.leaveQty,     jtable[i]["leaveQty"]).c_str(),       [i]jtable["leaveQty"]).length());
+				memcpy(m_tandem_reply.cumQty,       jtable[i]["cumQty"]).c_str(),         [i]jtable["cumQty"]).length());
+				memcpy(m_tandem_reply.transactTime, jtable[i]["transactTime"]).c_str()+1, jtable[i]["transactTime"]).length()-2);
 #endif
 			}
 			SetStatus(tsMsgReady);
@@ -832,52 +831,52 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 
 	string response, exchange_data[30];
 
-	exchange_data[0] = to_string((*jtable)["account"]);
+	exchange_data[0] = (*jtable)["account"].dump();
 	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
 
-	exchange_data[1] = to_string((*jtable)["orderID"]);
+	exchange_data[1] = (*jtable)["orderID"].dump();
 	exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
 
-	exchange_data[2] = to_string((*jtable)["symbol"]);
+	exchange_data[2] = (*jtable)["symbol"].dump();
 	exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
 
-	exchange_data[3] = to_string((*jtable)["side"]);
+	exchange_data[3] = (*jtable)["side"].dump();
 	exchange_data[3] = exchange_data[3].substr(1, exchange_data[3].length()-2);
 
-	exchange_data[4] = to_string((*jtable)["price"]);
+	exchange_data[4] = (*jtable)["price"].dump();
 	exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
 
-	exchange_data[5] = to_string((*jtable)["orderQty"]);
+	exchange_data[5] = (*jtable)["orderQty"].dump();
 	exchange_data[5] = exchange_data[5].substr(0, exchange_data[5].length());
 
-	exchange_data[6] = to_string((*jtable)["ordType"]);
+	exchange_data[6] = (*jtable)["ordType"].dump();
 	exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
 
-	exchange_data[7] = to_string((*jtable)["ordStatus"]);
+	exchange_data[7] = (*jtable)["ordStatus"].dump();
 	exchange_data[7] = exchange_data[7].substr(1, exchange_data[7].length()-2);
 
-	exchange_data[8] = to_string((*jtable)["transactTime"]);
+	exchange_data[8] = (*jtable)["transactTime"].dump();
 	exchange_data[8] = exchange_data[8].substr(1, 19);
 
-	exchange_data[9] = to_string((*jtable)["stopPx"]);
+	exchange_data[9] = (*jtable)["stopPx"].dump();
 	exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
 
-	exchange_data[10] = to_string((*jtable)["avgPx"]);
+	exchange_data[10] = (*jtable)["avgPx"].dump();
 	exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
 
-	exchange_data[11] = to_string((*jtable)["cumQty"]);
+	exchange_data[11] = (*jtable)["cumQty"].dump();
 	exchange_data[11] = exchange_data[11].substr(0, exchange_data[11].length());
 
-	exchange_data[12] = to_string((*jtable)["leavesQty"]);
+	exchange_data[12] = (*jtable)["leavesQty"].dump();
 	exchange_data[12] = exchange_data[12].substr(0, exchange_data[12].length());
 
-	exchange_data[13] = to_string((*jtable)["currency"]);
+	exchange_data[13] = (*jtable)["currency"].dump();
 	exchange_data[13] = exchange_data[13].substr(1, exchange_data[13].length()-2);
 
-	exchange_data[14] = to_string((*jtable)["settlCurrency"]);
+	exchange_data[14] = (*jtable)["settlCurrency"].dump();
 	exchange_data[14] = exchange_data[14].substr(1, exchange_data[14].length()-2);
 
-	exchange_data[15] = to_string((*jtable)["clOrdID"]);
+	exchange_data[15] = (*jtable)["clOrdID"].dump();
 
 
 	if(option == OPT_ADD) {
@@ -923,52 +922,52 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 
 	string response, exchange_data[30];
 
-	exchange_data[0] = to_string((*jtable)["orderId"]);
+	exchange_data[0] = (*jtable)["orderId"].dump();
 	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
 
-	exchange_data[1] = to_string((*jtable)["symbol"]);
+	exchange_data[1] = (*jtable)["symbol"].dump();
 	exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
 
-	exchange_data[2] = to_string((*jtable)["accountId"]);
+	exchange_data[2] = (*jtable)["accountId"].dump();
 	exchange_data[2] = exchange_data[2].substr(0, exchange_data[2].length());
 
-	exchange_data[3] = to_string((*jtable)["status"]);
+	exchange_data[3] = (*jtable)["status"].dump();
 	exchange_data[3] = exchange_data[3].substr(1, exchange_data[3].length()-2);
 
-	exchange_data[4] = to_string((*jtable)["clientOrderId"]);
+	exchange_data[4] = (*jtable)["clientOrderId"].dump();
 	exchange_data[4] = exchange_data[4].substr(1, exchange_data[4].length()-2);
 
-	exchange_data[5] = to_string((*jtable)["price"]);
+	exchange_data[5] = (*jtable)["price"].dump();
 	exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
 
-	exchange_data[6] = to_string((*jtable)["origQty"]);
+	exchange_data[6] = (*jtable)["origQty"].dump();
 	exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
 
-	exchange_data[7] = to_string((*jtable)["executedQty"]);
+	exchange_data[7] = (*jtable)["executedQty"].dump();
 	exchange_data[7] = exchange_data[7].substr(1, exchange_data[7].length()-2);
 
-	exchange_data[8] = to_string((*jtable)["cumQty"]);
+	exchange_data[8] = (*jtable)["cumQty"].dump();
 	exchange_data[8] = exchange_data[8].substr(1, exchange_data[8].length()-2);
 
-	exchange_data[9] = to_string((*jtable)["cumQuote"]);
+	exchange_data[9] = (*jtable)["cumQuote"].dump();
 	exchange_data[9] = exchange_data[9].substr(1, exchange_data[9].length()-2);
 
-	exchange_data[10] = to_string((*jtable)["timeInForce"]);
+	exchange_data[10] = (*jtable)["timeInForce"].dump();
 	exchange_data[10] = exchange_data[10].substr(1, exchange_data[10].length()-2);
 
-	exchange_data[11] = to_string((*jtable)["type"]);
+	exchange_data[11] = (*jtable)["type"].dump();
 	exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
 
-	exchange_data[12] = to_string((*jtable)["reduceOnly"]);
+	exchange_data[12] = (*jtable)["reduceOnly"].dump();
 	exchange_data[12] = exchange_data[12].substr(0, exchange_data[12].length());
 
-	exchange_data[13] = to_string((*jtable)["side"]);
+	exchange_data[13] = (*jtable)["side"].dump();
 	exchange_data[13] = exchange_data[13].substr(1, exchange_data[13].length()-2);
 
-	exchange_data[14] = to_string((*jtable)["stopPrice"]);
+	exchange_data[14] = (*jtable)["stopPrice"].dump();
 	exchange_data[14] = exchange_data[14].substr(1, exchange_data[14].length()-2);
 
-	exchange_data[15] = to_string((*jtable)["updateTime"]);
+	exchange_data[15] = (*jtable)["updateTime"].dump();
 	exchange_data[15] = exchange_data[15].substr(0, exchange_data[15].length());
 #if 1	
 	time_t tt_time = atol(exchange_data[15].c_str())/1000;

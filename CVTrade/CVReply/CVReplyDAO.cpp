@@ -176,8 +176,8 @@ bool CCVReplyDAO::Binance_Getkey()
 		for(int i=0 ; i<m_numberOfkey_Bitmex ; i++)
 		{
 			struct APIKEY apikeynode;
-			apikeynode.api_id = to_string(jtable_query_exchange[i]["api_id"]);
-			apikeynode.api_secret = to_string(jtable_query_exchange[i]["api_secret"]);
+			apikeynode.api_id = jtable_query_exchange[i]["api_id"].dump();
+			apikeynode.api_secret = jtable_query_exchange[i]["api_secret"].dump();
 			apikeynode.api_id = apikeynode.api_id.substr(1, apikeynode.api_id.length()-2);
 			apikeynode.api_secret = apikeynode.api_secret.substr(1, apikeynode.api_secret.length()-2);
 #ifdef DEBUG
@@ -214,8 +214,8 @@ bool CCVReplyDAO::Bitmex_Getkey()
 		for(int i=0 ; i<m_numberOfkey_Bitmex ; i++)
 		{
 			struct APIKEY apikeynode;
-			apikeynode.api_id = to_string(jtable_query_exchange[i]["api_id"]);
-			apikeynode.api_secret = to_string(jtable_query_exchange[i]["api_secret"]);
+			apikeynode.api_id = jtable_query_exchange[i]["api_id"].dump();
+			apikeynode.api_secret = jtable_query_exchange[i]["api_secret"].dump();
 			apikeynode.api_id = apikeynode.api_id.substr(1, apikeynode.api_id.length()-2);
 			apikeynode.api_secret = apikeynode.api_secret.substr(1, apikeynode.api_secret.length()-2);
 #ifdef DEBUG
@@ -315,11 +315,11 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 
 	for(int i=0 ; i<jtable.size() ; i++)
 	{
-		text = to_string(jtable[i]["error"]);
+		text = jtable[i]["error"].dump();
 
 		printf("\n\n\ntext = %s\n", text.c_str());
 
-		memcpy(m_trade_reply[i].bookno, to_string(jtable[i]["orderID"]).c_str()+1, 36);
+		memcpy(m_trade_reply[i].bookno, jtable[i]["orderID"].dump().c_str()+1, 36);
 #ifdef DEBUG		
 		//cout << setw(4) << jtable[i] << endl;
 #endif
@@ -331,16 +331,16 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 		else
 		{
 			memcpy(m_trade_reply[i].status_code, "1000", 4);
-			sprintf(m_trade_reply[i].reply_msg, "reply success - [%s]", to_string(jtable[i]["text"]).c_str());
+			sprintf(m_trade_reply[i].reply_msg, "reply success - [%s]", jtable[i]["text"].dump().c_str());
 			LogOrderReplyDB_Bitmex(&jtable[i]);
 		}
-		memcpy(m_trade_reply[i].key_id, to_string(jtable[i]["clOrdID"]).c_str(), 13);
-		memcpy(m_trade_reply[i].price, to_string(jtable[i]["price"]).c_str(), 10);
-		memcpy(m_trade_reply[i].avgPx, to_string(jtable[i]["avgPx"]).c_str(), 10);
-		memcpy(m_trade_reply[i].orderQty, to_string(jtable[i]["orderQty"]).c_str(), 10);
-		memcpy(m_trade_reply[i].leaveQty, to_string(jtable[i]["leaveQty"]).c_str(), 10);
-		memcpy(m_trade_reply[i].cumQty, to_string(jtable[i]["cumQty"]).c_str(), 10);
-		memcpy(m_trade_reply[i].transactTime, to_string(jtable[i]["transactTime"]).c_str()+1, 24);
+		memcpy(m_trade_reply[i].key_id, jtable[i]["clOrdID"].dump().c_str(), 13);
+		memcpy(m_trade_reply[i].price, jtable[i]["price"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].avgPx, jtable[i]["avgPx"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].orderQty, jtable[i]["orderQty"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].leaveQty, jtable[i]["leaveQty"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].cumQty, jtable[i]["cumQty"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].transactTime, jtable[i]["transactTime"].dump().c_str()+1, 24);
 	}
 
         CCVWriteQueueDAO* pWriteQueueDAO = NULL;
@@ -458,11 +458,11 @@ void CCVReplyDAO::Binance_Transaction_Update(int count, string symbol, struct AP
 
 	for(int i=0 ; i<jtable.size() ; i++)
 	{
-		text = to_string(jtable[i]["error"]);
+		text = jtable[i]["error"].dump();
 
 		printf("\n\n\ntext = %s\n", text.c_str());
 
-		memcpy(m_trade_reply[i].bookno, to_string(jtable[i]["orderID"]).c_str()+1, 36);
+		memcpy(m_trade_reply[i].bookno, jtable[i]["orderID"].dump().c_str()+1, 36);
 #ifdef DEBUG		
 		//cout << setw(4) << jtable[i] << endl;
 #endif
@@ -474,16 +474,16 @@ void CCVReplyDAO::Binance_Transaction_Update(int count, string symbol, struct AP
 		else
 		{
 			memcpy(m_trade_reply[i].status_code, "1000", 4);
-			sprintf(m_trade_reply[i].reply_msg, "reply success - [%s]", to_string(jtable[i]["text"]).c_str());
+			sprintf(m_trade_reply[i].reply_msg, "reply success - [%s]", jtable[i]["text"].dump().c_str());
 			LogOrderReplyDB_Bitmex(&jtable[i]);
 		}
-		memcpy(m_trade_reply[i].key_id, to_string(jtable[i]["clOrdID"]).c_str(), 13);
-		memcpy(m_trade_reply[i].price, to_string(jtable[i]["price"]).c_str(), 10);
-		memcpy(m_trade_reply[i].avgPx, to_string(jtable[i]["avgPx"]).c_str(), 10);
-		memcpy(m_trade_reply[i].orderQty, to_string(jtable[i]["orderQty"]).c_str(), 10);
-		memcpy(m_trade_reply[i].leaveQty, to_string(jtable[i]["leaveQty"]).c_str(), 10);
-		memcpy(m_trade_reply[i].cumQty, to_string(jtable[i]["cumQty"]).c_str(), 10);
-		memcpy(m_trade_reply[i].transactTime, to_string(jtable[i]["transactTime"]).c_str()+1, 24);
+		memcpy(m_trade_reply[i].key_id, jtable[i]["clOrdID"].dump().c_str(), 13);
+		memcpy(m_trade_reply[i].price, jtable[i]["price"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].avgPx, jtable[i]["avgPx"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].orderQty, jtable[i]["orderQty"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].leaveQty, jtable[i]["leaveQty"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].cumQty, jtable[i]["cumQty"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].transactTime, jtable[i]["transactTime"].dump().c_str()+1, 24);
 	}
 
         CCVWriteQueueDAO* pWriteQueueDAO = NULL;
@@ -527,67 +527,67 @@ bool CCVReplyDAO::LogOrderReplyDB_Bitmex(json* jtable)
 
 	string orderID, clOrdID, account, symbol, side, orderQty, price, ordStatus, transactTime, stopPx, avgPx, leavesQty, currency, settlCurrency, text;
 
-	bitmex_data[0] = to_string((*jtable)["account"]);
+	bitmex_data[0] = ((*jtable)["account"].dump());
 	bitmex_data[0] = bitmex_data[0].substr(0, bitmex_data[0].length());
 
-	bitmex_data[1] = to_string((*jtable)["execID"]);
+	bitmex_data[1] = ((*jtable)["execID"].dump());
 	bitmex_data[1] = bitmex_data[1].substr(1, bitmex_data[1].length()-2);
 
-	bitmex_data[2] = to_string((*jtable)["symbol"]);
+	bitmex_data[2] = ((*jtable)["symbol"].dump());
 	bitmex_data[2] = bitmex_data[2].substr(1, bitmex_data[2].length()-2);
 
-	bitmex_data[3] = to_string((*jtable)["side"]);
+	bitmex_data[3] = ((*jtable)["side"].dump());
 	bitmex_data[3] = bitmex_data[3].substr(1, bitmex_data[3].length()-2);
 
-	bitmex_data[4] = to_string((*jtable)["lastPx"]);
+	bitmex_data[4] = ((*jtable)["lastPx"].dump());
 	bitmex_data[4] = bitmex_data[4].substr(0, bitmex_data[4].length());
 
-	bitmex_data[5] = to_string((*jtable)["lastQty"]);
+	bitmex_data[5] = ((*jtable)["lastQty"].dump());
 	bitmex_data[5] = bitmex_data[5].substr(0, bitmex_data[5].length());
 
-	bitmex_data[6] = to_string((*jtable)["cumQty"]);
+	bitmex_data[6] = ((*jtable)["cumQty"].dump());
 	bitmex_data[6] = bitmex_data[6].substr(0, bitmex_data[6].length());
 
-	bitmex_data[7] = to_string((*jtable)["leavesQty"]);
+	bitmex_data[7] = ((*jtable)["leavesQty"].dump());
 	bitmex_data[7] = bitmex_data[7].substr(0, bitmex_data[7].length());
 
-	bitmex_data[8] = to_string((*jtable)["execType"]);
+	bitmex_data[8] = ((*jtable)["execType"].dump());
 	bitmex_data[8] = bitmex_data[8].substr(1, bitmex_data[8].length()-2);
 
-	bitmex_data[9] = to_string((*jtable)["transactTime"]);
+	bitmex_data[9] = ((*jtable)["transactTime"].dump());
 	bitmex_data[9] = bitmex_data[9].substr(1, 19);
 
-	bitmex_data[10] = to_string((*jtable)["commission"]);
+	bitmex_data[10] = ((*jtable)["commission"].dump());
 	bitmex_data[10] = bitmex_data[10].substr(0, bitmex_data[10].length());
 
-	bitmex_data[11] = to_string((*jtable)["execComm"]);
+	bitmex_data[11] = ((*jtable)["execComm"].dump());
 	bitmex_data[11] = bitmex_data[11].substr(0, bitmex_data[11].length());
 
-	bitmex_data[12] = to_string((*jtable)["orderID"]);
+	bitmex_data[12] = ((*jtable)["orderID"].dump());
 	bitmex_data[12] = bitmex_data[12].substr(1, bitmex_data[12].length()-2);
 
-	bitmex_data[13] = to_string((*jtable)["price"]);
+	bitmex_data[13] = ((*jtable)["price"].dump());
 	bitmex_data[13] = bitmex_data[13].substr(0, bitmex_data[13].length());
 
-	bitmex_data[14] = to_string((*jtable)["orderQty"]);
+	bitmex_data[14] = ((*jtable)["orderQty"].dump());
 	bitmex_data[14] = bitmex_data[14].substr(0, bitmex_data[14].length());
 
-	bitmex_data[15] = to_string((*jtable)["ordType"]);
+	bitmex_data[15] = ((*jtable)["ordType"].dump());
 	bitmex_data[15] = bitmex_data[15].substr(1, bitmex_data[15].length()-2);
 
-	bitmex_data[16] = to_string((*jtable)["ordStatus"]);
+	bitmex_data[16] = ((*jtable)["ordStatus"].dump());
 	bitmex_data[16] = bitmex_data[16].substr(1, bitmex_data[16].length()-2);
 
-	bitmex_data[17] = to_string((*jtable)["currency"]);
+	bitmex_data[17] = ((*jtable)["currency"].dump());
 	bitmex_data[17] = bitmex_data[17].substr(1, bitmex_data[17].length()-2);
 
-	bitmex_data[18] = to_string((*jtable)["settlCurrency"]);
+	bitmex_data[18] = ((*jtable)["settlCurrency"].dump());
 	bitmex_data[18] = bitmex_data[18].substr(1, bitmex_data[18].length()-2);
 
-	bitmex_data[19] = to_string((*jtable)["clOrdID"]);
+	bitmex_data[19] = ((*jtable)["clOrdID"].dump());
 	bitmex_data[19] = bitmex_data[19].substr(1, bitmex_data[19].length()-2);
 
-	bitmex_data[20] = to_string((*jtable)["text"]);
+	bitmex_data[20] = ((*jtable)["text"].dump());
 	bitmex_data[20] = bitmex_data[20].substr(1, bitmex_data[20].length()-2);
 
 	sprintf(insert_str, "http://tm1.cryptovix.com.tw:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_qty=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,commission=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[1].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[9].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str(), bitmex_data[17].c_str(), bitmex_data[18].c_str(), bitmex_data[19].c_str(), bitmex_data[20].c_str());

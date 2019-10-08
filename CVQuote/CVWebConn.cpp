@@ -135,12 +135,6 @@ void CCVServer::OnConnect()
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
 				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitmex_Test,&m_pClientSocket->m_cfd,::_1,::_2));
 			}
-			else if(m_strName == "BITMEXLESS") {
-				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_MIN);
-				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
-				m_pClientSocket->m_cfd.set_message_handler(bind(&OnData_Bitmex_Less,&m_pClientSocket->m_cfd,::_1,::_2));
-			}
 			else if(m_strName == "BITMEXINDEX") {
 				sprintf((char*)msg, "set timer to %d", HEARTBEAT_INTERVAL_MIN);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
@@ -167,7 +161,7 @@ void CCVServer::OnConnect()
 			}
 
 			else {
-				
+				FprintfStderrLog("Exchange config error", -1, 0);	
 			}
 			string uri = m_strWeb + m_strQstr;
 
@@ -252,7 +246,7 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 	static char timemsg[9];
 
 	string str = msg->get_payload();
-	string price_str, size_str, side_str, time_str, symbol_str;
+	string time_str, symbol_str, size_str;
 	json jtable = json::parse(str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
 
@@ -275,17 +269,11 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
-#ifdef AWSCODE
-		price_str  = to_string(static_cast<float>(jtable["data"][i]["lastPrice"]));
-#else
-		price_str  = to_string(jtable["data"][i]["lastPrice"]);
-#endif
 		size_str   = "0";
-		if(price_str == "null")
-			return;
+
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
 		sprintf(netmsg, "01_ID=%s.BMEX,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
-			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
+			symbol_str.c_str(), timemsg, jtable["data"][i]["lastPrice"].dump().c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
 		int msglen = strlen(netmsg);
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
@@ -300,57 +288,6 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 
 }
 
-
-void CCVServer::OnData_Bitmex_Less(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
-{
-#ifdef DEBUG
-	printf("[on_message_bitmexLess]\n");
-#endif
-	static char netmsg[BUFFERSIZE];
-	static char timemsg[9];
-
-	string str = msg->get_payload();
-	string price_str, size_str, side_str, time_str, symbol_str;
-	json jtable = json::parse(str.c_str());
-	static CCVClients* pClients = CCVClients::GetInstance();
-
-	if(pClients == NULL)
-		throw "GET_CLIENTS_ERROR";
-
-	string strname = "BITMEXLESS";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
-	pServer->m_heartbeat_count = 0;
-	if(pServer->GetStatus() == ssBreakdown) {
-		c->close(con,websocketpp::close::status::normal,"");
-		printf("Bitmex breakdown\n");
-		exit(-1);
-	}
-	pServer->m_pHeartbeat->TriggerGetReplyEvent();
-	for(int i=0 ; i<jtable["data"].size() ; i++)
-	{ 
-		memset(netmsg, 0, BUFFERSIZE);
-		memset(timemsg, 0, 8);
-		static int tick_count=0;
-		time_str   = jtable["data"][i]["timestamp"];
-		symbol_str = jtable["data"][i]["symbol"];
-		price_str  = to_string(static_cast<float>(jtable["data"][i]["price"]));
-		size_str   = to_string(static_cast<int>(jtable["data"][i]["size"]));
-		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BMEX,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
-			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
-		int msglen = strlen(netmsg);
-		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
-		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
-		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-		assert(pClients);
-		pQueueDAO->SendData(netmsg, strlen(netmsg));
-#ifdef DEBUG
-		cout << setw(4) << jtable << endl;
-		cout << netmsg << endl;
-#endif
-	}
-
-}
 
 void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
@@ -361,7 +298,7 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 	static char timemsg[9];
 
 	string str = msg->get_payload();
-	string price_str, size_str, side_str, time_str, symbol_str;
+	string time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
 
@@ -385,11 +322,11 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
-		price_str  = to_string(static_cast<float>(jtable["data"][i]["price"]));
-		size_str   = to_string(static_cast<int>(jtable["data"][i]["size"]));
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
 		sprintf(netmsg, "01_ID=%s.BITMEX_T,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
-			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
+			symbol_str.c_str(), timemsg, jtable["data"][i]["price"].dump().c_str(),
+			jtable["data"][i]["size"].dump().c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
+
 		int msglen = strlen(netmsg);
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
@@ -414,7 +351,7 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 	static char timemsg[9];
 
 	string str = msg->get_payload();
-	string price_str, size_str, side_str, time_str, symbol_str;
+	string time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
 
@@ -438,11 +375,10 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
-		price_str  = to_string(static_cast<float>(jtable["data"][i]["price"]));
-		size_str   = to_string(static_cast<int>(jtable["data"][i]["size"]));
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
 		sprintf(netmsg, "01_ID=%s.BMEX,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,",
-			symbol_str.c_str(), timemsg, price_str.c_str(), size_str.c_str(), tick_count++, pClients->m_strEPIDNum.c_str());
+			symbol_str.c_str(), timemsg, jtable["data"][i]["price"].dump().c_str(), jtable["data"][i]["size"].dump().c_str(),
+			tick_count++, pClients->m_strEPIDNum.c_str());
 		int msglen = strlen(netmsg);
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
@@ -465,7 +401,7 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	string str = msg->get_payload();
-	string price_str, size_str, side_str, time_str, symbol_str;
+	string price_str, size_str, time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
 
 	static CCVClients* pClients = CCVClients::GetInstance();
@@ -521,7 +457,7 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	string str = msg->get_payload();
-	string price_str, size_str, side_str, time_str, symbol_str;
+	string price_str, size_str, time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
 	static int tick_count_binance=0;
@@ -576,7 +512,7 @@ void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, cl
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	string str = msg->get_payload();
-	string price_str, size_str, side_str, time_str, symbol_str;
+	string price_str, size_str, time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
 	static int tick_count_binance=0;

@@ -227,7 +227,7 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 	string buysell_str;
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
-	int recvwin = 5000, ret;
+	int recvwin = 10000, ret;
 	struct timeval  tv;
 	gettimeofday(&tv, NULL);
 	double expires = (tv.tv_sec) * 1000 ;
@@ -311,19 +311,19 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			switch(cv_ts_order.order_mark[0])
 			{
 				case '0'://Market
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.2f&type=MARKET&timestamp=%.0lf&recvWindow=5000",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, expires);
+					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.2f&type=MARKET&timestamp=%.0lf&recvWindow=%d",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, expires, recvwin);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.2f&price=%.4lf&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=5000",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, expires);
+					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.2f&price=%.4lf&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=%d",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, expires, recvwin);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '4'://stop limit
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&price=%.4lf&stopPrice=%.4lf&type=STOP&timestamp=%.0lf&recvWindow=5000",
+					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&price=%.4lf&stopPrice=%.4lf&type=STOP&timestamp=%.0lf&recvWindow=%d",
 					//&text=%.7s|%.30s|%.20s",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, dtprice, expires);
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, dtprice, expires, recvwin);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '2'://Protect
@@ -874,7 +874,10 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 	exchange_data[14] = exchange_data[14].substr(1, exchange_data[14].length()-2);
 
 	exchange_data[15] = (*jtable)["clOrdID"].dump();
+	exchange_data[15] = exchange_data[15].substr(1, exchange_data[15].length()-2);
 
+	exchange_data[16] = (*jtable)["text"].dump();
+	exchange_data[16] = exchange_data[16].substr(1, exchange_data[16].length()-2);
 
 	if(option == OPT_ADD) {
 		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());

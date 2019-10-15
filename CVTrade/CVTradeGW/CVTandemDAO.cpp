@@ -311,22 +311,19 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			switch(cv_ts_order.order_mark[0])
 			{
 				case '0'://Market
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&type=MARKET&timestamp=%.0lf&recvWindow=5000",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty,cv_ts_order.sub_acno_id,
-					cv_ts_order.strategy_name, cv_ts_order.username, expires);
+					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.2f&type=MARKET&timestamp=%.0lf&recvWindow=5000",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, expires);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&price=%.4lf&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=5000",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice,
-					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, expires);
+					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.2f&price=%.4lf&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=5000",
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, expires);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '4'://stop limit
 					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&price=%.4lf&stopPrice=%.4lf&type=STOP&timestamp=%.0lf&recvWindow=5000",
 					//&text=%.7s|%.30s|%.20s",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, dtprice,
-					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, expires);
+					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, dtprice, expires);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '2'://Protect
@@ -353,7 +350,7 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			break;
 	}
 #ifdef DEBUG
-			printf("encrystr = %s\n", encrystr);
+			printf("\n\nencrystr = %s\n\n", encrystr);
 			printf("secret key = %s\n", cv_ts_order.apiSecret_order);
 #endif
 
@@ -880,7 +877,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 
 
 	if(option == OPT_ADD) {
-		sprintf(insert_str, "http://tm1.cryptovix.com.tw:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
+		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
 		if(exchange_data[4] != "null")
 			sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, exchange_data[4].c_str());
 		if(exchange_data[9] != "null")
@@ -889,7 +886,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 			sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, exchange_data[10].c_str());
 	}
 	if(option == OPT_DELETE) {
-		sprintf(insert_str, "http://tm1.cryptovix.com.tw:19487/mysql?db=Cryptovix_test&query=update%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
+		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=update%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
 		if(exchange_data[4] != "null")
 			sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, exchange_data[4].c_str());
 		if(exchange_data[9] != "null")
@@ -975,7 +972,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 	struct tm *tm_time  = localtime(&tt_time);
 	strftime(time_str, 30, "%Y-%m-%d %H:%M:%S", tm_time);
 #endif
-		sprintf(insert_str, "http://tm1.cryptovix.com.tw:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,\
+		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=insert%%20into%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,\
 account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%.19s%%27,\
 match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27,order_price=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.30s%%27,trader=%%27%.20s%%27",
 		exchange_data[2].c_str(), exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[13].c_str(),
@@ -984,7 +981,7 @@ match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27,order_price=%%27
 		cv_ts_order->sub_acno_id, cv_ts_order->strategy_name, cv_ts_order->username);
 
 	if(option == OPT_DELETE) {
-		sprintf(insert_str, "http://tm1.cryptovix.com.tw:19487/mysql?db=Cryptovix_test&query=update%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,\
+		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=update%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,\
 account=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%.19s%%27,\
 match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27,order_price=%%27%s%%27",
 		exchange_data[2].c_str(), exchange_data[1].c_str(), exchange_data[13].c_str(), exchange_data[6].c_str(),

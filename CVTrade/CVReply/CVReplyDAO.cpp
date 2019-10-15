@@ -111,17 +111,17 @@ void* CCVReplyDAO::Run()
 {
 	SetStatus(tsServiceOn);
 	Bitmex_Getkey();
-	Binance_Getkey();
+	//Binance_Getkey();
 	while(IsTerminated())
 	{
 		for(int i=0 ; i<m_numberOfkey_Bitmex ; i++)
 		{
-			//Bitmex_Transaction_Update(5, "XBTUSD", m_vApikeyTable_Bitmex[i]);
+			Bitmex_Transaction_Update(5, "XBTUSD", m_vApikeyTable_Bitmex[i]);
 			//Bitmex_Order_Update(5, "XBTUSD", m_vApikeyTable_Bitmex[i]);
 		}
 		for(int i=0 ; i<m_numberOfkey_Bitmex ; i++)
 		{
-			Binance_Transaction_Update(5, "BTCUSDT", m_vApikeyTable_Binance[i]);
+			///Binance_Transaction_Update(5, "BTCUSDT", m_vApikeyTable_Binance[i]);
 			//Binance_Order_Update(5, "XBTUSD", m_vApikeyTable_Binance[i]);
 			sleep(1);
 		}
@@ -161,7 +161,7 @@ bool CCVReplyDAO::Binance_Getkey()
 	string readBuffer;
 
 	if(curl) {
-		sprintf(query_str,"http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_name_en%%20=%%20%%27BINANCE_F%%27");
+		sprintf(query_str,"http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_name_en%%20=%%20%%27BINANCE_F%%27");
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -199,7 +199,7 @@ bool CCVReplyDAO::Bitmex_Getkey()
 	string readBuffer;
 
 	if(curl) {
-		sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_name_en%%20=%%20%%27BITMEX_T%%27");
+		sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_name_en%%20=%%20%%27BITMEX_T%%27");
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
@@ -250,7 +250,7 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
 	if(m_curl) {
-		order_url = "https://testnet.bitmex.com/api/v1/execution";
+		order_url = "https://testnet.bitmex.com/api/v1/execution/tradeHistory";
 		curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
 		http_header = curl_slist_append(http_header, "content-type: application/json");
 		http_header = curl_slist_append(http_header, "Accept: application/json");
@@ -258,7 +258,7 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 
 		sprintf(apisecret_str, "%s", apikeynode.api_secret.c_str());
 		sprintf(apikey_str, "api-key: %s", apikeynode.api_id.c_str());
-		sprintf(encrystr, "GET/api/v1/order%d%s", expires, commandstr);
+		sprintf(encrystr, "GET/api/v1/execution/tradeHistory%d%s", expires, commandstr);
 		HmacEncodeSHA256(apisecret_str, 64, encrystr, strlen(encrystr), mac, mac_length);
 
 		for(int i = 0; i < mac_length; i++)
@@ -320,8 +320,9 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 		printf("\n\n\ntext = %s\n", text.c_str());
 
 		memcpy(m_trade_reply[i].bookno, jtable[i]["orderID"].dump().c_str()+1, 36);
+		cout << setw(4) << jtable[i] << endl;
 #ifdef DEBUG		
-		//cout << setw(4) << jtable[i] << endl;
+		cout << setw(4) << jtable[i] << endl;
 #endif
 		if(text != "null")
 		{
@@ -364,7 +365,7 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
                 else
                 {
                         FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
-                        usleep(500000);
+                        sleep(1);
                 }
         }
 
@@ -391,19 +392,20 @@ void CCVReplyDAO::Binance_Transaction_Update(int count, string symbol, struct AP
 	struct curl_slist *http_header;
 	string order_url;
 
-	//char commandstr[] = R"({"symbol":"BTCUSDT","limit":500,},)";
+	char commandstr[] = R"({"timestamp":1570528663000,"limit":500,},)";
 
 	CURL *m_curl = curl_easy_init();
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
 	if(m_curl) {
-		order_url = "https://fapi.binance.com/fapi/v1/historicalTrades";
+		order_url = "https://fapi.binance.com/fapi/v1/balance";
 		curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
 
 		sprintf(apisecret_str, "%.64s", apikeynode.api_secret.c_str());
 		sprintf(apikey_str, "X-MBX-APIKEY: %.64s", apikeynode.api_id.c_str());
-		sprintf(encrystr, "{\"symbol\":\"BTCUSDT\",\"limit\":\"500\",\"timestamp\":\"%0.1f\",\"recvWindow\":5000", expires);
+		sprintf(encrystr, "{\"timestamp\": %.0lf,\"recvWindow\": 5000}", expires);
+		//sprintf(encrystr, "timestamp=%.0lf,recvWindow=5000", expires);
 		HmacEncodeSHA256(apisecret_str, 64, encrystr, strlen(encrystr), mac, mac_length);
 
 		for(int i = 0; i < mac_length; i++)
@@ -415,9 +417,8 @@ void CCVReplyDAO::Binance_Transaction_Update(int count, string symbol, struct AP
 		http_header = curl_slist_append(http_header, apikey_str);
 		curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, http_header);
 		curl_easy_setopt(m_curl, CURLOPT_HEADER, true);
-		//sprintf(execution_str, "%s&signature=%s", commandstr, macoutput);
-		sprintf(execution_str, "%s,\"signature\":\"%s\"}", encrystr, macoutput);
-		printf("execution_str = %s\n", execution_str);
+		sprintf(execution_str, "%s&signature=%s", commandstr, macoutput);
+		//sprintf(execution_str, "timestamp=%.0lf,recvWindow=5000&signature=%.64s", expires, macoutput);
 		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE, strlen(execution_str));
 		curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, execution_str);
 		curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "GET");
@@ -433,8 +434,9 @@ void CCVReplyDAO::Binance_Transaction_Update(int count, string symbol, struct AP
 		curl_easy_cleanup(m_curl);
 		curl_global_cleanup();
 #ifdef DEBUG
+		printf("execution_str = %s\n", execution_str);
 		printf("apikey_str = %s\n", apikey_str);
-		printf("apisec_str = %s\n", apisecret_str);
+		printf("apisec_str = %.64s\n", apisecret_str);
 		printf("encrystr = %s\n", encrystr);
 		printf("signature = %.64s\n", macoutput);
 		printf("===============\n%s\n==============\n\n\n", response.c_str());
@@ -590,7 +592,7 @@ bool CCVReplyDAO::LogOrderReplyDB_Bitmex(json* jtable)
 	bitmex_data[20] = ((*jtable)["text"].dump());
 	bitmex_data[20] = bitmex_data[20].substr(1, bitmex_data[20].length()-2);
 
-	sprintf(insert_str, "http://tm1.cryptovix.com.tw:19487/mysql?db=Cryptovix_test&query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_qty=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,commission=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[1].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[9].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str(), bitmex_data[17].c_str(), bitmex_data[18].c_str(), bitmex_data[19].c_str(), bitmex_data[20].c_str());
+	sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_qty=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,commission=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[1].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[9].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str(), bitmex_data[17].c_str(), bitmex_data[18].c_str(), bitmex_data[19].c_str(), bitmex_data[20].c_str());
 
 	if(bitmex_data[4] != "null")
 		sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, bitmex_data[4].c_str());
@@ -600,7 +602,7 @@ bool CCVReplyDAO::LogOrderReplyDB_Bitmex(json* jtable)
 		sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, bitmex_data[13].c_str());
 	sprintf(insert_str, "%s,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27", insert_str);
 
-	sprintf(delete_str, "http://tm1.cryptovix.com.tw:19487/mysql?db=Cryptovix_test&query=update%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_qty=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,commission=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[9].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str(), bitmex_data[17].c_str(), bitmex_data[18].c_str(), bitmex_data[19].c_str(), bitmex_data[20].c_str());
+	sprintf(delete_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=update%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_qty=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,commission=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", bitmex_data[0].c_str(), bitmex_data[2].c_str(), bitmex_data[3].c_str(), bitmex_data[5].c_str(), bitmex_data[6].c_str(), bitmex_data[7].c_str(), bitmex_data[8].c_str(), bitmex_data[9].c_str(), bitmex_data[11].c_str(), bitmex_data[12].c_str(), bitmex_data[14].c_str(), bitmex_data[15].c_str(), bitmex_data[16].c_str(), bitmex_data[17].c_str(), bitmex_data[18].c_str(), bitmex_data[19].c_str(), bitmex_data[20].c_str());
 
 	if(bitmex_data[4] != "null")
 		sprintf(delete_str, "%s,match_price=%%27%s%%27", delete_str, bitmex_data[4].c_str());

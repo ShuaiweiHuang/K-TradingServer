@@ -121,7 +121,6 @@ void CCVClients::CheckClientVector()
 		if(pClient->GetStatus() == csOffline && (*iter).unique())
 		{
 			ShutdownClient(pClient->GetClientSocket());
-
 			EraseClientFromVector(iter);
 		}
 		else

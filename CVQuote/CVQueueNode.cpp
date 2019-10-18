@@ -69,9 +69,6 @@ void* CCVQueueDAO::Run()
 				if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
 					pClient->m_pHeartbeat->TriggerGetReplyEvent();
 				}
-#ifdef DEBUG
-				printf("send msg: %s\n", uncaRecvBuf);
-#endif
 				iter++;
 			}
 		}

@@ -45,8 +45,6 @@ class CCVClientSocket
 		void Close();
 
 	public:
-		client m_cfd;
-		client::connection_ptr m_conn;
 		CCVClientSocket();
 		CCVClientSocket(ICVClientSocketCallback* pClientSocketCallback);
 		virtual ~CCVClientSocket();

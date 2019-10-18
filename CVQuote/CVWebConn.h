@@ -18,6 +18,19 @@
 #include "CVRequest.h"
 #include "CVServer.h"
 
+#include <websocketpp/config/asio_client.hpp>
+#include <websocketpp/client.hpp>
+#include <nlohmann/json.hpp>
+
+typedef websocketpp::client<websocketpp::config::asio_tls_client> client;
+typedef websocketpp::lib::shared_ptr<websocketpp::lib::asio::ssl::context> context_ptr;
+
+using json = nlohmann::json;
+using websocketpp::lib::placeholders::_1;
+using websocketpp::lib::placeholders::_2;
+using websocketpp::lib::bind;
+using namespace std;
+
 #define MAX_DATA_LENGTH 4096 
 
 class CCVClient;
@@ -39,6 +52,8 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 	private:
 		friend void CCVClient:: TriggerSendRequestEvent(CCVServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength);
 
+		client m_cfd;
+		client::connection_ptr m_conn;
 		char m_caPthread_ID[21];
 		shared_ptr<CCVClient> m_shpClient;
 
@@ -68,7 +83,6 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		static void OnData_Binance_F(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Binance_FT(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Bitstamp(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-
 	protected:
 		void* Run();
 

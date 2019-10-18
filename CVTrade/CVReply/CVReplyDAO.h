@@ -70,7 +70,8 @@ private:
 
 private:
 	char* GetReplyMsgOffsetPointer(const unsigned char *pMessageBuf);
-	bool LogOrderReplyDB_Bitmex(json*);
+	bool LogTranReplyDB_Bitmex(json*);
+	bool UpdateOrderReplyDB_Binance(json*);
 
 protected:
 	void* Run();

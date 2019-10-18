@@ -291,8 +291,8 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 	string order_url, order_all_url;
 	if(!strcmp(cv_ts_order.exchange_id, "BINANCE_FT"))
 	{
-		order_url = "https://binance.com/fapi/v1/order";
-		order_all_url = "https://binance.com/fapi/v1/allOrders";
+		order_url = "https://testnet.binancefuture.com/fapi/v1/order";
+		order_all_url = "https://testnet.binancefuture.com/fapi/v1/allOrders";
 	}
 
 	if(!strcmp(cv_ts_order.exchange_id, "BINANCE_F"))
@@ -311,12 +311,12 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			switch(cv_ts_order.order_mark[0])
 			{
 				case '0'://Market
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.2f&type=MARKET&timestamp=%.0lf&recvWindow=%d",
+					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.3f&type=MARKET&timestamp=%.0lf&recvWindow=%d",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, expires, recvwin);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.2f&price=%.4lf&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=%d",
+					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.3f&price=%.4lf&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=%d",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, expires, recvwin);
 					sprintf(encrystr, "%s", commandstr);
 					break;
@@ -969,15 +969,17 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 
 	exchange_data[15] = (*jtable)["updateTime"].dump();
 	exchange_data[15] = exchange_data[15].substr(0, exchange_data[15].length());
-#if 1	
+
+#if 1//log local time
 	time_t tt_time = atol(exchange_data[15].c_str())/1000;
 	char time_str[30];
 	struct tm *tm_time  = localtime(&tt_time);
 	strftime(time_str, 30, "%Y-%m-%d %H:%M:%S", tm_time);
 #endif
+
 		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=insert%%20into%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,\
 account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%.19s%%27,\
-match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27,order_price=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.30s%%27,trader=%%27%.20s%%27",
+match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27,order_price=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.30s%%27,trader=%%27%.20s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27",
 		exchange_data[2].c_str(), exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[13].c_str(),
 		exchange_data[6].c_str(), exchange_data[11].c_str(), exchange_data[3].c_str(), time_str,
 		exchange_data[7].c_str(), exchange_data[4].c_str(), exchange_data[14].c_str(), exchange_data[5].c_str(),

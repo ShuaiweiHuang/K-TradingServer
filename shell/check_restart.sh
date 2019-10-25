@@ -27,3 +27,12 @@ echo "$service is running!!!"
 else
 sh $BASEDIR/restart_trade.sh; 
 fi
+
+service=CVReplyWS
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_replyws.sh; 
+fi

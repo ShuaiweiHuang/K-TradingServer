@@ -464,6 +464,7 @@ void CCVReplyDAO::Binance_Order_Update(int count, string symbol, struct APIKEY a
 		printf("\n\n\ntext = %s\n", text.c_str());
 
 		memcpy(m_trade_reply[i].bookno, jtable[i]["orderID"].dump().c_str(), 8);
+		cout << setw(4) << jtable[i] << endl;
 #ifdef DEBUG		
 		//cout << setw(4) << jtable[i] << endl;
 #endif

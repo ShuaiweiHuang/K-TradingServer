@@ -555,6 +555,7 @@ void CCVServer::OnHeartbeatLost()
 {
 	FprintfStderrLog("HEARTBEAT LOST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
 	SetStatus(ssBreakdown);
+	exit(-1);
 }
 
 void CCVServer::OnHeartbeatRequest()

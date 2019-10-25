@@ -234,7 +234,7 @@ void CCVServer::Binance_Update(json* jtable)
 		exchagne_data[4] = ((*jtable)["o"]["c"].dump());
 		exchagne_data[4] = exchagne_data[4].substr(1, exchagne_data[4].length()-2);
 
-		exchagne_data[5] = ((*jtable)["o"]["p"].dump());
+		exchagne_data[5] = ((*jtable)["o"]["ap"].dump());
 		exchagne_data[5] = exchagne_data[5].substr(1, exchagne_data[5].length()-2);
 
 		exchagne_data[6] = ((*jtable)["o"]["q"].dump());

@@ -223,14 +223,14 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_time, time, 8);
 			memcpy(ts_order.order_buysell, "B", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
-			memcpy(ts_order.order_mark, "0", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
+			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
-			memcpy(ts_order.order_price, "080000000", 9);
+			memcpy(ts_order.order_price, "097000000", 9);
 			memcpy(ts_order.touch_price, "098000000", 9);
 			memcpy(ts_order.qty_mark, "2", 1);
-			memcpy(ts_order.order_qty, "000000100", 9);
+			memcpy(ts_order.order_qty, "000000010", 9);
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
 			for(order_loop=0 ; order_loop<order_num && is_conn ; order_loop++)

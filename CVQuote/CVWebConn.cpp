@@ -84,6 +84,9 @@ void* CCVServer::Run()
 		{
 			SetStatus(ssNone);
 			m_cfd.run();
+#ifdef EXIT_VERSION
+			exit(-1);
+#endif
 			SetStatus(ssBreakdown);
 			break;
 		}
@@ -554,8 +557,10 @@ void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, cl
 void CCVServer::OnHeartbeatLost()
 {
 	FprintfStderrLog("HEARTBEAT LOST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
-	SetStatus(ssBreakdown);
+#ifdef EXIT_VERSION
 	exit(-1);
+#endif
+	SetStatus(ssBreakdown);
 }
 
 void CCVServer::OnHeartbeatRequest()
@@ -573,6 +578,9 @@ void CCVServer::OnHeartbeatRequest()
 		if(msg.message() != "SUCCESS" && msg.message() != "Success")
 		{
 			FprintfStderrLog("Server PING/PONG Fail", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
+#ifdef EXIT_VERSION
+			exit(-1);
+#endif
 			SetStatus(ssBreakdown);
 		}
 		else
@@ -582,12 +590,19 @@ void CCVServer::OnHeartbeatRequest()
 	}
 	else
 	{
+
+#ifdef EXIT_VERSION
+		exit(-1);
+#endif
 		SetStatus(ssBreakdown);
 	}
 }
 
 void CCVServer::OnHeartbeatError(int nData, const char* pErrorMessage)
 {
+#ifdef EXIT_VERSION
+	exit(-1);
+#endif
 	SetStatus(ssBreakdown);
 }
 

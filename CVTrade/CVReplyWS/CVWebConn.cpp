@@ -133,9 +133,9 @@ void CCVServer::OnConnect()
 			}
 
 			if(m_strName == "ORDER_REPLY") {
-				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_SEC);
+				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_MIN);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
 				m_cfd.set_message_handler(bind(&OnData_Order_Reply,&m_cfd,::_1,::_2));
 			}
 
@@ -261,16 +261,10 @@ void CCVServer::Binance_Update(json* jtable)
 		exchagne_data[13] = ((*jtable)["o"]["T"].dump());
 		exchagne_data[13] = exchagne_data[10].substr(0, exchagne_data[10].length());
 
-		sprintf(update_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27,match_price=%%27%s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27%20where%%20order_no=%%27%s%%27", exchagne_data[3].c_str(), exchagne_data[7].c_str(), exchagne_data[5].c_str(), exchagne_data[1].c_str());
+		sprintf(update_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27,match_price=%%27%s%%27,update_user=%%27reply.server%%27%20where%%20order_no=%%27%s%%27", exchagne_data[3].c_str(), exchagne_data[7].c_str(), exchagne_data[5].c_str(), exchagne_data[1].c_str());
 
 		printf("=============\n%s\n=============\n", update_str);
 		CURL *curl = curl_easy_init();
-		curl_easy_setopt(curl, CURLOPT_URL, update_str);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-		curl_easy_perform(curl);
-		sprintf(update_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27,match_price=%%27%s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27%20where%%20order_no=%%27%s%%27", exchagne_data[3].c_str(), exchagne_data[7].c_str(), exchagne_data[5].c_str(), exchagne_data[1].c_str());
-		printf("=============\n%s\n=============\n", update_str);
 		curl_easy_setopt(curl, CURLOPT_URL, update_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
@@ -282,6 +276,148 @@ void CCVServer::Binance_Update(json* jtable)
 
 void CCVServer::Bitmex_Update(json* jtable)
 {
+        char update_match_str[MAXDATA], insert_str[MAXDATA], update_order_str[MAXDATA];
+        string response, exchagne_data[30];
+	if((*jtable)["table"] == "execution")
+	{
+		exchagne_data[0] = ((*jtable)["data"][0]["account"].dump());
+		exchagne_data[0] = exchagne_data[0].substr(0, exchagne_data[0].length());
+
+		exchagne_data[1] = ((*jtable)["data"][0]["execID"].dump());
+		exchagne_data[1] = exchagne_data[1].substr(1, exchagne_data[1].length()-2);
+
+		exchagne_data[2] = ((*jtable)["data"][0]["symbol"].dump());
+		exchagne_data[2] = exchagne_data[2].substr(1, exchagne_data[2].length()-2);
+
+		exchagne_data[3] = ((*jtable)["data"][0]["side"].dump());
+		exchagne_data[3] = exchagne_data[3].substr(1, exchagne_data[3].length()-2);
+
+		exchagne_data[4] = ((*jtable)["data"][0]["lastPx"].dump());
+		exchagne_data[4] = exchagne_data[4].substr(0, exchagne_data[4].length());
+
+		exchagne_data[5] = ((*jtable)["data"][0]["lastQty"].dump());
+		exchagne_data[5] = exchagne_data[5].substr(0, exchagne_data[5].length());
+
+		exchagne_data[6] = ((*jtable)["data"][0]["cumQty"].dump());
+		exchagne_data[6] = exchagne_data[6].substr(0, exchagne_data[6].length());
+
+		exchagne_data[7] = ((*jtable)["data"][0]["leavesQty"].dump());
+		exchagne_data[7] = exchagne_data[7].substr(0, exchagne_data[7].length());
+
+		exchagne_data[8] = ((*jtable)["data"][0]["execType"].dump());
+		exchagne_data[8] = exchagne_data[8].substr(1, exchagne_data[8].length()-2);
+
+		exchagne_data[9] = ((*jtable)["data"][0]["transactTime"].dump());
+		exchagne_data[9] = exchagne_data[9].substr(1, 19);
+
+		exchagne_data[10] = ((*jtable)["data"][0]["commission"].dump());
+		exchagne_data[10] = exchagne_data[10].substr(0, exchagne_data[10].length());
+
+		exchagne_data[11] = ((*jtable)["data"][0]["execComm"].dump());
+		exchagne_data[11] = exchagne_data[11].substr(0, exchagne_data[11].length());
+
+		exchagne_data[12] = ((*jtable)["data"][0]["orderID"].dump());
+		exchagne_data[12] = exchagne_data[12].substr(1, exchagne_data[12].length()-2);
+
+		exchagne_data[13] = ((*jtable)["data"][0]["price"].dump());
+		exchagne_data[13] = exchagne_data[13].substr(0, exchagne_data[13].length());
+
+		exchagne_data[14] = ((*jtable)["data"][0]["orderQty"].dump());
+		exchagne_data[14] = exchagne_data[14].substr(0, exchagne_data[14].length());
+
+		exchagne_data[15] = ((*jtable)["data"][0]["ordType"].dump());
+		exchagne_data[15] = exchagne_data[15].substr(1, exchagne_data[15].length()-2);
+
+		exchagne_data[16] = ((*jtable)["data"][0]["ordStatus"].dump());
+		exchagne_data[16] = exchagne_data[16].substr(1, exchagne_data[16].length()-2);
+
+		exchagne_data[17] = ((*jtable)["data"][0]["currency"].dump());
+		exchagne_data[17] = exchagne_data[17].substr(1, exchagne_data[17].length()-2);
+
+		exchagne_data[18] = ((*jtable)["data"][0]["settlCurrency"].dump());
+		exchagne_data[18] = exchagne_data[18].substr(1, exchagne_data[18].length()-2);
+
+		exchagne_data[19] = ((*jtable)["data"][0]["clOrdID"].dump());
+		exchagne_data[19] = exchagne_data[19].substr(1, exchagne_data[19].length()-2);
+
+		exchagne_data[20] = ((*jtable)["data"][0]["text"].dump());
+		exchagne_data[20] = exchagne_data[20].substr(1, exchagne_data[20].length()-2);
+
+		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchagne_data[0].c_str(), exchagne_data[1].c_str(), exchagne_data[2].c_str(), exchagne_data[3].c_str(), exchagne_data[6].c_str(), exchagne_data[7].c_str(), exchagne_data[8].c_str(), exchagne_data[9].c_str(), exchagne_data[12].c_str(), exchagne_data[14].c_str(), exchagne_data[15].c_str(), exchagne_data[16].c_str(), exchagne_data[17].c_str(), exchagne_data[18].c_str(), exchagne_data[19].c_str(), exchagne_data[20].c_str());
+
+		if(exchagne_data[4] != "null")
+			sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, exchagne_data[4].c_str());
+		if(exchagne_data[5] != "null")
+			sprintf(insert_str, "%s,match_qty=%%27%s%%27", insert_str, exchagne_data[5].c_str());
+		if(exchagne_data[10] != "null")
+			sprintf(insert_str, "%s,commission_rate=%%27%s%%27", insert_str, exchagne_data[10].c_str());
+		if(exchagne_data[11] != "null")
+			sprintf(insert_str, "%s,commission=%%27%s%%27", insert_str, exchagne_data[11].c_str());
+		if(exchagne_data[13] != "null")
+			sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, exchagne_data[13].c_str());
+
+		sprintf(insert_str, "%s,insert_user=%%27reply.server%%27,update_user=%%27reply.server%%27", insert_str);
+
+		sprintf(update_match_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20bitmex_match_history%%20set%%20match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchagne_data[6].c_str(), exchagne_data[7].c_str(), exchagne_data[8].c_str(), exchagne_data[9].c_str(), exchagne_data[16].c_str(), exchagne_data[20].c_str());
+
+		if(exchagne_data[4] != "null")
+			sprintf(update_match_str, "%s,match_price=%%27%s%%27", update_match_str, exchagne_data[4].c_str());
+		if(exchagne_data[5] != "null")
+			sprintf(update_match_str, "%s,match_qty=%%27%s%%27", update_match_str, exchagne_data[5].c_str());
+		if(exchagne_data[10] != "null")
+			sprintf(update_match_str, "%s,commission_rate=%%27%s%%27", update_match_str, exchagne_data[10].c_str());
+		if(exchagne_data[11] != "null")
+			sprintf(update_match_str, "%s,commission=%%27%s%%27", update_match_str, exchagne_data[11].c_str());
+		sprintf(update_match_str, "%s,update_user=%%27reply.server%%27", update_match_str);
+		sprintf(update_match_str, "%s%%20where%%20serial_no=%%27%s%%27", update_match_str, exchagne_data[19].c_str());
+
+		sprintf(update_order_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20bitmex_order_history%%20set%%20remaining_qty=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchagne_data[7].c_str(), exchagne_data[16].c_str(), exchagne_data[20].c_str());
+		if(exchagne_data[4] != "null")
+			sprintf(update_order_str, "%s,match_price=%%27%s%%27", update_order_str, exchagne_data[4].c_str());
+		if(exchagne_data[5] != "null")
+			sprintf(update_order_str, "%s,match_qty=%%27%s%%27", update_order_str, exchagne_data[5].c_str());
+		sprintf(update_order_str, "%s,update_user=%%27reply.server%%27", update_order_str);
+		sprintf(update_order_str, "%s%%20where%%20serial_no=%%27%s%%27", update_order_str, exchagne_data[19].c_str());
+
+		CURL *curl = curl_easy_init();
+
+		for(int i=0 ; i<strlen(insert_str) ; i++)
+		{
+			if(insert_str[i] == ' ')
+				insert_str[i] = '+';
+		}
+		for(int i=0 ; i<strlen(update_match_str) ; i++)
+		{
+			if(update_match_str[i] == ' ')
+				update_match_str[i] = '+';
+		}
+		for(int i=0 ; i<strlen(update_order_str) ; i++)
+		{
+			if(update_order_str[i] == ' ')
+				update_order_str[i] = '+';
+		}
+
+		if(exchagne_data[16] == "New") {
+			printf("=============insert:\n%s\n=============\n", insert_str);
+			curl_easy_setopt(curl, CURLOPT_URL, insert_str);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+			curl_easy_perform(curl);
+		}
+		else {
+			printf("=============update match:\n%s\n=============\n", update_match_str);
+			curl_easy_setopt(curl, CURLOPT_URL, update_match_str);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+			curl_easy_perform(curl);
+			printf("=============update order:\n%s\n=============\n", update_order_str);
+			curl_easy_setopt(curl, CURLOPT_URL, update_order_str);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+			curl_easy_perform(curl);
+		}
+		curl_easy_cleanup(curl);
+	}
 }
 
 void CCVServer::OnData_Order_Reply(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
@@ -302,15 +438,20 @@ void CCVServer::OnData_Order_Reply(client* c, websocketpp::connection_hdl con, c
 
 	if(str[0] == '{') {
 		json jtable = json::parse(str.c_str());
-		cout << setw(4) << jtable << endl;
-		if(jtable["exchange"] == "BINANCE") {
-			pServer->Binance_Update(&jtable);
-		}
-		else if(jtable["exchange"] == "BITMEX") {
-			pServer->Bitmex_Update(&jtable);
-		}
-		else {
-			FprintfStderrLog("UNKNOWN EXCHANGE", -1, 0, jtable["exchange"].dump().c_str(), jtable["exchange"].dump().length(),  NULL, 0);
+
+		if(jtable["table"] != "margin") {
+
+			cout << setw(4) << jtable << endl;
+
+			if(jtable["exchange"] == "BINANCE") {
+				pServer->Binance_Update(&jtable);
+			}
+			else if(jtable["exchange"] == "BITMEX") {
+				pServer->Bitmex_Update(&jtable);
+			}
+			else {
+				FprintfStderrLog("UNKNOWN EXCHANGE", -1, 0, jtable["exchange"].dump().c_str(), jtable["exchange"].dump().length(),  NULL, 0);
+			}
 		}
 			
 	}

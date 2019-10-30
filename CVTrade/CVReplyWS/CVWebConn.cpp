@@ -425,25 +425,22 @@ void CCVServer::Bitmex_Update(json* jtable)
 				update_order_str[i] = '+';
 		}
 
-		if(exchange_data[16] == "New") {
-			printf("=============insert:\n%s\n=============\n", insert_str);
-			curl_easy_setopt(curl, CURLOPT_URL, insert_str);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-			curl_easy_perform(curl);
-		}
-		else {
-			printf("=============update match:\n%s\n=============\n", update_match_str);
-			curl_easy_setopt(curl, CURLOPT_URL, update_match_str);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-			curl_easy_perform(curl);
-			printf("=============update order:\n%s\n=============\n", update_order_str);
-			curl_easy_setopt(curl, CURLOPT_URL, update_order_str);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-			curl_easy_perform(curl);
-		}
+		printf("=============insert:\n%s\n=============\n", insert_str);
+		curl_easy_setopt(curl, CURLOPT_URL, insert_str);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+		curl_easy_perform(curl);
+		printf("=============update match:\n%s\n=============\n", update_match_str);
+		curl_easy_setopt(curl, CURLOPT_URL, update_match_str);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+		curl_easy_perform(curl);
+		printf("=============update order:\n%s\n=============\n", update_order_str);
+		curl_easy_setopt(curl, CURLOPT_URL, update_order_str);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+		curl_easy_perform(curl);
+
 		curl_easy_cleanup(curl);
 
 		memcpy(m_trade_reply.bookno, (*jtable)["data"][0]["orderID"].dump().c_str()+1, 36);

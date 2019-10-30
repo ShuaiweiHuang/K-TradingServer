@@ -343,7 +343,7 @@ void CCVReplyDAO::Bitmex_Transaction_Update(int count, string symbol, struct API
 		memcpy(m_trade_reply[i].price, jtable[i]["price"].dump().c_str(), 10);
 		memcpy(m_trade_reply[i].avgPx, jtable[i]["avgPx"].dump().c_str(), 10);
 		memcpy(m_trade_reply[i].orderQty, jtable[i]["orderQty"].dump().c_str(), 10);
-		memcpy(m_trade_reply[i].leaveQty, jtable[i]["leaveQty"].dump().c_str(), 10);
+		memcpy(m_trade_reply[i].lastQty, jtable[i]["lastQty"].dump().c_str(), 10);
 		memcpy(m_trade_reply[i].cumQty, jtable[i]["cumQty"].dump().c_str(), 10);
 		memcpy(m_trade_reply[i].transactTime, jtable[i]["transactTime"].dump().c_str()+1, 24);
 	}
@@ -482,8 +482,8 @@ void CCVReplyDAO::Binance_Order_Update(int count, string symbol, struct APIKEY a
 		memcpy(m_trade_reply[i].key_id, jtable[i]["clientOrderId"].dump().c_str()+1, 13);
 		memcpy(m_trade_reply[i].price, jtable[i]["price"].dump().c_str()+1, jtable[i]["price"].dump().length()-2);
 		memcpy(m_trade_reply[i].orderQty, jtable[i]["origQty"].dump().c_str()+1, jtable[i]["origQty"].dump().length()-2);
-		memcpy(m_trade_reply[i].leaveQty, jtable[i]["cumQuote"].dump().c_str()+1, jtable[i]["cumQuote"].dump().length()-2);
-		memcpy(m_trade_reply[i].cumQty, jtable[i]["executedQty"].dump().c_str()+1, jtable[i]["executedQty"].dump().length()-2);
+		memcpy(m_trade_reply[i].lastQty, jtable[i]["executedQty"].dump().c_str()+1, jtable[i]["executedQty"].dump().length()-2);
+		memcpy(m_trade_reply[i].cumQty, jtable[i]["cumQuote"].dump().c_str()+1, jtable[i]["cumQuote"].dump().length()-2);
 		memcpy(m_trade_reply[i].transactTime, jtable[i]["updateTime"].dump().c_str(), jtable[i]["updateTime"].dump().length());
 		sprintf(m_trade_reply[i].avgPx, "0");
 	}

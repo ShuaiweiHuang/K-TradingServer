@@ -14,7 +14,7 @@ void FillBitcoinReplyFormat(union CV_ORDER_REPLY &cv_order_reply, union CV_TS_OR
 	memcpy(cv_order_reply.cv_reply.price, cv_ts_order_reply.cv_ts_reply.price, 10);
 	memcpy(cv_order_reply.cv_reply.avgPx, cv_ts_order_reply.cv_ts_reply.avgPx, 10);
 	memcpy(cv_order_reply.cv_reply.orderQty, cv_ts_order_reply.cv_ts_reply.orderQty, 10);
-	memcpy(cv_order_reply.cv_reply.leaveQty, cv_ts_order_reply.cv_ts_reply.leaveQty, 10);
+	memcpy(cv_order_reply.cv_reply.lastQty, cv_ts_order_reply.cv_ts_reply.lastQty, 10);
 	memcpy(cv_order_reply.cv_reply.cumQty, cv_ts_order_reply.cv_ts_reply.cumQty, 10);
 	memcpy(cv_order_reply.cv_reply.transactTime, cv_ts_order_reply.cv_ts_reply.transactTime, 24);
 #ifdef DEBUG
@@ -25,7 +25,7 @@ void FillBitcoinReplyFormat(union CV_ORDER_REPLY &cv_order_reply, union CV_TS_OR
 	printf("FillBitcoinReplyFormat price: %.10s\n", cv_ts_order_reply.cv_ts_reply.price);
 	printf("FillBitcoinReplyFormat avgPx: %.10s\n", cv_ts_order_reply.cv_ts_reply.avgPx);
 	printf("FillBitcoinReplyFormat orderQty: %.10s\n", cv_ts_order_reply.cv_ts_reply.orderQty);
-	printf("FillBitcoinReplyFormat leaveQty: %.10s\n", cv_ts_order_reply.cv_ts_reply.leaveQty);
+	printf("FillBitcoinReplyFormat lastQty: %.10s\n", cv_ts_order_reply.cv_ts_reply.lastQty);
 	printf("FillBitcoinReplyFormat cumQty: %.10s\n", cv_ts_order_reply.cv_ts_reply.cumQty);
 	printf("FillBitcoinReplyFormat transactTime: %.24s\n", cv_ts_order_reply.cv_ts_reply.transactTime);
 	printf("sizeofstructCV_StructOrderReply: %d\n", sizeof(struct CV_StructOrderReply));

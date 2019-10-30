@@ -26,7 +26,7 @@ CCVQueueDAO::CCVQueueDAO(string strService, key_t kSendKey, key_t kRecvKey)
 	m_pRecvQueue = new CCVQueue;
 	m_pRecvQueue->Create(m_kRecvKey);
 
-	Start();
+	//Start();
 }
 
 CCVQueueDAO::~CCVQueueDAO() 

@@ -74,7 +74,7 @@ struct CV_StructOrderReply
 	char price[10];
 	char avgPx[10];
 	char orderQty[10];
-	char leaveQty[10];
+	char lastQty[10];
 	char cumQty[10];
 	char transactTime[24];	
 	char reply_msg[176];
@@ -147,7 +147,7 @@ struct CV_StructTSOrderReply
 	char price[10];
 	char avgPx[10];
 	char orderQty[10];
-	char leaveQty[10];
+	char lastQty[10];
 	char cumQty[10];
 	char transactTime[24];	
 	char reply_msg[129];
@@ -163,7 +163,6 @@ struct CV_StructTSDealReply
 	char lastPx[10];
 	char lastQty[10];
 	char orderQty[10];
-	char leaveQty[10];
 	char cumQty[10];
 	char transactTime[24];	
 	char reply_msg[130];

@@ -37,9 +37,3 @@ do
 	 kill -9 $pid
   fi
 done
-
-for i in {101..110};
-do
-ipcrm -Q $i >/dev/null 2>&1
-done
-

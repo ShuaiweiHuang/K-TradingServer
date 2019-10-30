@@ -718,7 +718,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 				memcpy(m_tandem_reply.price, jtable["price"].dump().c_str(), jtable["price"].dump().length());
 				memcpy(m_tandem_reply.avgPx, jtable["avgPx"].dump().c_str(), jtable["avgPx"].dump().length());
 				memcpy(m_tandem_reply.orderQty, jtable["orderQty"].dump().c_str(), jtable["orderQty"].dump().length());
-				memcpy(m_tandem_reply.leaveQty, jtable["leaveQty"].dump().c_str(), jtable["leaveQty"].dump().length());
+				memcpy(m_tandem_reply.lastQty, jtable["lastQty"].dump().c_str(), jtable["lastQty"].dump().length());
 				memcpy(m_tandem_reply.cumQty, jtable["cumQty"].dump().c_str(), jtable["cumQty"].dump().length());
 				memcpy(m_tandem_reply.transactTime, jtable["transactTime"].dump().c_str()+1, jtable["transactTime"].dump().length()-2);
 				sprintf(m_tandem_reply.reply_msg, "submit order success - [%s]", jtable["text"].dump().c_str());
@@ -889,8 +889,8 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 			sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, exchange_data[10].c_str());
 	}
 	if(option == OPT_DELETE) {
-		sprintf(insert_str,"http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20bitmex_order_history%%20set%%20order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27", exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[16].c_str());
-		sprintf(insert_str, "%s%%20where order_no=%%27%s%%27", insert_str, exchange_data[1].c_str());
+		sprintf(insert_str,"http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20bitmex_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27", exchange_data[7].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[16].c_str());
+		sprintf(insert_str, "%s%%20where%%20order_no=%%27%s%%27", insert_str, exchange_data[1].c_str());
 	}
 
 	for(int i=0 ; i<strlen(insert_str) ; i++)
@@ -978,8 +978,8 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 		cv_ts_order->sub_acno_id, cv_ts_order->strategy_name, cv_ts_order->username);
 
 	if(option == OPT_DELETE) {
-		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,order_time=%%27%.19s%%27,match_qty=%%27%s%%27", exchange_data[3].c_str(), time_str, exchange_data[7].c_str());
-		sprintf(insert_str, "%s%%20where order_no=%%27%s%%27", insert_str, exchange_data[0].c_str());
+		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str());
+		sprintf(insert_str, "%s%%20where%%20order_no=%%27%s%%27", insert_str, exchange_data[0].c_str());
 	}
 
 	for(int i=0 ; i<strlen(insert_str) ; i++)

@@ -45,6 +45,20 @@ enum TCVServerStatus
 };
 
 
+struct CV_StructTSOrderReply
+{
+        char status_code[4];
+        char key_id[13];
+        char bookno[36];
+        char price[10];
+        char avgPx[10];
+        char orderQty[10];
+        char lastQty[10];
+        char cumQty[10];
+        char transactTime[24];
+        char reply_msg[129];
+};
+
 using namespace std;
 
 class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHeartbeatCallback, public ICVRequestCallback
@@ -97,6 +111,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		void OnRequest();
 		void OnRequestError(int, const char*);
 		void OnData(unsigned char*, int);
+		struct CV_StructTSOrderReply m_trade_reply;
 
 	public:
 		TCVServerStatus m_ssServerStatus;

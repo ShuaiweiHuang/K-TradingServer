@@ -99,6 +99,11 @@ void* CCVQueueDAO::Run()
 			memcpy(caOrderNumber, uncaRecvBuf+4, 13);
 			long lOrderNumber = atol(caOrderNumber);
 
+#ifdef DEBUG
+			printf("Keanu lOrderNumber = %ld\n", lOrderNumber);
+			printf("\nreceive queue %d data with length = %d\n\n", m_kRecvKey, nSizeOfSendSocket);
+#endif
+
 			try
 			{
 				if(pClients->GetClientFromHash(lOrderNumber) == NULL)
@@ -130,9 +135,6 @@ void* CCVQueueDAO::Run()
 
 					if(pClient->GetStatus() == csOnline)//weird if(pClient) not working
 					{
-#ifdef DEBUG
-						printf("\nqueue send data length = %d\n\n", nSizeOfSendSocket);
-#endif
 						bSendData = pClient->SendData(uncaSendBuf, nSizeOfSendSocket);
 					}
 					else
@@ -144,7 +146,7 @@ void* CCVQueueDAO::Run()
 					if(bSendData == true)
 					{
 						FprintfStderrLog("SEND_CV_ORDER_REPLY", 0, uncaSendBuf, nSizeOfSendSocket);
-						pClients->RemoveClientFromHash(lOrderNumber);
+						//pClients->RemoveClientFromHash(lOrderNumber);
 					}
 					else
 					{

@@ -26,7 +26,7 @@ CCVQueueDAO::CCVQueueDAO(string strService, key_t kSendKey, key_t kRecvKey)
 	m_pRecvQueue = new CCVQueue;
 	m_pRecvQueue->Create(m_kRecvKey);
 
-	//Start();
+	Start();
 }
 
 CCVQueueDAO::~CCVQueueDAO() 
@@ -79,12 +79,12 @@ void* CCVQueueDAO::Run()
 int CCVQueueDAO::SendData(char* pBuf, int nSize, long lType, int nFlag)
 {
 	int nResult = -1;
-#ifdef DEBUG
-	printf("SERVER: queue data send at key %d\ndata contents: %s\n", m_kSendKey, pBuf);
-#endif
 	if(m_pSendQueue)
 	{
 		nResult= m_pSendQueue->SendMessage(pBuf, nSize, lType, nFlag);
+#ifdef DEBUG
+	printf("SERVER: queue data send at key %d\ndata contents: %s, success:%d\n", m_kSendKey, pBuf, nResult);
+#endif
 	}
 	else
 	{

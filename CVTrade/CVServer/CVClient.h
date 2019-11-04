@@ -50,6 +50,16 @@ struct AccountData
 	string exchange_name;
 };
 
+struct RiskctlData
+{
+	int bitmex_limit;
+	int bitmex_cum;
+	int bitmex_limit_cum;
+	float binance_limit;
+	float binance_cum;
+	float binance_limit_cum;
+};
+
 class CCVClient: public CCVThread
 {
 	private:
@@ -66,6 +76,7 @@ class CCVClient: public CCVThread
 		TCVClientStauts m_ClientStatus;
 		map<long, struct CVOriginalOrder> m_mOriginalOrder;
 		map<string, struct AccountData> m_mBranchAccount;
+		map<string, struct RiskctlData> m_mRiskControl;
 		string m_strService;
 		CCVHeartbeat* m_pHeartbeat;
 		pthread_mutex_t m_MutexLockOnClientStatus;

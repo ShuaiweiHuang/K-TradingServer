@@ -56,7 +56,7 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
 		//memcpy(ucvts.cv_ts_order.key_id, ucv.cv_order.key_id, 13);
 		memcpy(ucvts.cv_ts_order.order_bookno, ucv.cv_order.order_bookno, 36);
-		if(ucv.cv_order.trade_type[0] >= '2') {
+		if(ucv.cv_order.trade_type[0] >= '2') { // delete all
 			if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F")||!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_FT"))
 				return TT_ERROR;
 		}

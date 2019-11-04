@@ -572,7 +572,8 @@ void CCVClient::ReplyAccountContents()
 	memset(AcclistReplyBuf, 0, 1024);
 	AcclistReplyBuf[0] = ESCAPE;
 	AcclistReplyBuf[1] = ACCLISTREP;
-	int i = 0, len ;
+	int i = 0, len;
+
 	for(iter = m_mBranchAccount.begin(); iter != m_mBranchAccount.end() ; iter++, i++)
 	{
 		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2), iter->second.broker_id.c_str(), iter->second.broker_id.length());
@@ -639,7 +640,7 @@ void CCVClient::ReplyAccountNum()
 		ReplyAccountContents();
 }
 
-bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply &logon_reply)
+bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLogonReply &logon_reply)
 {
 	json jtable_query_account;
 	json jtable_query_exchange;
@@ -650,102 +651,105 @@ bool CCVClient::LogonAuth(char* pID, char* ppassword, struct CV_StructLogonReply
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
 	char macoutput[256];
+	char query_str[512];
 
-	if(curl) {
-		char query_str[512];
-		sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,\
-acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20\
-from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20\
-and%%20acv_trader.emp_no=acv_employee.emp_no)", pID, ppassword);
+	if(curl == NULL)
+	{
+		FprintfStderrLog("CURL_INIT_FAIL", 0, (unsigned char*)p_username, strlen(p_username));
+		memcpy(logon_reply.status_code, "NG", 2);
+		memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+		memcpy(logon_reply.error_code, "01", 2);
+		sprintf(logon_reply.error_message, "cannot accesss authentication server");
+		return false;
+	}
+
+	sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
+
+#ifdef DEBUG
+	printf("============================\nquery_str:%s\n============================\n", query_str);
+#endif
+	curl_easy_setopt(curl, CURLOPT_URL, query_str);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer1);
+	res = curl_easy_perform(curl);
+	jtable_query_account = json::parse(readBuffer1.c_str());
+
+	if(jtable_query_account.size() == 0)
+	{
+		memcpy(logon_reply.status_code, "NG", 2);//to do
+		memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+		memcpy(logon_reply.error_code, "01", 2);
+		sprintf(logon_reply.error_message, "login authentication fail");
+		return false;
+	}
+
+#ifdef DEBUG
+		printf("%s\n", readBuffer1.c_str());
+#endif
+	for(int i=0 ; i<jtable_query_account.size() ; i++)
+	{
+		readBuffer2 = "";
+		acno = jtable_query_account[i]["accounting_no"].dump();
+		exno = jtable_query_account[i]["exchange_no"].dump();
+		brno = jtable_query_account[i]["broker_no"].dump();
+		acno.erase(remove(acno.begin(), acno.end(), '\"'), acno.end());
+		exno.erase(remove(exno.begin(), exno.end(), '\"'), exno.end());
+		brno.erase(remove(brno.begin(), brno.end(), '\"'), brno.end());
+
+		sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 #ifdef DEBUG
 		printf("============================\nquery_str:%s\n============================\n", query_str);
 #endif
-		curl_easy_setopt(curl, CURLOPT_URL, query_str);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer1);
-		res = curl_easy_perform(curl);
-		jtable_query_account = json::parse(readBuffer1.c_str());
-
-		if(jtable_query_account.size() == 0) {
-			memcpy(logon_reply.status_code, "NG", 2);//to do
-			memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
-			memcpy(logon_reply.error_code, "01", 2);
-			sprintf(logon_reply.error_message, "login authentication fail");
-			return false;
-		}
-
-#ifdef DEBUG
-			printf("%s\n", readBuffer1.c_str());
-#endif
-		for(int i=0 ; i<jtable_query_account.size() ; i++) {
-			readBuffer2 = "";
-			acno = jtable_query_account[i]["accounting_no"].dump();
-			exno = jtable_query_account[i]["exchange_no"].dump();
-			brno = jtable_query_account[i]["broker_no"].dump();
-			acno.erase(remove(acno.begin(), acno.end(), '\"'), acno.end());
-			exno.erase(remove(exno.begin(), exno.end(), '\"'), exno.end());
-			brno.erase(remove(brno.begin(), brno.end(), '\"'), brno.end());
-
-			sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
-#ifdef DEBUG
-			printf("============================\nquery_str:%s\n============================\n", query_str);
-#endif
-			curl_easy_setopt(curl, CURLOPT_URL, query_str);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
-			res = curl_easy_perform(curl);
-			jtable_query_exchange = json::parse(readBuffer2.c_str());
-			memset(&acdata, sizeof(struct AccountData), 0);
-			acdata.exchange_name = jtable_query_exchange[0]["exchange_name_en"].dump();
-			acdata.api_id = jtable_query_exchange[0]["api_id"].dump();
-			acdata.api_key = jtable_query_exchange[0]["api_secret"].dump();
-			acdata.exchange_name.erase(remove(acdata.exchange_name.begin(), acdata.exchange_name.end(), '\"'), acdata.exchange_name.end());
-			acdata.api_id.erase(remove(acdata.api_id.begin(), acdata.api_id.end(), '\"'), acdata.api_id.end());
-			acdata.api_key.erase(remove(acdata.api_key.begin(), acdata.api_key.end(), '\"'), acdata.api_key.end());
-			acdata.broker_id = brno;
-			m_mBranchAccount.insert(pair<string, struct AccountData>(acno, acdata));
-#ifdef DEBUG
-			printf("%s, %s, %s, %s\n==================\n", acdata.api_id.c_str(), acdata.api_key.c_str(), acdata.exchange_name.c_str(), acdata.broker_id.c_str());
-#endif
-		}
-		
-		int expires = (int)time(NULL);
-		char expire_str[20];
-		sprintf(expire_str, "%d", expires);
-		HmacEncodeSHA256(acdata.api_key.c_str(), acdata.api_key.length(), expire_str, strlen(expire_str), mac, mac_length);
-		
-		for(int i = 0; i < mac_length; i++) {
-			sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
-		}
-		if(mac)
-			free(mac);
-
-		memcpy(logon_reply.access_token, macoutput, 64);
-
-		sprintf(query_str, "http://192.168.101.209:19487/mysql?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27", macoutput, pID);
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
 		res = curl_easy_perform(curl);
+		jtable_query_exchange = json::parse(readBuffer2.c_str());
+		memset(&acdata, sizeof(struct AccountData), 0);
+		acdata.exchange_name = jtable_query_exchange[0]["exchange_name_en"].dump();
+		acdata.api_id = jtable_query_exchange[0]["api_id"].dump();
+		acdata.api_key = jtable_query_exchange[0]["api_secret"].dump();
+		acdata.exchange_name.erase(remove(acdata.exchange_name.begin(), acdata.exchange_name.end(), '\"'), acdata.exchange_name.end());
+		acdata.api_id.erase(remove(acdata.api_id.begin(), acdata.api_id.end(), '\"'), acdata.api_id.end());
+		acdata.api_key.erase(remove(acdata.api_key.begin(), acdata.api_key.end(), '\"'), acdata.api_key.end());
+		acdata.broker_id = brno;
+		m_mBranchAccount.insert(pair<string, struct AccountData>(acno, acdata));
+#ifdef DEBUG
+		printf("%s, %s, %s, %s\n==================\n", acdata.api_id.c_str(), acdata.api_key.c_str(), acdata.exchange_name.c_str(), acdata.broker_id.c_str());
+#endif
+	}
+	
+	int expires = (int)time(NULL);
+	char expire_str[20];
+	sprintf(expire_str, "%d", expires);
+	HmacEncodeSHA256(acdata.api_key.c_str(), acdata.api_key.length(), expire_str, strlen(expire_str), mac, mac_length);
+	
+	for(int i = 0; i < mac_length; i++)
+		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
+
+	if(mac)
+		free(mac);
+
+	memcpy(logon_reply.access_token, macoutput, 64);
+
+	sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27",
+		macoutput, p_username);
+	curl_easy_setopt(curl, CURLOPT_URL, query_str);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
+	res = curl_easy_perform(curl);
 
 #ifdef DEBUG
-		printf("macoutput = %s\n\n\n", macoutput);
-		printf("============================\nquery_str:%s\n============================\n", query_str);
+	printf("macoutput = %s\n\n\n", macoutput);
+	printf("============================\nquery_str:%s\n============================\n", query_str);
 #endif
-
-		memcpy(logon_reply.status_code, "OK", 2);//to do
-		memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
-		memcpy(logon_reply.error_code, "00", 2);
-		sprintf(logon_reply.error_message, "login success");
-		curl_easy_cleanup(curl);
-		return true;
-	}
-
-	memcpy(logon_reply.status_code, "NG", 2);//to do
+	memcpy(logon_reply.status_code, "OK", 2);//to do
 	memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
-	memcpy(logon_reply.error_code, "01", 2);
-	sprintf(logon_reply.error_message, "cannot accesss authentication server");
-	return false;
+	memcpy(logon_reply.error_code, "00", 2);
+	sprintf(logon_reply.error_message, "login success");
+	curl_easy_cleanup(curl);
+	return true;
+
 
 }
 

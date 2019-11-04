@@ -466,29 +466,27 @@ void CCVServer::Bitmex_Update(json* jtable)
 			else
 			{
 				memcpy(m_trade_reply.status_code, "1000", 4);
-				sprintf(m_trade_reply.reply_msg, "trade reply - [%s]", (*jtable)["data"][0]["text"].dump().c_str());
+				memcpy(m_trade_reply.price,		(*jtable)["data"][0]["price"].dump().c_str(),		(*jtable)["data"][0]["price"].dump().length());
+				memcpy(m_trade_reply.avgPx,		(*jtable)["data"][0]["avgPx"].dump().c_str(),		(*jtable)["data"][0]["avgPx"].dump().length());
+				memcpy(m_trade_reply.orderQty,		(*jtable)["data"][0]["orderQty"].dump().c_str(),	(*jtable)["data"][0]["orderQty"].dump().length());
+				memcpy(m_trade_reply.lastQty,		(*jtable)["data"][0]["lastQty"].dump().c_str(),		(*jtable)["data"][0]["lastQty"].dump().length());
+				memcpy(m_trade_reply.cumQty,		(*jtable)["data"][0]["cumQty"].dump().c_str(),		(*jtable)["data"][0]["cumQty"].dump().length());
+				memcpy(m_trade_reply.key_id,		(*jtable)["data"][0]["clOrdID"].dump().c_str()+1,	(*jtable)["data"][0]["clOrdID"].dump().length()-2);
+				memcpy(m_trade_reply.transactTime,	(*jtable)["data"][0]["transactTime"].dump().c_str()+1,	(*jtable)["data"][0]["transactTime"].dump().length()-2);
+				sprintf(m_trade_reply.reply_msg, "trade reply - [%s, (%s/%s)]", (*jtable)["data"][0]["text"].dump().c_str(), m_trade_reply.cumQty, m_trade_reply.orderQty);
+				printf("===============================\n");
+				printf("KEYID: %.13s\n", m_trade_reply.key_id);
+				printf("BOOKNO: %.36s\n", m_trade_reply.bookno);
+				printf("PRICE: %s\n", m_trade_reply.price);
+				printf("MATCHPRICE: %s\n", m_trade_reply.avgPx);
+				printf("ORDERQTY: %s\n", m_trade_reply.orderQty);
+				printf("MATCHQTY: %s\n", m_trade_reply.lastQty);
+				printf("CUMQTY: %s\n", m_trade_reply.cumQty);
+				printf("TIME: %s\n", m_trade_reply.transactTime);
+				printf("===============================\n");
+				CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
+				pQueueDAO->SendData((char*)&m_trade_reply, sizeof(m_trade_reply));
 			}
-			memcpy(m_trade_reply.price,		(*jtable)["data"][0]["price"].dump().c_str(),		(*jtable)["data"][0]["price"].dump().length());
-			memcpy(m_trade_reply.avgPx,		(*jtable)["data"][0]["avgPx"].dump().c_str(),		(*jtable)["data"][0]["avgPx"].dump().length());
-			memcpy(m_trade_reply.orderQty,		(*jtable)["data"][0]["orderQty"].dump().c_str(),	(*jtable)["data"][0]["orderQty"].dump().length());
-			memcpy(m_trade_reply.lastQty,		(*jtable)["data"][0]["lastQty"].dump().c_str(),		(*jtable)["data"][0]["lastQty"].dump().length());
-			memcpy(m_trade_reply.cumQty,		(*jtable)["data"][0]["cumQty"].dump().c_str(),		(*jtable)["data"][0]["cumQty"].dump().length());
-			memcpy(m_trade_reply.key_id,		(*jtable)["data"][0]["clOrdID"].dump().c_str()+1,	(*jtable)["data"][0]["clOrdID"].dump().length()-2);
-			memcpy(m_trade_reply.transactTime,	(*jtable)["data"][0]["transactTime"].dump().c_str()+1,	(*jtable)["data"][0]["transactTime"].dump().length()-2);
-			printf("===============================\n");
-			printf("KEYID: %.13s\n", m_trade_reply.key_id);
-			printf("BOOKNO: %.36s\n", m_trade_reply.bookno);
-			printf("PRICE: %s\n", m_trade_reply.price);
-			printf("MATCHPRICE: %s\n", m_trade_reply.avgPx);
-			printf("ORDERQTY: %s\n", m_trade_reply.orderQty);
-			printf("MATCHQTY: %s\n", m_trade_reply.lastQty);
-			printf("CUMQTY: %s\n", m_trade_reply.cumQty);
-			printf("TIME: %s\n", m_trade_reply.transactTime);
-			printf("===============================\n");
-			CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-			printf("Send Queue\n");
-			pQueueDAO->SendData((char*)&m_trade_reply, sizeof(m_trade_reply));
-			printf("Send Queue return\n");
 		}
 	}
 }

@@ -83,9 +83,10 @@ class CCVClient: public CCVThread
 		char m_username[20];
 	protected:
 		void* Run();
-		bool LogonAuth(char* pID, char* pPasswd, struct CV_StructLogonReply &logon_reply);
+		bool LogonAuth(char* p_username, char* p_password, struct CV_StructLogonReply &logon_reply);
 		void ReplyAccountContents();
 		void ReplyAccountNum();
+		void LoadRiskControl(char* p_username);
 
 	public:
 		CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService);

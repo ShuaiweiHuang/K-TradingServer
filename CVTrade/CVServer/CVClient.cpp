@@ -251,6 +251,7 @@ void* CCVClient::Run()
 					{
 						SetStatus(csOnline);
 						ReplyAccountNum();
+						LoadRiskControl(logon_type.logon_id);
 						m_pHeartbeat->Start();
 					}
 					else//logon failed
@@ -565,11 +566,76 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 		return size * nmemb;
 }
 
+void CCVClient::LoadRiskControl(char* p_username)
+{
+	json jtable_query_limit;
+	CURLcode res;
+	string limit_reply, cum_limit_reply, order_limit_str, strategy_str, accno_str, exchange_str;
+	struct AccountData acdata;
+	CURL *curl = curl_easy_init();
+	unsigned char * mac = NULL;
+	unsigned int mac_length = 0;
+	char query_str[512];
+
+	if(!curl)
+	{
+		FprintfStderrLog("CURL_INIT_FAIL", 0, (unsigned char*)p_username, strlen(p_username));
+		return;
+	}
+
+	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username);
+
+#ifdef DEBUG
+	printf("============================\nquery_str:%s\n============================\n", query_str);
+#endif
+	curl_easy_setopt(curl, CURLOPT_URL, query_str);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &limit_reply);
+
+	res = curl_easy_perform(curl);
+	try {
+		jtable_query_limit = json::parse(limit_reply.c_str());
+
+	} catch(...) {
+		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)limit_reply.c_str(), limit_reply.length());
+	}
+ 
+	if(jtable_query_limit.size() == 0)
+	{
+		return;
+	}
+
+	struct RiskctlData rcdata;
+	memset(&rcdata, sizeof(struct RiskctlData), 0);
+
+	for(int i=0 ; i<jtable_query_limit.size() ; i++)
+	{
+		order_limit_str = jtable_query_limit[i]["order_limit"].dump();
+		strategy_str = jtable_query_limit[i]["strategy"].dump();
+		strategy_str.erase(remove(strategy_str.begin(), strategy_str.end(), '\"'), strategy_str.end());
+		accno_str = jtable_query_limit[i]["accounting_no"].dump();
+		accno_str.erase(remove(accno_str.begin(), accno_str.end(), '\"'), accno_str.end());
+		exchange_str = jtable_query_limit[i]["exchange"].dump();
+		exchange_str.erase(remove(exchange_str.begin(), exchange_str.end(), '\"'), exchange_str.end());
+		rcdata.bitmex_limit = atoi(order_limit_str.c_str());
+		m_mRiskControl.insert(pair<string, struct RiskctlData>((accno_str+strategy_str), rcdata));
+
+		printf("[%s] %s:%s - %s\n", exchange_str.c_str(), accno_str.c_str(), strategy_str.c_str(), order_limit_str.c_str());
+	}
+
+	map<string, struct RiskctlData>::iterator iter;
+	for(iter = m_mRiskControl.begin(); iter != m_mRiskControl.end() ; iter++)
+		printf("[%s] %s - %d\n", exchange_str.c_str(), iter->first.c_str(), iter->second.bitmex_limit);
+
+
+	curl_easy_cleanup(curl);
+}
+
 void CCVClient::ReplyAccountContents()
 {
-	char AcclistReplyBuf[1024];
+	char AcclistReplyBuf[MAXDATA];
 	map<string, struct AccountData>::iterator iter;
-	memset(AcclistReplyBuf, 0, 1024);
+	memset(AcclistReplyBuf, 0, MAXDATA);
 	AcclistReplyBuf[0] = ESCAPE;
 	AcclistReplyBuf[1] = ACCLISTREP;
 	int i = 0, len;
@@ -645,7 +711,7 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 	json jtable_query_account;
 	json jtable_query_exchange;
 	CURLcode res;
-	string readBuffer1, readBuffer2, acno, exno, brno;
+	string login_query_reply, account_query_reply, acno, exno, brno;
 	struct AccountData acdata;
 	CURL *curl = curl_easy_init();
 	unsigned char * mac = NULL;
@@ -653,7 +719,7 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 	char macoutput[256];
 	char query_str[512];
 
-	if(curl == NULL)
+	if(!curl)
 	{
 		FprintfStderrLog("CURL_INIT_FAIL", 0, (unsigned char*)p_username, strlen(p_username));
 		memcpy(logon_reply.status_code, "NG", 2);
@@ -663,16 +729,16 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		return false;
 	}
 
-	sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
+	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
 
 #ifdef DEBUG
 	printf("============================\nquery_str:%s\n============================\n", query_str);
 #endif
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer1);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &login_query_reply);
 	res = curl_easy_perform(curl);
-	jtable_query_account = json::parse(readBuffer1.c_str());
+	jtable_query_account = json::parse(login_query_reply.c_str());
 
 	if(jtable_query_account.size() == 0)
 	{
@@ -684,11 +750,11 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 	}
 
 #ifdef DEBUG
-		printf("%s\n", readBuffer1.c_str());
+		printf("%s\n", login_query_reply.c_str());
 #endif
 	for(int i=0 ; i<jtable_query_account.size() ; i++)
 	{
-		readBuffer2 = "";
+		account_query_reply = "";
 		acno = jtable_query_account[i]["accounting_no"].dump();
 		exno = jtable_query_account[i]["exchange_no"].dump();
 		brno = jtable_query_account[i]["broker_no"].dump();
@@ -696,15 +762,15 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		exno.erase(remove(exno.begin(), exno.end(), '\"'), exno.end());
 		brno.erase(remove(brno.begin(), brno.end(), '\"'), brno.end());
 
-		sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
+		sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 #ifdef DEBUG
 		printf("============================\nquery_str:%s\n============================\n", query_str);
 #endif
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &account_query_reply);
 		res = curl_easy_perform(curl);
-		jtable_query_exchange = json::parse(readBuffer2.c_str());
+		jtable_query_exchange = json::parse(account_query_reply.c_str());
 		memset(&acdata, sizeof(struct AccountData), 0);
 		acdata.exchange_name = jtable_query_exchange[0]["exchange_name_en"].dump();
 		acdata.api_id = jtable_query_exchange[0]["api_id"].dump();
@@ -732,11 +798,11 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 
 	memcpy(logon_reply.access_token, macoutput, 64);
 
-	sprintf(query_str, "http://tm1.cryptovix.com.tw:19487/mysql?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27",
+	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27",
 		macoutput, p_username);
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer2);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &account_query_reply);
 	res = curl_easy_perform(curl);
 
 #ifdef DEBUG

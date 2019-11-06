@@ -35,6 +35,8 @@
 #define LG_ERROR	-1114
 #define AC_ERROR	-1115
 #define KI_ERROR	-1116
+#define RC_LINIT_ERROR	-2000
+#define ERROR_OTHER	-9999
 
 #define HEARTBEATVAL 	60
 #define SCALE_TPYE_1	10000

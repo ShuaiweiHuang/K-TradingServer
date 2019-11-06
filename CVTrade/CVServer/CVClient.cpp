@@ -23,8 +23,8 @@
 using json = nlohmann::json;
 using namespace std;
 
-typedef long (*FillTandemOrder)(string& strService, char* pUsername, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
-extern long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &cv_order, union CV_TS_ORDER &cv_ts_order);
+typedef long (*FillTandemOrder)(string& strService, char*, char*, map<string, struct AccountData>&, map<string, struct RiskctlData>&, union CV_ORDER&, union CV_TS_ORDER&);
+extern long FillTandemBitcoinOrderFormat(string&, char*, char*, map<string, struct AccountData>&, map<string, struct RiskctlData>&, union CV_ORDER &, union CV_TS_ORDER &);
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
 int CCVClient::HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length)
@@ -375,13 +375,13 @@ void* CCVClient::Run()
 					long lOrderNumber = 0;
 
 					lOrderNumber = fpFillTandemOrder(m_strService, m_username, m_ClientAddrInfo.caIP,
-									m_mBranchAccount, cv_order, cv_ts_order);
+									m_mBranchAccount, m_mRiskControl, cv_order, cv_ts_order);
 #ifdef DEBUG
 					printf("lOrderNumber = %ld\n", lOrderNumber);
 #endif
 					if(lOrderNumber < 0)//error
 					{
-						int errorcode = ((lOrderNumber >= KI_ERROR) && (lOrderNumber <= TT_ERROR)) ? (-lOrderNumber) : (-KI_ERROR);
+						int errorcode = ((lOrderNumber >= ERROR_OTHER) && (lOrderNumber <= TT_ERROR)) ? (-lOrderNumber) : (-KI_ERROR);
 						struct CV_StructOrderReply replymsg;
 
 						memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
@@ -570,7 +570,7 @@ void CCVClient::LoadRiskControl(char* p_username)
 {
 	json jtable_query_limit;
 	CURLcode res;
-	string limit_reply, cum_limit_reply, order_limit_str, strategy_str, accno_str, exchange_str;
+	string riskctl_query_reply, order_limit_str, strategy_str, accno_str, exchange_str;
 	struct AccountData acdata;
 	CURL *curl = curl_easy_init();
 	unsigned char * mac = NULL;
@@ -590,14 +590,14 @@ void CCVClient::LoadRiskControl(char* p_username)
 #endif
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &limit_reply);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &riskctl_query_reply);
 
 	res = curl_easy_perform(curl);
 	try {
-		jtable_query_limit = json::parse(limit_reply.c_str());
+		jtable_query_limit = json::parse(riskctl_query_reply.c_str());
 
 	} catch(...) {
-		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)limit_reply.c_str(), limit_reply.length());
+		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)riskctl_query_reply.c_str(), riskctl_query_reply.length());
 	}
  
 	if(jtable_query_limit.size() == 0)
@@ -738,7 +738,13 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &login_query_reply);
 	res = curl_easy_perform(curl);
-	jtable_query_account = json::parse(login_query_reply.c_str());
+
+	try {
+		jtable_query_account = json::parse(login_query_reply.c_str());
+
+	} catch(...) {
+		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)login_query_reply.c_str(), login_query_reply.length());
+	}
 
 	if(jtable_query_account.size() == 0)
 	{
@@ -770,7 +776,13 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &account_query_reply);
 		res = curl_easy_perform(curl);
+
+	try {
 		jtable_query_exchange = json::parse(account_query_reply.c_str());
+
+	} catch(...) {
+		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)account_query_reply.c_str(), account_query_reply.length());
+	}
 		memset(&acdata, sizeof(struct AccountData), 0);
 		acdata.exchange_name = jtable_query_exchange[0]["exchange_name_en"].dump();
 		acdata.api_id = jtable_query_exchange[0]["api_id"].dump();

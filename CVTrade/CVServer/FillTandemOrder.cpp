@@ -11,6 +11,7 @@
 #include "CVClients.h"
 
 using namespace std;
+extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
 bool IsNum(string strData, int nLength)
 {
@@ -31,7 +32,13 @@ bool IsNum(string strData, int nLength)
 		return true;
 }
 
-long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP, map<string, struct AccountData>& mBranchAccount, union CV_ORDER &ucv, union CV_TS_ORDER &ucvts)
+long FillTandemBitcoinOrderFormat(string& strService,
+				char* pUsername,
+				char* pIP,
+				map<string, struct AccountData>& mBranchAccount,
+				map<string, struct RiskctlData>& m_mRiskControl,
+				union CV_ORDER &ucv,
+				union CV_TS_ORDER &ucvts)
 {
 	char caQty[10];
 	char caOrderPrice[10];
@@ -246,6 +253,17 @@ long FillTandemBitcoinOrderFormat(string& strService, char* pUsername, char* pIP
 	if(!IsNum(strQty, sizeof(ucv.cv_order.order_qty)))
 		return QT_ERROR;
 	memcpy(ucvts.cv_ts_order.order_qty, ucv.cv_order.order_qty, 9);
+//Risk control check
+	string strRiskKey(ucv.cv_order.sub_acno_id);
+	printf("strRiskKey = %s\n", strRiskKey.c_str());
+
+        map<string, struct RiskctlData>::iterator iter;
+        iter = m_mRiskControl.find(strRiskKey);
+
+	int order_qty = atoi(caQty);
+	printf("order_qty = %d, order_limit = %d\n", order_qty, iter->second.bitmex_limit);
+	if(order_qty > iter->second.bitmex_limit)
+		return RC_LINIT_ERROR;
 
 //Order Kind
 	switch(ucv.cv_order.order_kind[0])

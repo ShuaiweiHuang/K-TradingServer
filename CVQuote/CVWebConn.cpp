@@ -247,10 +247,13 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 #endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
+	static char epochmsg[20];
+
 	string str = msg->get_payload();
 	string time_str, symbol_str, size_str;
 	json jtable = json::parse(str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
+	tm tm_struct;
 
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
@@ -262,10 +265,12 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
+		static int tick_count=0;
+
 		memset(netmsg, 0, BUFFERSIZE);
 		memset(timemsg, 0, 8);
+		memset(epochmsg, 0, 20);
 
-		static int tick_count=0;
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
 		size_str   = "0";
@@ -273,9 +278,14 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 		if(jtable["data"][i]["lastPrice"].dump() == "null")
 			continue;
 
+		sprintf(epochmsg, "%.10s %.2s:%.2s:%.2s", time_str.c_str(), time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17);
+		strptime(epochmsg, "%Y-%m-%d %H:%M:%S", &tm_struct);
+		tm_struct.tm_isdst = 1;
+		size_t epoch = std::mktime(&tm_struct);
+		sprintf(epochmsg, "%d.%.3s", epoch, time_str.c_str()+20);
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BMEX,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
-			symbol_str.c_str(), tick_count, timemsg, jtable["data"][i]["lastPrice"].dump().c_str(), size_str.c_str(), tick_count, pClients->m_strEPIDNum.c_str(), tick_count);
+		sprintf(netmsg, "01_ID=%s.BMEX,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
+			symbol_str.c_str(), tick_count, timemsg, jtable["data"][i]["lastPrice"].dump().c_str(), size_str.c_str(), tick_count, pClients->m_strEPIDNum.c_str(), tick_count, epochmsg);
 		tick_count++;
 
 		int msglen = strlen(netmsg);
@@ -300,11 +310,13 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 #endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
+	static char epochmsg[20];
 
 	string str = msg->get_payload();
 	string time_str, symbol_str;
 	json jtable = json::parse(str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
+	tm tm_struct;
 
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
@@ -315,19 +327,27 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
+		static int tick_count=0;
+
 		memset(netmsg, 0, BUFFERSIZE);
 		memset(timemsg, 0, 8);
-		static int tick_count=0;
+		memset(epochmsg, 0, 20);
+
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
 
 		if(jtable["data"][i]["price"].dump() == "null")
 			continue;
 
+		sprintf(epochmsg, "%.10s %.2s:%.2s:%.2s", time_str.c_str(), time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17);
+		strptime(epochmsg, "%Y-%m-%d %H:%M:%S", &tm_struct);
+		tm_struct.tm_isdst = 1;
+		size_t epoch = std::mktime(&tm_struct);
+		sprintf(epochmsg, "%d.%.3s", epoch, time_str.c_str()+20);
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BITMEX_T,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
+		sprintf(netmsg, "01_ID=%s.BITMEX_T,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
 			symbol_str.c_str(), tick_count, timemsg, jtable["data"][i]["price"].dump().c_str(),
-		jtable["data"][i]["size"].dump().c_str(), tick_count, pClients->m_strEPIDNum.c_str(), tick_count);
+		jtable["data"][i]["size"].dump().c_str(), tick_count, pClients->m_strEPIDNum.c_str(), tick_count, epochmsg);
 		tick_count++;
 		int msglen = strlen(netmsg);
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
@@ -351,11 +371,13 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 #endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
+	static char epochmsg[20];
 
 	string str = msg->get_payload();
-	string time_str, symbol_str;
+	string time_str, symbol_str, epoch_str;
 	json jtable = json::parse(str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
+	tm tm_struct;
 
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
@@ -366,19 +388,26 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
+		static int tick_count = 0;
+
 		memset(netmsg, 0, BUFFERSIZE);
-		memset(timemsg, 0, 8);
-		static int tick_count=0;
+		memset(timemsg, 0, 9);
+		memset(epochmsg, 0, 20);
+
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
 
 		if(jtable["data"][i]["price"].dump() == "null")
 			continue;
-
+		sprintf(epochmsg, "%.10s %.2s:%.2s:%.2s", time_str.c_str(), time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17);
+		strptime(epochmsg, "%Y-%m-%d %H:%M:%S", &tm_struct);
+		tm_struct.tm_isdst = 1;
+		size_t epoch = std::mktime(&tm_struct);
+		sprintf(epochmsg, "%d.%.3s", epoch, time_str.c_str()+20);
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BMEX,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
+		sprintf(netmsg, "01_ID=%s.BMEX,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
 			symbol_str.c_str(), tick_count, timemsg, jtable["data"][i]["price"].dump().c_str(), jtable["data"][i]["size"].dump().c_str(),
-			tick_count, pClients->m_strEPIDNum.c_str(), tick_count);
+			tick_count, pClients->m_strEPIDNum.c_str(), tick_count, epochmsg);
 		tick_count++;
 		int msglen = strlen(netmsg);
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
@@ -401,6 +430,7 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 #endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
+
 	string str = msg->get_payload();
 	string price_str, size_str, time_str, symbol_str;
 	json jtable = json::parse(str.c_str());

@@ -582,9 +582,11 @@ void CCVClient::LoadRiskControl(char* p_username)
 		FprintfStderrLog("CURL_INIT_FAIL", 0, (unsigned char*)p_username, strlen(p_username));
 		return;
 	}
-
+#ifdef AWSCODE
+	sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix_test&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username);
+#else
 	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username);
-
+#endif
 #ifdef DEBUG
 	printf("============================\nquery_str:%s\n============================\n", query_str);
 #endif
@@ -729,7 +731,11 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		return false;
 	}
 
+#ifdef AWSCODE
+	sprintf(query_str, "http://127.0.0.1:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
+#else
 	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
+#endif
 
 #ifdef DEBUG
 	printf("============================\nquery_str:%s\n============================\n", query_str);
@@ -767,8 +773,12 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		acno.erase(remove(acno.begin(), acno.end(), '\"'), acno.end());
 		exno.erase(remove(exno.begin(), exno.end(), '\"'), exno.end());
 		brno.erase(remove(brno.begin(), brno.end(), '\"'), brno.end());
-
+#ifdef AWSCODE
+		sprintf(query_str, "http://127.0.0.1:2011/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
+#else
 		sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
+#endif
+
 #ifdef DEBUG
 		printf("============================\nquery_str:%s\n============================\n", query_str);
 #endif
@@ -809,9 +819,13 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		free(mac);
 
 	memcpy(logon_reply.access_token, macoutput, 64);
-
+#ifdef AWSCODE
+	sprintf(query_str, "http://127.0.0.1:2011/mysql?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27",
+		macoutput, p_username);
+#else
 	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27",
 		macoutput, p_username);
+#endif
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &account_query_reply);

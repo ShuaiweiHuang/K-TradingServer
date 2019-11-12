@@ -274,7 +274,7 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 			continue;
 
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BMEX,ECC1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC2=%d,",
+		sprintf(netmsg, "01_ID=%s.BMEX,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
 			symbol_str.c_str(), tick_count, timemsg, jtable["data"][i]["lastPrice"].dump().c_str(), size_str.c_str(), tick_count, pClients->m_strEPIDNum.c_str(), tick_count);
 		tick_count++;
 
@@ -325,7 +325,7 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 			continue;
 
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BITMEX_T,ECC1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC2=%d,",
+		sprintf(netmsg, "01_ID=%s.BITMEX_T,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
 			symbol_str.c_str(), tick_count, timemsg, jtable["data"][i]["price"].dump().c_str(),
 		jtable["data"][i]["size"].dump().c_str(), tick_count, pClients->m_strEPIDNum.c_str(), tick_count);
 		tick_count++;
@@ -376,7 +376,7 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 			continue;
 
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BMEX,ECC1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC2=%d,",
+		sprintf(netmsg, "01_ID=%s.BMEX,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
 			symbol_str.c_str(), tick_count, timemsg, jtable["data"][i]["price"].dump().c_str(), jtable["data"][i]["size"].dump().c_str(),
 			tick_count, pClients->m_strEPIDNum.c_str(), tick_count);
 		tick_count++;
@@ -430,7 +430,7 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
 	size_str = to_string(size_int);
 
-	sprintf(netmsg, "01_ID=%s.BINANCE,ECC1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC2=%d,",
+	sprintf(netmsg, "01_ID=%s.BINANCE,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
 		symbol_str.c_str(), tick_count_binance, time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance, pClients->m_strEPIDNum.c_str(), tick_count_binance);
 	tick_count_binance++;
 	int msglen = strlen(netmsg);
@@ -480,7 +480,7 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
 	size_str = to_string(size_int);
 
-	sprintf(netmsg, "01_ID=%s.BINANCE_F,ECC1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC2=%d,",
+	sprintf(netmsg, "01_ID=%s.BINANCE_F,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
 		symbol_str.c_str(), tick_count_binance_F, time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance_F, pClients->m_strEPIDNum.c_str(), tick_count_binance_F);
 	tick_count_binance_F++;
 	int msglen = strlen(netmsg);
@@ -539,7 +539,7 @@ void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, cl
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
 	size_str = to_string(size_int);
 
-	sprintf(netmsg, "01_ID=%s.BINANCE_FT,ECC1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC2=%d,",symbol_str.c_str(),
+	sprintf(netmsg, "01_ID=%s.BINANCE_FT,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",symbol_str.c_str(),
 		tick_count_binance_FT, time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance_FT, pClients->m_strEPIDNum.c_str(), tick_count_binance_FT);
 	tick_count_binance_FT++;
 	int msglen = strlen(netmsg);

@@ -29,7 +29,7 @@ void FillBitcoinReplyFormat(union CV_ORDER_REPLY &cv_order_reply, union CV_TS_OR
 	printf("FillBitcoinReplyFormat cumQty: %.10s\n", cv_ts_order_reply.cv_ts_reply.cumQty);
 	printf("FillBitcoinReplyFormat transactTime: %.24s\n", cv_ts_order_reply.cv_ts_reply.transactTime);
 	printf("sizeofstructCV_StructOrderReply: %d\n", sizeof(struct CV_StructOrderReply));
-	printf("FillBitcoinReplyFormat trade_type: %x\n", cv_order_reply.cv_reply.original.trade_type[0]);
+	printf("FillBitcoinReplyFormat trade_type: %c\n", cv_order_reply.cv_reply.original.trade_type[0]);
 	printf("\n===========================================================================\n");
 #endif
 	cv_order_reply.cv_reply.header_bit[0] = ESCAPE;

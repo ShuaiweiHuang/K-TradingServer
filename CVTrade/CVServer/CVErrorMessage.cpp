@@ -20,6 +20,7 @@ CCVErrorMessage::CCVErrorMessage()
 	string str1115 = "Account invalid";
 	string str1116 = "key ID error";
 	string str2000 = "risk control error(order quantity limit exceeded)";
+	string str2001 = "risk control error(order quantity side limit exceeded)";
 
 	m_mErrorMessage.insert(std::pair<int, string>(1100, str1100));
 	m_mErrorMessage.insert(std::pair<int, string>(1101, str1101));
@@ -39,6 +40,7 @@ CCVErrorMessage::CCVErrorMessage()
 	m_mErrorMessage.insert(std::pair<int, string>(1115, str1115));
 	m_mErrorMessage.insert(std::pair<int, string>(1116, str1116));
 	m_mErrorMessage.insert(std::pair<int, string>(2000, str2000));
+	m_mErrorMessage.insert(std::pair<int, string>(2001, str2001));
 }
 
 CCVErrorMessage::~CCVErrorMessage()

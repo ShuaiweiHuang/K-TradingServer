@@ -53,11 +53,8 @@ struct AccountData
 struct RiskctlData
 {
 	int bitmex_limit;
-	int bitmex_cum;
-	int bitmex_limit_cum;
-	float binance_limit;
-	float binance_cum;
-	float binance_limit_cum;
+	int bitmex_side_limit;
+	int bitmex_cum_limit;
 };
 
 class CCVClient: public CCVThread
@@ -76,7 +73,6 @@ class CCVClient: public CCVThread
 		TCVClientStauts m_ClientStatus;
 		map<long, struct CVOriginalOrder> m_mOriginalOrder;
 		map<string, struct AccountData> m_mBranchAccount;
-		map<string, struct RiskctlData> m_mRiskControl;
 		string m_strService;
 		CCVHeartbeat* m_pHeartbeat;
 		pthread_mutex_t m_MutexLockOnClientStatus;
@@ -98,7 +94,8 @@ class CCVClient: public CCVThread
 		void SetStatus(TCVClientStauts csStatus);
 		void GetOriginalOrder(long nOrderNumber, int nOrderSize, union CV_ORDER_REPLY &cv_order_reply);
 		int GetClientSocket();
+		int m_bitmex_side_limit_current;
 		int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);
-
+		map<string, struct RiskctlData> m_mRiskControl;
 };
 #endif

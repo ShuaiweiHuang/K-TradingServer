@@ -130,6 +130,26 @@ void* CCVQueueDAO::Run()
 
 					fpFillCVReply(cv_order_reply, tig_reply);
 					memcpy(uncaSendBuf , &cv_order_reply, sizeof(union CV_ORDER_REPLY));
+#if 1
+					//Risk control check
+					string strRiskKey(cv_order_reply.cv_reply.original.sub_acno_id);
+					printf("\n\nReply strRiskKey = %s\n\n", strRiskKey.c_str());
+
+					map<string, struct RiskctlData>::iterator iter;
+
+					iter = pClient->m_mRiskControl.find(strRiskKey);
+					char Qty[10];
+					memset(Qty, 0, 10);
+					memcpy(Qty, cv_order_reply.cv_reply.original.order_qty, 9);
+					int order_qty = atoi(Qty);
+
+					if(cv_order_reply.cv_reply.original.trade_type[0] == '1' && strcmp(cv_order_reply.cv_reply.error_code, "1000") == 0)//delete order success
+						pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? -(order_qty) : order_qty);
+
+					printf("Reply order_qty = %d, order_limit = %d, side_limit = %d, side_limit_current = %d\n",
+						order_qty, iter->second.bitmex_limit, iter->second.bitmex_side_limit, pClient->m_bitmex_side_limit_current);
+
+#endif
 
 					bool bSendData = false;
 

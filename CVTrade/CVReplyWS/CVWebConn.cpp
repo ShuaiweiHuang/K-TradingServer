@@ -382,9 +382,9 @@ void CCVServer::Bitmex_Update(json* jtable)
 		exchange_data[20] = ((*jtable)["data"][0]["text"].dump());
 		exchange_data[20] = exchange_data[20].substr(1, exchange_data[20].length()-2);
 #ifdef AWSCODE
-		sprintf(insert_str, "http://127.0.0.1:2011/mysql?db=cryptovix_test&query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[12].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str(), exchange_data[17].c_str(), exchange_data[18].c_str(), exchange_data[19].c_str(), exchange_data[20].c_str());
+		sprintf(insert_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[12].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str(), exchange_data[17].c_str(), exchange_data[18].c_str(), exchange_data[19].c_str(), exchange_data[20].c_str());
 #else
-		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[12].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str(), exchange_data[17].c_str(), exchange_data[18].c_str(), exchange_data[19].c_str(), exchange_data[20].c_str());
+		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[12].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str(), exchange_data[17].c_str(), exchange_data[18].c_str(), exchange_data[19].c_str(), exchange_data[20].c_str());
 #endif
 
 		if(exchange_data[4] != "null")
@@ -400,9 +400,9 @@ void CCVServer::Bitmex_Update(json* jtable)
 
 		sprintf(insert_str, "%s,insert_user=%%27reply.server%%27,update_user=%%27reply.server%%27", insert_str);
 #ifdef AWSCODE
-		sprintf(update_match_str, "http://127.0.0.1:2011/mysql?db=cryptovix_test&query=update%%20bitmex_match_history%%20set%%20match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
+		sprintf(update_match_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=update%%20bitmex_match_history%%20set%%20match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
 #else
-		sprintf(update_match_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix_test&query=update%%20bitmex_match_history%%20set%%20match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
+		sprintf(update_match_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20bitmex_match_history%%20set%%20match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
 #endif
 		if(exchange_data[4] != "null")
 			sprintf(update_match_str, "%s,match_price=%%27%s%%27", update_match_str, exchange_data[4].c_str());
@@ -450,11 +450,13 @@ void CCVServer::Bitmex_Update(json* jtable)
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 		curl_easy_perform(curl);
+#if 0
 		printf("=============update match:\n%s\n=============\n", update_match_str);
 		curl_easy_setopt(curl, CURLOPT_URL, update_match_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 		curl_easy_perform(curl);
+#endif
 		printf("=============update order:\n%s\n=============\n", update_order_str);
 		curl_easy_setopt(curl, CURLOPT_URL, update_order_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
@@ -486,6 +488,7 @@ void CCVServer::Bitmex_Update(json* jtable)
 				memcpy(m_trade_reply.key_id,		(*jtable)["data"][0]["clOrdID"].dump().c_str()+1,	(*jtable)["data"][0]["clOrdID"].dump().length()-2);
 				memcpy(m_trade_reply.transactTime,	(*jtable)["data"][0]["transactTime"].dump().c_str()+1,	(*jtable)["data"][0]["transactTime"].dump().length()-2);
 				sprintf(m_trade_reply.reply_msg, "trade reply - [%s, (%s/%s)]", (*jtable)["data"][0]["text"].dump().c_str(), m_trade_reply.cumQty, m_trade_reply.orderQty);
+				memcpy(m_trade_reply.symbol,		(*jtable)["data"][0]["symbol"].dump().c_str()+1,	(*jtable)["data"][0]["symbol"].dump().length()-2);
 				printf("===============================\n");
 				printf("KEYID: %.13s\n", m_trade_reply.key_id);
 				printf("BOOKNO: %.36s\n", m_trade_reply.bookno);
@@ -494,6 +497,7 @@ void CCVServer::Bitmex_Update(json* jtable)
 				printf("ORDERQTY: %s\n", m_trade_reply.orderQty);
 				printf("MATCHQTY: %s\n", m_trade_reply.lastQty);
 				printf("CUMQTY: %s\n", m_trade_reply.cumQty);
+				printf("SYMBOL: %s\n", m_trade_reply.symbol);
 				printf("TIME: %s\n", m_trade_reply.transactTime);
 				printf("===============================\n");
 				CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
@@ -519,7 +523,7 @@ void CCVServer::OnData_Order_Reply(client* c, websocketpp::connection_hdl con, c
 	if(str[0] == '{') {
 		json jtable = json::parse(str.c_str());
 
-		if(jtable["table"] != "margin") {
+		if(jtable["table"] != "margin" && jtable["table"] != "position") {
 			printf("===========================\n");
 			cout << setw(4) << jtable << endl;
 			printf("===========================\n");

@@ -32,6 +32,7 @@ using websocketpp::lib::bind;
 using namespace std;
 
 #define MAX_DATA_LENGTH 4096 
+#define SYMSIZE 10
 
 class CCVClient;
 
@@ -43,7 +44,6 @@ enum TCVServerStatus
 	ssBreakdown,
 	ssReconnecting
 };
-
 
 struct CV_StructTSOrderReply
 {
@@ -57,6 +57,7 @@ struct CV_StructTSOrderReply
         char cumQty[10];
         char transactTime[24];
         char reply_msg[129];
+        char symbol[10];
 };
 
 using namespace std;

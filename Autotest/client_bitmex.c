@@ -215,7 +215,7 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_dayoff, "N", 1);
 			memcpy(ts_order.order_date, "20190821", 8);
 			memcpy(ts_order.order_time, "17160301", 8);
-			memcpy(ts_order.order_buysell, "B", 1);
+			memcpy(ts_order.order_buysell, "S", 1);
 			memcpy(ts_order.order_cond, "0", 1);//0:ROD
 			memcpy(ts_order.order_mark, "1", 1);//0:Market 1:limit 2:protect 3:stop market 4:stop limit
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
@@ -224,7 +224,7 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_price, "090000000", 9);
 			memcpy(ts_order.touch_price, "096000000", 9);
 			memcpy(ts_order.qty_mark, "0", 1);
-			memcpy(ts_order.order_qty, "000000001", 9);
+			memcpy(ts_order.order_qty, "000000030", 9);
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
 			for(order_loop=0 ; order_loop<order_num && is_conn ; order_loop++)

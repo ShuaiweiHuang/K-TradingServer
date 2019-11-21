@@ -199,6 +199,8 @@ void* test_run(void *arg)
 			if(!is_conn)
 				break;
 
+			for(order_loop=0 ; order_loop<order_num && is_conn ; order_loop++)
+			{
 			memset(&ts_order, ' ', sizeof(ts_order));
 			ts_order.header_bit[0] = 0x1b;
 			ts_order.header_bit[1] = 0x40;
@@ -227,8 +229,6 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_qty, "000000030", 9);
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
-			for(order_loop=0 ; order_loop<order_num && is_conn ; order_loop++)
-			{
 				printf("send order %d: %.1s %.9s %s\n", order_loop, ts_order.order_buysell, ts_order.order_price, ts_order.order_mark=='0'?"MARKET":"Limit");
 				if (write(server, (&ts_order.header_bit[0]), 256) <= 0) {
 					perror("write to server error !");

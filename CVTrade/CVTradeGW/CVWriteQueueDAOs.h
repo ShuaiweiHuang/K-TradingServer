@@ -27,6 +27,7 @@ class CCVWriteQueueDAOs: public CCVThread
 
 		key_t m_kWriteQueueDAOStartKey;
 		key_t m_kWriteQueueDAOEndKey;
+		key_t m_kQueueDAOMonitorKey;
 
 		bool m_bAlarm;
 
@@ -43,9 +44,9 @@ class CCVWriteQueueDAOs: public CCVThread
 
 	public:
 		static CCVWriteQueueDAOs* GetInstance();
-		CCVWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
+		CCVWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey, key_t kQueueDAOMonitorKey);
 		virtual ~CCVWriteQueueDAOs();
-
+		CCVWriteQueueDAO* m_QueueDAOMonitor;
 		CCVWriteQueueDAO* GetAvailableDAO();
 		bool IsAllWriteQueueDAOBreakdown();
 		void ReConstructWriteQueueDAO();

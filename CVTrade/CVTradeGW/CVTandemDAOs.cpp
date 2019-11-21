@@ -39,7 +39,7 @@ void CCVTandemDAOs::AddAvailableDAO()
 {
 	pthread_mutex_lock(&m_MutexLockOnAddAvailableDAO);//lock
 	m_nToSetTandemDAOID += 1;
-	CCVTandemDAO *pNewDAO = new CCVTandemDAO(m_nToSetTandemDAOID, m_nNumberOfWriteQueueDAO, m_kWriteQueueDAOStartKey, m_kWriteQueueDAOEndKey);
+	CCVTandemDAO *pNewDAO = new CCVTandemDAO(m_nToSetTandemDAOID, m_nNumberOfWriteQueueDAO, m_kWriteQueueDAOStartKey, m_kWriteQueueDAOEndKey, m_kQueueDAOMonitorKey);
 
 	m_vTandemDAO.push_back(pNewDAO);
 
@@ -136,7 +136,7 @@ void CCVTandemDAOs::TriggerAddAvailableDAOEvent()
 }
 
 void CCVTandemDAOs::SetConfiguration(string strService, int nInitialConnection, int nMaximumConnection, int nNumberOfWriteQueueDAO,
-					key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey)
+					key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey, key_t kQueueDAOMonitorKey)
 {
 	m_strService = strService;
 	m_nDefaultNumberOfTandemDAO = nInitialConnection;
@@ -145,6 +145,7 @@ void CCVTandemDAOs::SetConfiguration(string strService, int nInitialConnection, 
 	m_nNumberOfWriteQueueDAO = nNumberOfWriteQueueDAO;
 	m_kWriteQueueDAOStartKey = kWriteQueueDAOStartKey;
 	m_kWriteQueueDAOEndKey = kWriteQueueDAOEndKey;
+	m_kQueueDAOMonitorKey = kQueueDAOMonitorKey;
 }
 
 void CCVTandemDAOs::StartUpDAOs()//todo

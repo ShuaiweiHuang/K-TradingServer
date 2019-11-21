@@ -24,7 +24,7 @@ using namespace std;
 
 void ReadTandemDAOConfigFile(string strConfigFileName, string& strService, int& nInitialConnection,
 							 int& nMaximumConnection, int& nNumberOfWriteQueueDAO, key_t& kWriteQueueDAOStartKey, 
-							 key_t& kWriteQueueDAOEndKey);
+							 key_t& kWriteQueueDAOEndKey, key_t& kQueueDAOMonitorKey);
 
 void ReadReadQueueDAOConfigFile(string strConfigFileName, string& strOTSID, int& nNumberOfReadQueueDAO,
 							    key_t& kReadQueueDAOStartKey, key_t& kReadQueueDAOEndKey, key_t& kTIGNumberSharedMemoryKey);
@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 	int nNumberOfReadQueueDAO;
 	key_t kReadQueueDAOStartKey;
 	key_t kReadQueueDAOEndKey;
+	key_t kQueueDAOMonitorKey;
 
 	struct sigaction action;
 	memset(&action, 0, sizeof(action));
@@ -57,13 +58,13 @@ int main(int argc, char *argv[])
 	setbuf(stdout, NULL);
 
 	ReadTandemDAOConfigFile("../ini/CVTrade.ini", strService, nInitialConnection, nMaximumConnection, nNumberOfWriteQueueDAO,
-							kWriteQueueDAOStartKey, kWriteQueueDAOEndKey);//todo check
+							kWriteQueueDAOStartKey, kWriteQueueDAOEndKey, kQueueDAOMonitorKey);//todo check
 
 	CCVTandemDAOs* pTandemDAOs = CCVTandemDAOs::GetInstance();
 
 	if(pTandemDAOs)
 	{
-		pTandemDAOs->SetConfiguration(strService, nInitialConnection, nMaximumConnection, nNumberOfWriteQueueDAO, kWriteQueueDAOStartKey, kWriteQueueDAOEndKey);
+		pTandemDAOs->SetConfiguration(strService, nInitialConnection, nMaximumConnection, nNumberOfWriteQueueDAO, kWriteQueueDAOStartKey, kWriteQueueDAOEndKey, kQueueDAOMonitorKey);
 		pTandemDAOs->StartUpDAOs();
 	}
 
@@ -94,9 +95,9 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-void ReadTandemDAOConfigFile(string strConfigFileName, string& strService, int& nInitialConnection,
-						     int& nMaximumConnection, int& nNumberOfWriteQueueDAO, key_t& kWriteQueueDAOStartKey,
-							 key_t& kWriteQueueDAOEndKey)
+void ReadTandemDAOConfigFile(	string strConfigFileName, string& strService, int& nInitialConnection,
+				int& nMaximumConnection, int& nNumberOfWriteQueueDAO, key_t& kWriteQueueDAOStartKey,
+				key_t& kWriteQueueDAOEndKey, key_t& kQueueDAOMonitorKey)
 {
 	GKeyFile *keyfile;
 	GKeyFileFlags flags;
@@ -110,10 +111,11 @@ void ReadTandemDAOConfigFile(string strConfigFileName, string& strService, int& 
 	nNumberOfWriteQueueDAO = g_key_file_get_integer(keyfile, "Tandem", "NumberOfWriteQueueDAO", NULL);
 	kWriteQueueDAOStartKey = g_key_file_get_integer(keyfile, "Tandem", "WriteQueueDAOStartKey", NULL);
 	kWriteQueueDAOEndKey = g_key_file_get_integer(keyfile, "Tandem", "WriteQueueDAOEndKey", NULL);
+	kQueueDAOMonitorKey = g_key_file_get_integer(keyfile, "Tandem", "QueueNodeMonitorKey", NULL);
 }
 
 void ReadReadQueueDAOConfigFile(string strConfigFileName, string& strOTSID, int& nNumberOfReadQueueDAO, 
-								key_t& kReadQueueDAOStartKey, key_t& kReadQueueDAOEndKey, key_t& kTIGNumberSharedMemoryKey)
+				key_t& kReadQueueDAOStartKey, key_t& kReadQueueDAOEndKey, key_t& kTIGNumberSharedMemoryKey)
 {
 	GKeyFile *keyfile;
 	GKeyFileFlags flags;

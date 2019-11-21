@@ -26,8 +26,11 @@ CCVQueueDAOs::~CCVQueueDAOs()
 void CCVQueueDAOs::AddDAO(key_t kSendKey,key_t kRecvKey)
 {
 
-	CCVQueueDAO* pNewDAO = new CCVQueueDAO(m_strService, kSendKey,kRecvKey);
-	m_vQueueDAO.push_back(pNewDAO);
+	CCVQueueDAO* pNewDAO = new CCVQueueDAO(m_strService, kSendKey, kRecvKey);
+	if(kSendKey == m_kQueueDAOMonitorKey)
+		m_QueueDAOMonitor = pNewDAO;
+	else
+		m_vQueueDAO.push_back(pNewDAO);
 }
 
 CCVQueueDAO* CCVQueueDAOs::GetDAO()
@@ -89,7 +92,7 @@ CCVQueueDAOs* CCVQueueDAOs::GetInstance()
 	return instance;
 }
 
-void CCVQueueDAOs::SetConfiguration(string strService, int nNumberOfQueueDAO, key_t kQueueDAOWriteStartKey, key_t kQueueDAOWriteEndKey, key_t kQueueDAOReadStartKey, key_t kQueueDAOReadEndKey)
+void CCVQueueDAOs::SetConfiguration(string strService, int nNumberOfQueueDAO, key_t kQueueDAOWriteStartKey, key_t kQueueDAOWriteEndKey, key_t kQueueDAOReadStartKey, key_t kQueueDAOReadEndKey, key_t kQueueDAOMonitorKey)
 {
 	m_strService = strService;
 	m_nNumberOfQueueDAO = nNumberOfQueueDAO;
@@ -97,6 +100,7 @@ void CCVQueueDAOs::SetConfiguration(string strService, int nNumberOfQueueDAO, ke
 	m_kQueueDAOWriteEndKey = kQueueDAOWriteEndKey;
 	m_kQueueDAOReadStartKey = kQueueDAOReadStartKey;
 	m_kQueueDAOReadEndKey = kQueueDAOReadEndKey;
+	m_kQueueDAOMonitorKey = kQueueDAOMonitorKey;
 
 	m_kRoundRobinIndexOfQueueDAO = kQueueDAOWriteStartKey;
 }
@@ -110,4 +114,5 @@ void CCVQueueDAOs::StartUpDAOs()
 	{
 		AddDAO(kWriteKey, kReadKey);
 	}
+	AddDAO(m_kQueueDAOMonitorKey, m_kQueueDAOMonitorKey+1);
 }

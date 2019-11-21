@@ -20,7 +20,7 @@ extern void FprintfStderrLog(const char* pCause, int nError, int nData, const ch
 
 void ReadConfigFile(string strConfigFileName, string strSection, struct TCVConfig &struConfig);
 void ReadClientConfigFile(string strConfigFileName, string& strListenPort, string& strHeartBeatTime, string &strEPIDNum);
-void ReadQueueDAOConfigFile(string strConfigFileName,string&, int&, key_t&, key_t&, key_t&, key_t&);
+void ReadQueueDAOConfigFile(string strConfigFileName,string&, int&, key_t&, key_t&, key_t&, key_t&, key_t&);
 #define DECLARE_CONFIG_DATA(CONFIG)\
 	struct TCVConfig stru##CONFIG;\
 	memset(&stru##CONFIG, 0, sizeof(struct TCVConfig));\
@@ -33,6 +33,7 @@ int main()
         key_t kQueueDAOWriteEndKey;
         key_t kQueueDAOReadStartKey;
         key_t kQueueDAOReadEndKey;
+        key_t kQueueDAOMonitorKey;
 	string strService;
 
 	InitialGlobal();
@@ -66,12 +67,12 @@ int main()
 	}
 	
 	//Queue init.
-        ReadQueueDAOConfigFile("../ini/CVQuote.ini", strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
+        ReadQueueDAOConfigFile("../ini/CVQuote.ini", strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey, kQueueDAOMonitorKey);
 	//printf("%d, %d, %d, %d\n", kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
         CCVQueueDAOs* pQueueDAOs = CCVQueueDAOs::GetInstance();
         assert(pQueueDAOs);
 
-        pQueueDAOs->SetConfiguration(strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
+        pQueueDAOs->SetConfiguration(strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey, kQueueDAOMonitorKey);
         pQueueDAOs->StartUpDAOs();
 
 	//Server connection service.
@@ -155,7 +156,7 @@ void ReadClientConfigFile(string strConfigFileName, string& strListenPort, strin
 	strHeartBeatTime = g_key_file_get_string(keyfile, "SERVER", "HeartBeatTime", NULL);
 }
 
-void ReadQueueDAOConfigFile(string strConfigFileName, string& strService, int& nNumberOfQueueDAO, key_t& kQueueDAOWriteStartKey, key_t& kQueueDAOWriteEndKey, key_t& kQueueDAOReadStartKey, key_t& kQueueDAOReadEndKey)
+void ReadQueueDAOConfigFile(string strConfigFileName, string& strService, int& nNumberOfQueueDAO, key_t& kQueueDAOWriteStartKey, key_t& kQueueDAOWriteEndKey, key_t& kQueueDAOReadStartKey, key_t& kQueueDAOReadEndKey, key_t& kQueueDAOMonitorKey)
 {
         GKeyFile *keyfile;
         GKeyFileFlags flags;
@@ -172,5 +173,6 @@ void ReadQueueDAOConfigFile(string strConfigFileName, string& strService, int& n
         kQueueDAOWriteEndKey = g_key_file_get_integer(keyfile, "QUEUE", "QueueNodeWriteEndKey", NULL);
         kQueueDAOReadStartKey = g_key_file_get_integer(keyfile, "QUEUE", "QueueNodeReadStartKey", NULL);
         kQueueDAOReadEndKey = g_key_file_get_integer(keyfile, "QUEUE", "QueueNodeReadEndKey", NULL);
+        kQueueDAOMonitorKey = g_key_file_get_integer(keyfile, "QUEUE", "QueueNodeMonitorKey", NULL);
 }
 

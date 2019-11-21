@@ -39,7 +39,7 @@ int CCVTandemDAO::HmacEncodeSHA256( const char * key, unsigned int key_length, c
 	return 0;
 }
 
-CCVTandemDAO::CCVTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey)
+CCVTandemDAO::CCVTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey, key_t kQueueDAOMonitorKey)
 {
 	m_pHeartbeat = NULL;
 	m_TandemDAOStatus = tsNone;
@@ -47,7 +47,7 @@ CCVTandemDAO::CCVTandemDAO(int nTandemDAOID, int nNumberOfWriteQueueDAO, key_t k
 	m_pWriteQueueDAOs = CCVWriteQueueDAOs::GetInstance();
 
 	if(m_pWriteQueueDAOs == NULL)
-		m_pWriteQueueDAOs = new CCVWriteQueueDAOs(nNumberOfWriteQueueDAO, kWriteQueueDAOStartKey, kWriteQueueDAOEndKey);
+		m_pWriteQueueDAOs = new CCVWriteQueueDAOs(nNumberOfWriteQueueDAO, kWriteQueueDAOStartKey, kWriteQueueDAOEndKey, kQueueDAOMonitorKey);
 
 	assert(m_pWriteQueueDAOs);
 

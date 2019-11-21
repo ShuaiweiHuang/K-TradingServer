@@ -26,7 +26,7 @@ class CCVTandemDAOs: public CCVThread
 		int m_nNumberOfWriteQueueDAO;
 		key_t m_kWriteQueueDAOStartKey;
 		key_t m_kWriteQueueDAOEndKey;
-
+		key_t m_kQueueDAOMonitorKey;
 		neosmart_event_t m_PEvent;
 
 		pthread_mutex_t m_MutexLockOnAddAvailableDAO;
@@ -48,7 +48,7 @@ class CCVTandemDAOs: public CCVThread
 		void TriggerAddAvailableDAOEvent();
 
 		void SetConfiguration(string strService, int nInitialConnection, int nMaximumConnection,
-							  int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey);
+					int nNumberOfWriteQueueDAO, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey, key_t kQueueDAOMonitorKey);
 		void StartUpDAOs();
 
 		string& GetService();

@@ -17,11 +17,13 @@ CCVWriteQueueDAOs* CCVWriteQueueDAOs::GetInstance()
 	return instance;
 }
 
-CCVWriteQueueDAOs::CCVWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey)
+CCVWriteQueueDAOs::CCVWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueDAOStartKey, key_t kWriteQueueDAOEndKey, key_t kQueueDAOMonitorKey)
 {
 	key_t kKey = kWriteQueueDAOStartKey;
-	for(int i=0;i<nWriteQueueDAOCount;i++)
+
+	for(int i=0 ; i<nWriteQueueDAOCount ; i++)
 	{
+		printf("Add message write queue at key %d\n", kKey);
 		CCVWriteQueueDAO* pNewDAO = new CCVWriteQueueDAO(i+1, kKey);
 		m_vWriteQueueDAO.push_back(pNewDAO);
 
@@ -37,11 +39,17 @@ CCVWriteQueueDAOs::CCVWriteQueueDAOs(int nWriteQueueDAOCount, key_t kWriteQueueD
 			FprintfStderrLog("WRITE_QDAOS_KEY_ERROR", kKey, NULL, 0);
 	}
 
+
 	m_nWriteQueueDAOCount = nWriteQueueDAOCount;
 	m_nWriteQueueDAORoundRobinIndex = 0;
 
 	m_kWriteQueueDAOStartKey = kWriteQueueDAOStartKey;
 	m_kWriteQueueDAOEndKey = kWriteQueueDAOEndKey;
+	m_kQueueDAOMonitorKey = kQueueDAOMonitorKey;
+
+	printf("Add monitor write queue at key %d\n", kQueueDAOMonitorKey);
+	CCVWriteQueueDAO* pNewDAO = new CCVWriteQueueDAO(nWriteQueueDAOCount+1, kQueueDAOMonitorKey);
+	m_QueueDAOMonitor = pNewDAO;	
 
 	m_bAlarm = false;
 

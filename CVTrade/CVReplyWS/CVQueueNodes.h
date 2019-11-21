@@ -23,7 +23,7 @@ class CCVQueueDAOs: public CCVThread
 		key_t m_kQueueDAOWriteEndKey;
 		key_t m_kQueueDAOReadStartKey;
 		key_t m_kQueueDAOReadEndKey;
-
+		key_t m_kQueueDAOMonitorKey;
 		key_t m_kRoundRobinIndexOfQueueDAO;
 
 		string m_strService;
@@ -40,9 +40,10 @@ class CCVQueueDAOs: public CCVThread
 		void RemoveDAO(key_t key);//Sendkey
 
 		CCVQueueDAO* GetDAO();//SendKey
+		CCVQueueDAO* m_QueueDAOMonitor;
 
 		void SetConfiguration(string strService, int nNumberOfQueueDAO, key_t kQueueDAOWriteStartKey, key_t kQueueDAOWriteEndKey,
-						      key_t kQueueDAOReadStartKey, key_t kQueueDAOReadEndKey);
+						      key_t kQueueDAOReadStartKey, key_t kQueueDAOReadEndKey, key_t kQueueDAOMonitorKey);
 		void StartUpDAOs();
 };
 #endif

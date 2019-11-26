@@ -17,6 +17,7 @@
 
 using namespace std;
 
+void mem_usage(double& vm_usage, double& resident_set);
 void ReadQueueDAOConfigFile(string strConfigFileName,string& strService, int& nNumberOfWriteQueueDAO,
 			key_t& kQueueDAOWriteStartKey, key_t& kQueueDAOWriteEndKey, key_t& kQueueDAOReadStartKey, key_t& kQueueDAOReadEndKey, key_t& kQueueDAOMonitorKey);
 
@@ -32,6 +33,8 @@ int main(int argc, char *argv[])
 	key_t kQueueDAOReadStartKey;
 	key_t kQueueDAOReadEndKey;
 	key_t kQueueDAOMonitorKey;
+	double loading[3];
+	double vm, rss;
 
 	setbuf(stdout, NULL);
 	signal(SIGPIPE,SIG_IGN);
@@ -57,6 +60,12 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		sleep(1);
+		mem_usage(vm, rss);
+		cout << "Virtual Memory: " << vm << "\nResident set size: " << rss << endl;
+		if(getloadavg(loading, 3) != -1) /*getloadavg is the function used to calculate and obtain the load average*/
+		{
+			printf("load average : %f , %f , %f\n", loading[0],loading[1],loading[2]);
+		}
 		pClients->CheckOnlineClientVector();
 		pClients->ClearOfflineClientVector();
 	}
@@ -98,4 +107,25 @@ void ReadClientConfigFile(string strConfigFileName, string& strService, string& 
 	strService = g_key_file_get_string(keyfile, "Client", "Service", NULL);
 	strListenPort = g_key_file_get_string(keyfile, "Client", "ListenPort", NULL);
 	kSerialNumberSharedMemoryKey = g_key_file_get_integer(keyfile, "Client", "SerialNumberSharedMemoryKey", NULL);
+}
+
+void mem_usage(double& vm_usage, double& resident_set)
+{
+	vm_usage = 0.0;
+	resident_set = 0.0;
+	ifstream stat_stream("/proc/self/stat",ios_base::in);
+	string pid, comm, state, ppid, pgrp, session, tty_nr;
+	string tpgid, flags, minflt, cminflt, majflt, cmajflt;
+	string utime, stime, cutime, cstime, priority, nice;
+	string O, itrealvalue, starttime;
+	unsigned long vsize;
+	long rss;
+	stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
+	>> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+	>> utime >> stime >> cutime >> cstime >> priority >> nice
+	>> O >> itrealvalue >> starttime >> vsize >> rss;
+	stat_stream.close();
+	long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024;
+	vm_usage = vsize / 1024.0;
+	resident_set = rss * page_size_kb;
 }

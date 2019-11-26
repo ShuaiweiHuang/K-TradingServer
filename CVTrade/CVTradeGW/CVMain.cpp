@@ -21,7 +21,7 @@ using namespace std;
 
 #define OTSIDLENTH 12
 
-
+void mem_usage(double& vm_usage, double& resident_set);
 void ReadTandemDAOConfigFile(string strConfigFileName, string& strService, int& nInitialConnection,
 							 int& nMaximumConnection, int& nNumberOfWriteQueueDAO, key_t& kWriteQueueDAOStartKey, 
 							 key_t& kWriteQueueDAOEndKey, key_t& kQueueDAOMonitorKey);
@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
 	key_t kReadQueueDAOStartKey;
 	key_t kReadQueueDAOEndKey;
 	key_t kQueueDAOMonitorKey;
+	double vm, rss;
 
 	struct sigaction action;
 	memset(&action, 0, sizeof(action));
@@ -84,10 +85,11 @@ int main(int argc, char *argv[])
 		pReadQueueDAOs->SetConfiguration(strService, strOTSID, nNumberOfReadQueueDAO, kReadQueueDAOStartKey, kReadQueueDAOEndKey, kTIGNumberSharedMemoryKey);
 		pReadQueueDAOs->StartUpDAOs();
 	}
-
 	while(!done)
 	{
 		sleep(1);
+                mem_usage(vm, rss);
+                cout << "Virtual Memory: " << vm << "\nResident set size: " << rss << endl;
 	}
 	delete(pTandemDAOs);
 	delete(pReadQueueDAOs);
@@ -133,3 +135,25 @@ void ReadReadQueueDAOConfigFile(string strConfigFileName, string& strOTSID, int&
 
 	kTIGNumberSharedMemoryKey = g_key_file_get_integer(keyfile, "Tandem", "TIGNumberSharedMemoryKey", NULL);
 }
+
+void mem_usage(double& vm_usage, double& resident_set)
+{
+        vm_usage = 0.0;
+        resident_set = 0.0;
+        ifstream stat_stream("/proc/self/stat",ios_base::in);
+        string pid, comm, state, ppid, pgrp, session, tty_nr;
+        string tpgid, flags, minflt, cminflt, majflt, cmajflt;
+        string utime, stime, cutime, cstime, priority, nice;
+        string O, itrealvalue, starttime;
+        unsigned long vsize;
+        long rss;
+        stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
+        >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+        >> utime >> stime >> cutime >> cstime >> priority >> nice
+        >> O >> itrealvalue >> starttime >> vsize >> rss;
+        stat_stream.close();
+        long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024;
+        vm_usage = vsize / 1024.0;
+        resident_set = rss * page_size_kb;
+}
+

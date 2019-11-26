@@ -60,12 +60,14 @@ int main(int argc, char *argv[])
 	while(1)
 	{
 		sleep(1);
+#ifdef MONITOR
 		mem_usage(vm, rss);
 		cout << "Virtual Memory: " << vm << "\nResident set size: " << rss << endl;
 		if(getloadavg(loading, 3) != -1) /*getloadavg is the function used to calculate and obtain the load average*/
 		{
 			printf("load average : %f , %f , %f\n", loading[0],loading[1],loading[2]);
 		}
+#endif
 		pClients->CheckOnlineClientVector();
 		pClients->ClearOfflineClientVector();
 	}

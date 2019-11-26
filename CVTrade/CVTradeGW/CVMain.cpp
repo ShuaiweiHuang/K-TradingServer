@@ -88,8 +88,10 @@ int main(int argc, char *argv[])
 	while(!done)
 	{
 		sleep(1);
+#ifdef MONITOR
                 mem_usage(vm, rss);
                 cout << "Virtual Memory: " << vm << "\nResident set size: " << rss << endl;
+#endif
 	}
 	delete(pTandemDAOs);
 	delete(pReadQueueDAOs);

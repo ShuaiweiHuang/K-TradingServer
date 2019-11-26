@@ -50,7 +50,7 @@ int main()
 	ReadClientConfigFile("../ini/CVReplyWS.ini", strListenPort, strHeartBeatTime, strEPIDNum);
 
 	int nService = 0;
-	printf("Quote program start\n");
+	printf("Reply program start\n");
 	ReadConfigFile("../ini/CVReplyWS.ini", "EXCHANGE", struTSConfig);
 
 	//Web connection service.

@@ -48,6 +48,7 @@ struct AccountData
 	string api_key;
 	string broker_id;
 	string exchange_name;
+	string trader_name;
 };
 
 struct RiskctlData

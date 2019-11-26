@@ -46,7 +46,7 @@ long FillTandemBitcoinOrderFormat(string& strService,
 
 	memcpy(ucvts.cv_ts_order.client_ip, pIP, IPLEN);
 	memcpy(ucvts.cv_ts_order.seq_id, ucv.cv_order.seq_id, 13); 
-	memcpy(ucvts.cv_ts_order.username, pUsername, 20); 
+//	memcpy(ucvts.cv_ts_order.username, pUsername, 20); 
 	memcpy(ucvts.cv_ts_order.exchange_id, ucv.cv_order.exchange_id, 10);
 
 
@@ -93,6 +93,7 @@ long FillTandemBitcoinOrderFormat(string& strService,
 		if(!memcmp(iter->first.c_str(), ucvts.cv_ts_order.sub_acno_id, iter->first.length()))
 		{
 			account_check = true;
+			memcpy(ucvts.cv_ts_order.username, iter->second.trader_name.c_str(), iter->second.trader_name.length());
 			memset(ucvts.cv_ts_order.apiKey_order, 0, sizeof(ucvts.cv_ts_order.apiKey_order));
 			memset(ucvts.cv_ts_order.apiSecret_order, 0, sizeof(ucvts.cv_ts_order.apiSecret_order));
 			memcpy(ucvts.cv_ts_order.apiKey_order, iter->second.api_id.c_str(), iter->second.api_id.length());

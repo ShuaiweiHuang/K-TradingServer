@@ -594,12 +594,12 @@ void CCVClient::LoadRiskControl(char* p_username)
 {
 	json jtable_query_limit;
 	CURLcode res;
-	string riskctl_query_reply, order_limit_str, side_order_limit_str, cum_order_limit_str, strategy_str, accno_str, exchange_str;
+	string riskctl_query_reply, order_limit_str, side_order_limit_str, cum_order_limit_str, strategy_str, accno_str;
 	struct AccountData acdata;
 	CURL *curl = curl_easy_init();
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
-	char query_str[512];
+	char query_str[1024];
 	m_bitmex_side_limit_current = 0;
 
 	if(!curl)
@@ -608,10 +608,13 @@ void CCVClient::LoadRiskControl(char* p_username)
 		return;
 	}
 #ifdef AWSCODE
-	sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit,acv_risk_control.side_order_limit,acv_risk_control.cum_order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader==%%27%s%%27%%20", p_username);
+	//sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit,acv_risk_control.side_order_limit,acv_risk_control.cum_order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader==%%27%s%%27%%20", p_username);
+	sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
 #else
-	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit,acv_risk_control.side_order_limit,acv_risk_control.cum_order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader=%%27%s%%27%%20", p_username);
+	//sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit,acv_risk_control.side_order_limit,acv_risk_control.cum_order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader=%%27%s%%27%%20", p_username);
+	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
 #endif
+	printf("============================\nquery_str:%s\n============================\n", query_str);
 #ifdef DEBUG
 	printf("============================\nquery_str:%s\n============================\n", query_str);
 #endif
@@ -642,11 +645,9 @@ void CCVClient::LoadRiskControl(char* p_username)
 		cum_order_limit_str = jtable_query_limit[i]["cum_order_limit"].dump();
 		strategy_str = jtable_query_limit[i]["strategy"].dump();
 		accno_str = jtable_query_limit[i]["accounting_no"].dump();
-		exchange_str = jtable_query_limit[i]["exchange"].dump();
 
 		strategy_str.erase(remove(strategy_str.begin(), strategy_str.end(), '\"'), strategy_str.end());
 		accno_str.erase(remove(accno_str.begin(), accno_str.end(), '\"'), accno_str.end());
-		exchange_str.erase(remove(exchange_str.begin(), exchange_str.end(), '\"'), exchange_str.end());
 
 		rcdata.bitmex_limit = atoi(order_limit_str.c_str());
 		rcdata.bitmex_side_limit = atoi(side_order_limit_str.c_str());
@@ -654,8 +655,7 @@ void CCVClient::LoadRiskControl(char* p_username)
 
 		m_mRiskControl.insert(pair<string, struct RiskctlData>((accno_str+strategy_str), rcdata));
 #ifdef DEBUG
-		printf("[%s] %s%s - %s,%s,%s\n",
-			exchange_str.c_str(),
+		printf("%s%s - %s,%s,%s\n",
 			accno_str.c_str(),
 			strategy_str.c_str(),
 			order_limit_str.c_str(),
@@ -668,8 +668,7 @@ void CCVClient::LoadRiskControl(char* p_username)
 
 	for(iter = m_mRiskControl.begin(); iter != m_mRiskControl.end() ; iter++)
 	{
-		printf("[%s] %s - %d,%d,%d\n",
-			exchange_str.c_str(),
+		printf("%s - %d,%d,%d\n",
 			iter->first.c_str(),
 			iter->second.bitmex_limit,
 			iter->second.bitmex_side_limit,
@@ -759,13 +758,13 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 	json jtable_query_account;
 	json jtable_query_exchange;
 	CURLcode res;
-	string login_query_reply, account_query_reply, acno, exno, brno;
+	string login_query_reply, account_query_reply, acno, exno, brno, trader;
 	struct AccountData acdata;
 	CURL *curl = curl_easy_init();
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
 	char macoutput[256];
-	char query_str[512];
+	char query_str[1024];
 
 	if(!curl)
 	{
@@ -778,11 +777,13 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 	}
 
 #ifdef AWSCODE
-	sprintf(query_str, "http://127.0.0.1:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
+	//sprintf(query_str, "http://127.0.0.1:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
 #else
-	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
+	//sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
+	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20accounting_no,broker_no,exchange_no,trader%%20from%%20(select%%20DISTINCT%%20accounting_no,broker_no,exchange_no,trader,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_accounting.trader)%%20as%%20sub_trader,(select%%201%%20from%%20acv_employee%%20where%%20acv_employee.account=%%27%s%%27%%20and%%20acv_employee.password=%%27%s%%27%%20)%%20as%%20login_check%%20from%%20view_accounting%%20)%%20as%%20t1%%20where%%20login_check=1%%20and%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username, p_password, p_username);
 #endif
 
+	printf("============================\nquery_str:%s\n============================\n", query_str);
 #ifdef DEBUG
 	printf("============================\nquery_str:%s\n============================\n", query_str);
 #endif
@@ -807,6 +808,7 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		return false;
 	}
 
+		printf("%s\n", login_query_reply.c_str());
 #ifdef DEBUG
 		printf("%s\n", login_query_reply.c_str());
 #endif
@@ -816,9 +818,12 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		acno = jtable_query_account[i]["accounting_no"].dump();
 		exno = jtable_query_account[i]["exchange_no"].dump();
 		brno = jtable_query_account[i]["broker_no"].dump();
+		trader = jtable_query_account[i]["trader"].dump();
+printf("\ntrader: %s\n", trader.c_str());
 		acno.erase(remove(acno.begin(), acno.end(), '\"'), acno.end());
 		exno.erase(remove(exno.begin(), exno.end(), '\"'), exno.end());
 		brno.erase(remove(brno.begin(), brno.end(), '\"'), brno.end());
+		trader.erase(remove(trader.begin(), trader.end(), '\"'), trader.end());
 #ifdef AWSCODE
 		sprintf(query_str, "http://127.0.0.1:2011/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 #else
@@ -847,6 +852,8 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		acdata.api_id.erase(remove(acdata.api_id.begin(), acdata.api_id.end(), '\"'), acdata.api_id.end());
 		acdata.api_key.erase(remove(acdata.api_key.begin(), acdata.api_key.end(), '\"'), acdata.api_key.end());
 		acdata.broker_id = brno;
+		acdata.trader_name = trader;
+
 		m_mBranchAccount.insert(pair<string, struct AccountData>(acno, acdata));
 #ifdef DEBUG
 		printf("%s, %s, %s, %s\n==================\n", acdata.api_id.c_str(), acdata.api_key.c_str(), acdata.exchange_name.c_str(), acdata.broker_id.c_str());

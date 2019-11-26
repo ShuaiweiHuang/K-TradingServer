@@ -47,17 +47,19 @@ enum TCVServerStatus
 
 struct CV_StructTSOrderReply
 {
-        char status_code[4];
-        char key_id[13];
-        char bookno[36];
-        char price[10];
-        char avgPx[10];
-        char orderQty[10];
-        char lastQty[10];
-        char cumQty[10];
-        char transactTime[24];
-        char reply_msg[129];
-        char symbol[10];
+	char status_code[4];
+	char key_id[13];
+	char bookno[36];
+	char price[10];
+	char avgPx[10];
+	char orderQty[10];
+	char lastQty[10];
+	char cumQty[10];
+	char transactTime[24];
+	char reply_msg[129];
+	char symbol[10];
+	char buysell[1];
+	char exchange_name[10];
 };
 
 using namespace std;

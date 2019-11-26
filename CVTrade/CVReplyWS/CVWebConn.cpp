@@ -481,7 +481,11 @@ void CCVServer::Bitmex_Update(json* jtable)
 			{
 				memcpy(m_trade_reply.status_code, "1000", 4);
 				memcpy(m_trade_reply.price,		(*jtable)["data"][0]["price"].dump().c_str(),		(*jtable)["data"][0]["price"].dump().length());
-				memcpy(m_trade_reply.avgPx,		(*jtable)["data"][0]["avgPx"].dump().c_str(),		(*jtable)["data"][0]["avgPx"].dump().length());
+
+				if((*jtable)["data"][0]["avgPx"].dump() == "null")
+					memcpy(m_trade_reply.avgPx,		(*jtable)["data"][0]["stopPx"].dump().c_str(),		(*jtable)["data"][0]["stopPx"].dump().length());
+				else
+					memcpy(m_trade_reply.avgPx,		(*jtable)["data"][0]["avgPx"].dump().c_str(),		(*jtable)["data"][0]["avgPx"].dump().length());
 				memcpy(m_trade_reply.orderQty,		(*jtable)["data"][0]["orderQty"].dump().c_str(),	(*jtable)["data"][0]["orderQty"].dump().length());
 				memcpy(m_trade_reply.lastQty,		(*jtable)["data"][0]["lastQty"].dump().c_str(),		(*jtable)["data"][0]["lastQty"].dump().length());
 				memcpy(m_trade_reply.cumQty,		(*jtable)["data"][0]["cumQty"].dump().c_str(),		(*jtable)["data"][0]["cumQty"].dump().length());
@@ -489,6 +493,8 @@ void CCVServer::Bitmex_Update(json* jtable)
 				memcpy(m_trade_reply.transactTime,	(*jtable)["data"][0]["transactTime"].dump().c_str()+1,	(*jtable)["data"][0]["transactTime"].dump().length()-2);
 				sprintf(m_trade_reply.reply_msg, "trade reply - [%s, (%s/%s)]", (*jtable)["data"][0]["text"].dump().c_str(), m_trade_reply.cumQty, m_trade_reply.orderQty);
 				memcpy(m_trade_reply.symbol,		(*jtable)["data"][0]["symbol"].dump().c_str()+1,	(*jtable)["data"][0]["symbol"].dump().length()-2);
+				memcpy(m_trade_reply.buysell,		(*jtable)["data"][0]["side"].dump().c_str(), 1);
+				sprintf(m_trade_reply.exchange_name, "BITMEX");
 				printf("===============================\n");
 				printf("KEYID: %.13s\n", m_trade_reply.key_id);
 				printf("BOOKNO: %.36s\n", m_trade_reply.bookno);

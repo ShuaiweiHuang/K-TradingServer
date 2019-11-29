@@ -36,3 +36,12 @@ echo "$service is running!!!"
 else
 sh $BASEDIR/restart_replyws.sh; 
 fi
+
+service=CVMonitor
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_monitor.sh; 
+fi

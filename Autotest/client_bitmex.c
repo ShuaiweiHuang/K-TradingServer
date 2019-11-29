@@ -223,10 +223,10 @@ void* test_run(void *arg)
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
-			memcpy(ts_order.order_price, "067200000", 9);
+			memcpy(ts_order.order_price, "070400000", 9);
 			memcpy(ts_order.touch_price, "096000000", 9);
 			memcpy(ts_order.qty_mark, "0", 1);
-			memcpy(ts_order.order_qty, "000000010", 9);
+			memcpy(ts_order.order_qty, "000001000", 9);
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
 				printf("send order %d: %.1s %.9s(%.9s) %s\n", order_loop, ts_order.order_buysell, ts_order.order_price, ts_order.order_qty, ts_order.order_mark=='0'?"MARKET":"Limit");
@@ -239,9 +239,8 @@ void* test_run(void *arg)
 
 				printf("testing in order %d\n", order_loop);
 				int len;
-while(1) {
 				len = read(server, data1, 1024);
-				if (len < 0) 
+				if (len <= 0) 
 				{
 					printf("keanu read error\n");
 					perror ("read from server error !");
@@ -252,7 +251,6 @@ while(1) {
 				sleep(1);
 				printf("keanu read success\n");
 				printf("read byte = %d,%x,%x,%x,%x,%.13s\nstatus:%.4s\nmsg:%s\n", len, data1[0], data1[1], data1[2], data1[3], data1+43, data1+258, data1+336);
-}
 #if 0// delete order
 				memcpy(ts_order.order_bookno, data1+114, 36);
 				memcpy(ts_order.key_id, data1+56, 13);

@@ -50,16 +50,18 @@ void* CCVHeartbeat::Run()
 
 			if(nResult != 0 && nResult != WAIT_TIMEOUT) // not timeout and not get event
 			{
-					FprintfStderrLog("HBRQ_ERROR_IN_WAIT", -1, reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
+				FprintfStderrLog("HBRQ_ERROR_IN_WAIT", -1, reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
 			}
 
-			if(nResult == WAIT_TIMEOUT)  //Timeout
+			if(nResult == WAIT_TIMEOUT) //Timeout
 			{
 				m_nIdleTime += 5;
 
 				if(m_nIdleTime == m_nTimeIntervals + 10)
 				{
-					FprintfStderrLog("HBRQ_CLIENT_HEARTBEAT_LOST", -1, reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
+					FprintfStderrLog("HBRQ_CLIENT_HEARTBEAT_LOST", -1,
+					reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
+
 					if(m_pClient)
 					{
 						m_pClient->SetStatus(csOffline);//end the session
@@ -69,7 +71,8 @@ void* CCVHeartbeat::Run()
 				{
 					if(m_pClient)
 					{
-						FprintfStderrLog("HBRQ_SEND_HBRQ_TO_CLIENT", -1, reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
+						FprintfStderrLog("HBRQ_SEND_HBRQ_TO_CLIENT", -1,
+						reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
 						m_pClient->SendData(uncaSendBuf,6);//callback to send heartbeat
 					}
 				}
@@ -82,17 +85,20 @@ void* CCVHeartbeat::Run()
 			{
 				if(nIndex == 0)
 				{
-					FprintfStderrLog("HBRQ_GET_CLIENT_REPLY", -1, reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
+					FprintfStderrLog("HBRQ_GET_CLIENT_REPLY", -1,
+					reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
 					m_nIdleTime = 0;
 				}
 				else if(nIndex == 1)
 				{
-					FprintfStderrLog("HBRQ_TERMINATE", -1, reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
+					FprintfStderrLog("HBRQ_TERMINATE", -1,
+					reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
 					break;
 				}
 				else
 				{
-					FprintfStderrLog("HBRQ_ERROR_INDEX", -1, reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
+					FprintfStderrLog("HBRQ_ERROR_INDEX", -1,
+					reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
 					break;
 				}
 			}

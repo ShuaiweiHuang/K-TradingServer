@@ -75,21 +75,13 @@ class CCVClients: public CCVThread, public ICVSocketCallback
 		pthread_mutex_t m_MutexLockOnSerialNumber;
 		pthread_mutex_t m_MutexLockOnOnlineClientVector;
 		pthread_mutex_t m_MutexLockOnOfflineClientVector;
-
 		vector<char*> m_vProxyNode;
-#ifdef MNTRMSG
-		fstream m_fileOrder;
-		fstream m_fileReply;
-#endif
 	protected:
 		void* Run();
 		void OnListening();
 		void OnShutdown();
 
 	public:
-#ifdef MNTRMSG
-		void FlushLogMessageToFile();
-#endif
 		static CCVClients* GetInstance();
 
 		CCVClient* GetClientFromHash(long lOrderNumber);

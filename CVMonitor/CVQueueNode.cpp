@@ -67,7 +67,7 @@ void* CCVQueueDAO::Run()
 					continue;
 				}
 				if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
-					pClient->m_pHeartbeat->TriggerGetReplyEvent();
+					//pClient->m_pHeartbeat->TriggerGetReplyEvent();
 				}
 				iter++;
 			}

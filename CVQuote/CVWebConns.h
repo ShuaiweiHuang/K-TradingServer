@@ -9,6 +9,7 @@
 #include "CVWebConn.h"
 #include <vector>
 #include <string>
+#include "../CVInclude/Monitor.h"
 
 using namespace neosmart;
 using namespace std;
@@ -26,7 +27,13 @@ struct TCVConfig
 	vector<struct TCVServerInfo*> vServerInfo;
 };
 
-class CCVServers //public CCVThread
+struct MNTRMSGS
+{
+	int num_of_thread_Current;
+	int num_of_thread_Max;
+};
+
+class CCVServers: public ICVHeartbeatCallback//public CCVThread
 {
 	private:
 		CCVServers();
@@ -37,10 +44,13 @@ class CCVServers //public CCVThread
 		vector<struct TCVConfig*> m_vServerConfig;
 		//vector<vector<vector<CCVServer*> > > m_vvvServerPool;
 		vector<CCVServer*> m_vServerPool;
+		CCVHeartbeat* m_pHeartbeat;
 
 	protected:
 		void AddFreeServer(enum TCVRequestMarket rmRequestMarket, int nPoolIndex);
-
+		void OnHeartbeatLost();
+		void OnHeartbeatRequest();
+		void OnHeartbeatError(int nData, const char* pErrorMessage);
 	public:
 		static CCVServers* GetInstance();
 		void SetConfiguration(struct TCVConfig* pstruConfig);

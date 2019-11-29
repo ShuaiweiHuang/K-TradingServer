@@ -58,7 +58,7 @@ void* CCVClients::Run()
 		unsigned char *ip = (unsigned char *)&sin->sin_addr.s_addr;
 		sprintf(ClientAddrInfo.caIP,"%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);//to do
 
-		FprintfStderrLog("ACCEPT_CLIENT_IP", 0, 0, NULL, 0, reinterpret_cast<unsigned char*>(ClientAddrInfo.caIP), strlen(ClientAddrInfo.caIP));
+		FprintfStderrLog("Quote:ACCEPT_CLIENT_IP", 0, 0, NULL, 0, reinterpret_cast<unsigned char*>(ClientAddrInfo.caIP), strlen(ClientAddrInfo.caIP));
 		shared_ptr<CCVClient> shpClient = make_shared<CCVClient>(ClientAddrInfo);
 		PushBackClientToVector(shpClient);
 	}

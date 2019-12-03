@@ -79,6 +79,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		static void OnData_Bitmex(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Bitmex_Test(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Bitmex_Index(client* c, websocketpp::connection_hdl, client::message_ptr msg);
+		static void OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Binance(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Binance_F(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Binance_FT(client* c, websocketpp::connection_hdl, client::message_ptr msg);

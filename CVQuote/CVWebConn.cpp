@@ -145,6 +145,12 @@ void CCVServer::OnConnect()
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
 				m_cfd.set_message_handler(bind(&OnData_Bitmex_Index,&m_cfd,::_1,::_2));
 			}
+			else if(m_strName == "BITMEXFUND") {
+				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_MIN);
+				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
+				m_cfd.set_message_handler(bind(&OnData_Bitmex_Funding,&m_cfd,::_1,::_2));
+			}
 			else if(m_strName == "BINANCE") {
 				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_SEC);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
@@ -302,6 +308,71 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 
 }
 
+void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
+{
+//#ifdef DEBUG
+	printf("[on_message_bitmex_funding]\n");
+//#endif
+	static char netmsg[BUFFERSIZE];
+	static char timemsg[9];
+	static char epochmsg[20];
+
+	string str = msg->get_payload();
+	string time_str, symbol_str, size_str;
+	json jtable = json::parse(str.c_str());
+	static CCVClients* pClients = CCVClients::GetInstance();
+	tm tm_struct;
+
+	if(pClients == NULL)
+		throw "GET_CLIENTS_ERROR";
+
+	string strname = "BITMEXINDEX";
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	pServer->m_heartbeat_count = 0;
+	pServer->m_pHeartbeat->TriggerGetReplyEvent();
+
+	for(int i=0 ; i<jtable["data"].size() ; i++)
+	{ 
+		static int tick_count=0;
+
+		if(jtable["data"][i]["symbol"] != "XBTUSD" && jtable["data"][i]["symbol"] != "ETHUSD")
+			continue;
+
+		memset(netmsg, 0, BUFFERSIZE);
+		memset(timemsg, 0, 8);
+		memset(epochmsg, 0, 20);
+
+		time_str   = jtable["data"][i]["timestamp"];
+		symbol_str = jtable["data"][i]["symbol"];
+		size_str   = "0";
+		istringstream science_notation(jtable["data"][i]["fundingRate"].dump());
+		science_notation.precision(8);
+		double funding_rate;
+		science_notation >> funding_rate;
+
+		sprintf(epochmsg, "%.10s %.2s:%.2s:%.2s", time_str.c_str(), time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17);
+		strptime(epochmsg, "%Y-%m-%d %H:%M:%S", &tm_struct);
+		tm_struct.tm_isdst = 1;
+		size_t epoch = std::mktime(&tm_struct);
+		sprintf(epochmsg, "%d.%.3s", epoch, time_str.c_str()+20);
+		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
+		sprintf(netmsg, "01_ID=%s_FR.BMEX,ECC.1=%d,Time=%s,C=%lf,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
+			symbol_str.c_str(), tick_count, timemsg, funding_rate, size_str.c_str(), tick_count, pClients->m_strEPIDNum.c_str(), tick_count, epochmsg);
+		tick_count++;
+
+		int msglen = strlen(netmsg);
+		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
+		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
+		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
+		assert(pClients);
+		pQueueDAO->SendData(netmsg, strlen(netmsg));
+//#ifdef DEBUG
+		//cout << setw(4) << jtable << endl;
+		cout << netmsg << endl;
+//#endif
+	}
+
+}
 
 void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {

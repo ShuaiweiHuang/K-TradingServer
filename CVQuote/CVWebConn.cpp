@@ -264,8 +264,8 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BITMEXINDEX";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	string name_str = "BITMEXINDEX";
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 
@@ -310,9 +310,9 @@ void CCVServer::OnData_Bitmex_Index(client* c, websocketpp::connection_hdl con, 
 
 void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
-//#ifdef DEBUG
+#ifdef DEBUG
 	printf("[on_message_bitmex_funding]\n");
-//#endif
+#endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	static char epochmsg[20];
@@ -326,8 +326,8 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BITMEXINDEX";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	string name_str = "BITMEXINDEX";
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 
@@ -366,10 +366,10 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
-//#ifdef DEBUG
-		//cout << setw(4) << jtable << endl;
+#ifdef DEBUG
+		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;
-//#endif
+#endif
 	}
 
 }
@@ -392,8 +392,8 @@ void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, c
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BITMEX_T";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	string name_str = "BITMEX_T";
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	for(int i=0 ; i<jtable["data"].size() ; i++)
@@ -443,18 +443,21 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	static char epochmsg[20];
+	
 
-	string str = msg->get_payload();
+	string data_str = msg->get_payload();
 	string time_str, symbol_str, epoch_str;
-	json jtable = json::parse(str.c_str());
+	string name_str = "BITMEX";
+	int vol_count = 0;
+	static int aa = 0, bb = 0;
+	json jtable = json::parse(data_str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
 	tm tm_struct;
 
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BITMEX";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 	for(int i=0 ; i<jtable["data"].size() ; i++)
@@ -465,27 +468,42 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 		memset(timemsg, 0, 9);
 		memset(epochmsg, 0, 20);
 
+		vol_count  += atoi(jtable["data"][i]["size"].dump().c_str());
 		time_str   = jtable["data"][i]["timestamp"];
 		symbol_str = jtable["data"][i]["symbol"];
 
 		if(jtable["data"][i]["price"].dump() == "null")
 			continue;
-		sprintf(epochmsg, "%.10s %.2s:%.2s:%.2s", time_str.c_str(), time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17);
-		strptime(epochmsg, "%Y-%m-%d %H:%M:%S", &tm_struct);
-		tm_struct.tm_isdst = 1;
-		size_t epoch = std::mktime(&tm_struct);
-		sprintf(epochmsg, "%d.%.3s", epoch, time_str.c_str()+20);
-		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s.BMEX,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
-			symbol_str.c_str(), tick_count, timemsg, jtable["data"][i]["price"].dump().c_str(), jtable["data"][i]["size"].dump().c_str(),
-			tick_count, pClients->m_strEPIDNum.c_str(), tick_count, epochmsg);
-		tick_count++;
-		int msglen = strlen(netmsg);
-		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
-		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
-		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-		assert(pClients);
-		pQueueDAO->SendData(netmsg, strlen(netmsg));
+
+		if(i<jtable["data"].size()-1 && jtable["data"][i]["price"].dump() == jtable["data"][i+1]["price"].dump())
+		{
+			//printf("keanu merge: %s:%d\n", jtable["data"][i]["price"].dump().c_str(), vol_count);
+			continue;
+		}
+		else
+		{
+			//printf("keanu dump: %s:%d\n", jtable["data"][i]["price"].dump().c_str(), vol_count);
+			sprintf(epochmsg, "%.10s %.2s:%.2s:%.2s", time_str.c_str(), time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17);
+			strptime(epochmsg, "%Y-%m-%d %H:%M:%S", &tm_struct);
+			tm_struct.tm_isdst = 1;
+			size_t epoch = std::mktime(&tm_struct);
+
+			sprintf(epochmsg, "%d.%.3s", epoch, time_str.c_str()+20);
+			sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
+			sprintf(netmsg, "01_ID=%s.BMEX,ECC.1=%d,Time=%s,C=%s,V=%d,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
+				symbol_str.c_str(), tick_count, timemsg, jtable["data"][i]["price"].dump().c_str(), vol_count, //jtable["data"][i]["size"].dump().c_str(),
+				tick_count, pClients->m_strEPIDNum.c_str(), tick_count, epochmsg);
+			tick_count++;
+			int msglen = strlen(netmsg);
+
+			netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
+			netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
+
+			CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
+			pQueueDAO->SendData(netmsg, strlen(netmsg));
+			vol_count = 0;
+		}
+		cout << netmsg << endl;
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;
@@ -512,8 +530,8 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BINANCE";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	string name_str = "BINANCE";
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 
@@ -562,8 +580,8 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BINANCE_F";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	string name_str = "BINANCE_F";
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 
@@ -612,8 +630,8 @@ void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, cl
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string strname = "BINANCE_FT";
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(strname);
+	string name_str = "BINANCE_FT";
+	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 #if 0
 	if(pServer->GetStatus() == ssBreakdown) {

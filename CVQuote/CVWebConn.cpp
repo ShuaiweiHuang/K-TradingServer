@@ -335,8 +335,8 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 	{ 
 		static int tick_count=0;
 
-		if(jtable["data"][i]["symbol"] != "XBTUSD" && jtable["data"][i]["symbol"] != "ETHUSD")
-			continue;
+		//if(jtable["data"][i]["symbol"] != "XBTUSD" && jtable["data"][i]["symbol"] != "ETHUSD")
+		//	continue;
 
 		memset(netmsg, 0, BUFFERSIZE);
 		memset(timemsg, 0, 8);
@@ -349,7 +349,7 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 		science_notation.precision(8);
 		double funding_rate;
 		science_notation >> funding_rate;
-
+		funding_rate += 1;
 		sprintf(epochmsg, "%.10s %.2s:%.2s:%.2s", time_str.c_str(), time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17);
 		strptime(epochmsg, "%Y-%m-%d %H:%M:%S", &tm_struct);
 		tm_struct.tm_isdst = 1;

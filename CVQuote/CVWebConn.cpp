@@ -704,6 +704,7 @@ void CCVServer::OnHeartbeatRequest()
 		}
 		else
 		{
+			m_pHeartbeat->TriggerGetReplyEvent();
 			m_heartbeat_count++;
 		}
 	}

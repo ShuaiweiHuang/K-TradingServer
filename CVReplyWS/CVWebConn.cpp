@@ -503,6 +503,10 @@ void CCVServer::Bitmex_Update(json* jtable)
 					memcpy(m_trade_reply.transactTime,  (*jtable)["data"][i]["transactTime"].dump().c_str()+1, (*jtable)["data"][i]["transactTime"].dump().length()-2);
 					memcpy(m_trade_reply.symbol,		(*jtable)["data"][i]["symbol"].dump().c_str()+1,	(*jtable)["data"][i]["symbol"].dump().length()-2);
 					memcpy(m_trade_reply.buysell,		(*jtable)["data"][i]["side"].dump().c_str()+1, 1);
+	
+					if((*jtable)["data"][i]["execComm"].dump() != "null")
+						memcpy(m_trade_reply.commission,	(*jtable)["data"][i]["execComm"].dump().c_str(), (*jtable)["data"][i]["execComm"].dump().length());
+	
 					sprintf(m_trade_reply.reply_msg,    "trade reply - [%s, (%s/%s)]",
 					                                    (*jtable)["data"][i]["text"].dump().c_str(), m_trade_reply.cumQty, m_trade_reply.orderQty);
 					sprintf(m_trade_reply.exchange_name, "BITMEX");
@@ -516,6 +520,7 @@ void CCVServer::Bitmex_Update(json* jtable)
 					printf("CUMQTY: %s\n", m_trade_reply.cumQty);
 					printf("SYMBOL: %s\n", m_trade_reply.symbol);
 					printf("TIME: %s\n", m_trade_reply.transactTime);
+					printf("COMMISSION: %s\n", m_trade_reply.commission);
 					printf("===============================\n");
 					CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 					pQueueDAO->SendData((char*)&m_trade_reply, sizeof(m_trade_reply));

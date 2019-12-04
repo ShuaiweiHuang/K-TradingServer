@@ -60,6 +60,7 @@ struct CV_StructTSOrderReply
 	char symbol[10];
 	char buysell[1];
 	char exchange_name[10];
+	char commission[10];
 };
 
 using namespace std;

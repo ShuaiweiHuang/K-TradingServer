@@ -63,10 +63,6 @@ int main(int argc, char *argv[])
 #ifdef MONITOR
 		mem_usage(vm, rss);
 		cout << "Virtual Memory: " << vm << "\nResident set size: " << rss << endl;
-		if(getloadavg(loading, 3) != -1) /*getloadavg is the function used to calculate and obtain the load average*/
-		{
-			printf("load average : %f , %f , %f\n", loading[0],loading[1],loading[2]);
-		}
 #endif
 		pClients->CheckOnlineClientVector();
 		pClients->ClearOfflineClientVector();
@@ -128,6 +124,6 @@ void mem_usage(double& vm_usage, double& resident_set)
 	>> O >> itrealvalue >> starttime >> vsize >> rss;
 	stat_stream.close();
 	long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024;
-	vm_usage = vsize / 1024.0;
+	vm_usage = vsize / (1024.0*1024.0);
 	resident_set = rss * page_size_kb;
 }

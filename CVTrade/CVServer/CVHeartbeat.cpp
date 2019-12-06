@@ -7,13 +7,17 @@
 #include "CVHeartbeat.h"
 #include "CVClient.h"
 #include "CVClients.h"
+#include "CVQueueDAO.h"
+#include "CVQueueDAOs.h"
 #include "../include/CVGlobal.h"
+
 #include <iostream>
 
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
-
+extern void mem_usage(double& vm_usage, double& resident_set);
+extern struct MNTRMSGS g_MNTRMSG;
 CCVHeartbeat::CCVHeartbeat(int nTimeIntervals)
 {
 	m_nTimeIntervals = nTimeIntervals;
@@ -75,6 +79,13 @@ void* CCVHeartbeat::Run()
 						reinterpret_cast<unsigned char*>(m_pClient->m_ClientAddrInfo.caIP), sizeof(m_pClient->m_ClientAddrInfo.caIP));
 						m_pClient->SendData(uncaSendBuf,6);//callback to send heartbeat
 					}
+#if 0
+					sprintf(caHeartbeatRequestBuf, "SYSTEM_Trade,CurrentThread=%d,MaxThread=%d,MemoryUsage=%.0f\r\n",
+						g_MNTRMSG.num_of_thread_Current, g_MNTRMSG.num_of_thread_Max, g_MNTRMSG.process_vm_mb);
+					pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
+#endif
+//					m_pHeartbeat->TriggerGetReplyEvent();
+
 				}
 				else if(m_nIdleTime < m_nTimeIntervals)
 				{
@@ -102,6 +113,31 @@ void* CCVHeartbeat::Run()
 					break;
 				}
 			}
+		}
+	}
+	else
+	{
+		while(1) {
+			sleep(30);
+			char caHeartbeatRequestBuf[128];
+			time_t t = time(NULL);
+			struct tm tm = *localtime(&t);
+			double process_vm_mb, RSS_size;
+
+			memset(caHeartbeatRequestBuf, 0, 128);
+			mem_usage(process_vm_mb, RSS_size);
+			sprintf(caHeartbeatRequestBuf, "HTBT_Trade,ServerDate=%d%02d%02d,ServerTime=%02d%02d%02d00\r\n",
+			tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+			CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->m_QueueDAOMonitor;
+			pQueueDAO->SendData((const unsigned char*)caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
+			mem_usage(g_MNTRMSG.process_vm_mb, RSS_size);
+
+			sprintf(caHeartbeatRequestBuf, "SYSTEM_Trade,CurrentThread=%d,MaxThread=%d,MemoryUsage=%.0f\r\n",
+				g_MNTRMSG.num_of_thread_Current, g_MNTRMSG.num_of_thread_Max, g_MNTRMSG.process_vm_mb);
+
+			pQueueDAO->SendData((const unsigned char*)caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
+
 		}
 	}
 	return NULL;

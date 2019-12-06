@@ -15,6 +15,7 @@
 #include "CVCommon/CVThread.h"
 #include "CVNet/CVServerSocket.h"
 #include "CVClient.h"
+#include "CVHeartbeat.h"
 
 using namespace std;
 
@@ -36,16 +37,13 @@ enum TCVTimePoint
 extern void InsertTimeLogToSharedMemory(struct timeval *timeval_Start, struct timeval *timeval_End, enum TCVTimePoint tpTimePoint, long lOrderNumber);
 #endif
 
-#ifdef MNTRMSG
 struct MNTRMSGS
 {
-    int num_of_thread_Current;
-    int num_of_thread_Max;
-    int num_of_order_Received;
-    int num_of_order_Sent;
-    int num_of_order_Reply;
+	int num_of_thread_Current;
+	int num_of_thread_Max;
+	double process_vm_mb;
+	long network_delay_ms;
 };
-#endif
 
 class CCVClients: public CCVThread, public ICVSocketCallback
 {
@@ -83,7 +81,7 @@ class CCVClients: public CCVThread, public ICVSocketCallback
 
 	public:
 		static CCVClients* GetInstance();
-
+		CCVHeartbeat* m_pHeartbeat;
 		CCVClient* GetClientFromHash(long lOrderNumber);
 		void InsertClientToHash(long lOrderNumber, CCVClient* pClient);
 		void RemoveClientFromHash(long lOrderNumber);

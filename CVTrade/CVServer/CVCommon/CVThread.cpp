@@ -1,10 +1,8 @@
 #include "CVThread.h"
 
-#ifdef MNTRMSG
 #include "../CVClients.h"
 extern struct MNTRMSGS g_MNTRMSG;
 pthread_mutex_t mtxThreadCount = PTHREAD_MUTEX_INITIALIZER;
-#endif
 
 static void *ThreadExecution(void* pArg)////////////
 {
@@ -13,21 +11,17 @@ static void *ThreadExecution(void* pArg)////////////
 
 CCVThread::CCVThread(): m_tid(0), m_nRunning(0), m_nDetached(0)
 {
-#ifdef MNTRMSG
 	pthread_mutex_lock(&mtxThreadCount);
 	g_MNTRMSG.num_of_thread_Current++;
 	g_MNTRMSG.num_of_thread_Max = (g_MNTRMSG.num_of_thread_Current > g_MNTRMSG.num_of_thread_Max) ? g_MNTRMSG.num_of_thread_Current : g_MNTRMSG.num_of_thread_Max;
 	pthread_mutex_unlock(&mtxThreadCount);
-#endif
 }
 
 CCVThread::~CCVThread()
 {
-#ifdef MNTRMSG
 	pthread_mutex_lock(&mtxThreadCount);
 	g_MNTRMSG.num_of_thread_Current--;
 	pthread_mutex_unlock(&mtxThreadCount);
-#endif
 	if ( m_nRunning == 1 && m_nDetached == 0)
 	{
 		pthread_detach(m_tid);

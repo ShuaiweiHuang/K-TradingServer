@@ -4,12 +4,15 @@
 #include <assert.h>
 
 #include "CVClients.h"
+#include "CVHeartbeat.h"
+#include "../include/CVGlobal.h"
 
 #include<iostream>
 using namespace std;
 
 CCVClients* CCVClients::instance = NULL;
 pthread_mutex_t CCVClients::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
+struct MNTRMSGS g_MNTRMSG;
 
 CCVClients::CCVClients() 
 {
@@ -21,6 +24,11 @@ CCVClients::CCVClients()
 	pthread_mutex_init(&m_MutexLockOnSerialNumber, NULL);
 	pthread_mutex_init(&m_MutexLockOnOnlineClientVector, NULL);
 	pthread_mutex_init(&m_MutexLockOnOfflineClientVector, NULL);
+        m_pHeartbeat = new CCVHeartbeat(HEARTBEATVAL);
+        assert(m_pHeartbeat);
+        m_pHeartbeat->SetCallback(NULL);
+	m_pHeartbeat->Start();
+
 #if 0
 	ifstream NodeFile("../ini/CVProxy.ini");
 

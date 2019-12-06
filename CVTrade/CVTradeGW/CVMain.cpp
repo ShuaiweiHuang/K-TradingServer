@@ -27,12 +27,12 @@ void ReadTandemDAOConfigFile(string strConfigFileName, string& strService, int& 
 							 key_t& kWriteQueueDAOEndKey, key_t& kQueueDAOMonitorKey);
 
 void ReadReadQueueDAOConfigFile(string strConfigFileName, string& strOTSID, int& nNumberOfReadQueueDAO,
-							    key_t& kReadQueueDAOStartKey, key_t& kReadQueueDAOEndKey, key_t& kTIGNumberSharedMemoryKey);
+								key_t& kReadQueueDAOStartKey, key_t& kReadQueueDAOEndKey, key_t& kTIGNumberSharedMemoryKey);
 volatile sig_atomic_t done = 0;
 
 void term(int signum)
 {
-    done = 1;
+	done = 1;
 }
 
 int main(int argc, char *argv[])
@@ -88,10 +88,6 @@ int main(int argc, char *argv[])
 	while(!done)
 	{
 		sleep(1);
-#ifdef MONITOR
-                mem_usage(vm, rss);
-                cout << "Virtual Memory: " << vm << "\nResident set size: " << rss << endl;
-#endif
 	}
 	delete(pTandemDAOs);
 	delete(pReadQueueDAOs);
@@ -140,22 +136,22 @@ void ReadReadQueueDAOConfigFile(string strConfigFileName, string& strOTSID, int&
 
 void mem_usage(double& vm_usage, double& resident_set)
 {
-        vm_usage = 0.0;
-        resident_set = 0.0;
-        ifstream stat_stream("/proc/self/stat",ios_base::in);
-        string pid, comm, state, ppid, pgrp, session, tty_nr;
-        string tpgid, flags, minflt, cminflt, majflt, cmajflt;
-        string utime, stime, cutime, cstime, priority, nice;
-        string O, itrealvalue, starttime;
-        unsigned long vsize;
-        long rss;
-        stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
-        >> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
-        >> utime >> stime >> cutime >> cstime >> priority >> nice
-        >> O >> itrealvalue >> starttime >> vsize >> rss;
-        stat_stream.close();
-        long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024;
-        vm_usage = vsize / 1024.0;
-        resident_set = rss * page_size_kb;
+	vm_usage = 0.0;
+	resident_set = 0.0;
+	ifstream stat_stream("/proc/self/stat",ios_base::in);
+	string pid, comm, state, ppid, pgrp, session, tty_nr;
+	string tpgid, flags, minflt, cminflt, majflt, cmajflt;
+	string utime, stime, cutime, cstime, priority, nice;
+	string O, itrealvalue, starttime;
+	unsigned long vsize;
+	long rss;
+	stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr
+	>> tpgid >> flags >> minflt >> cminflt >> majflt >> cmajflt
+	>> utime >> stime >> cutime >> cstime >> priority >> nice
+	>> O >> itrealvalue >> starttime >> vsize >> rss;
+	stat_stream.close();
+	long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024;
+	vm_usage = vsize / (1024.0*1024.0);
+	resident_set = rss * page_size_kb;
 }
 

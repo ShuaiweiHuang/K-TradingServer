@@ -53,7 +53,6 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		friend void CCVClient:: TriggerSendRequestEvent(CCVServer* pServer, unsigned char* pRequestMessage, int nRequestMessageLength);
 
 		client m_cfd;
-		client::connection_ptr m_conn;
 		char m_caPthread_ID[21];
 		shared_ptr<CCVClient> m_shpClient;
 
@@ -103,6 +102,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		void OnData(unsigned char*, int);
 
 	public:
+		client::connection_ptr m_conn;
 		TCVServerStatus m_ssServerStatus;
 		CCVServer(string strHost, string strPort, string strName, TCVRequestMarket rmRequestMarket);
 		virtual ~CCVServer();

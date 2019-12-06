@@ -128,6 +128,7 @@ void CCVServer::OnConnect()
 			}
 
 			if(m_strName == "BITMEX") {
+				CCVServers::GetInstance()->m_ServerBitmex = this;
 				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_SEC);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
@@ -326,7 +327,7 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 	if(pClients == NULL)
 		throw "GET_CLIENTS_ERROR";
 
-	string name_str = "BITMEXINDEX";
+	string name_str = "BITMEXFUND";
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
@@ -503,7 +504,6 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 			pQueueDAO->SendData(netmsg, strlen(netmsg));
 			vol_count = 0;
 		}
-		cout << netmsg << endl;
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;

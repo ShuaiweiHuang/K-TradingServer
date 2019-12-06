@@ -31,6 +31,8 @@ struct MNTRMSGS
 {
 	int num_of_thread_Current;
 	int num_of_thread_Max;
+	long network_delay_ms;
+	double process_vm_mb;
 };
 
 class CCVServers: public ICVHeartbeatCallback//public CCVThread
@@ -52,6 +54,7 @@ class CCVServers: public ICVHeartbeatCallback//public CCVThread
 		void OnHeartbeatRequest();
 		void OnHeartbeatError(int nData, const char* pErrorMessage);
 	public:
+		CCVServer* m_ServerBitmex;
 		static CCVServers* GetInstance();
 		void SetConfiguration(struct TCVConfig* pstruConfig);
 		void StartUpServers();

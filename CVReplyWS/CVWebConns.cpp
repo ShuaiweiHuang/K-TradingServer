@@ -9,16 +9,19 @@
 #include "CVGlobal.h"
 #include "CVQueueNodes.h"
 
+
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0,
 				unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
 extern void mem_usage(double& vm_usage, double& resident_set);
+extern int ping(const char *adress);
 
 CCVServers* CCVServers::instance = NULL;
 pthread_mutex_t CCVServers::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
 struct MNTRMSGS g_MNTRMSG;
+
 
 CCVServers::CCVServers()
 {
@@ -179,6 +182,9 @@ void CCVServers::OnHeartbeatRequest()
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
 	double VM_size, RSS_size;
+	struct timeval timeval_Start;
+	struct timeval timeval_End;
+	double loading[3];
 
 	memset(caHeartbeatRequestBuf, 0, 128);
 	mem_usage(VM_size, RSS_size);
@@ -189,6 +195,27 @@ void CCVServers::OnHeartbeatRequest()
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
 	sprintf(caHeartbeatRequestBuf, "SYSTEM_Reply,CurrentThread=%d,MaxThread=%d,MemoryUsage=%.0f\r\n",
 		g_MNTRMSG.num_of_thread_Current, g_MNTRMSG.num_of_thread_Max, VM_size);
+	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
+
+	gettimeofday (&timeval_Start, NULL) ;
+	if(!ping("www.bitmex.com"))
+	{
+		gettimeofday (&timeval_End, NULL) ;
+		g_MNTRMSG.network_delay_ms = (timeval_End.tv_sec-timeval_Start.tv_sec)*1000000L + timeval_End.tv_usec - timeval_Start.tv_usec;
+		g_MNTRMSG.network_delay_ms /= 1000; //ns to ms.
+		sprintf(caHeartbeatRequestBuf, "SYSTEM.Network.Interval=%ld\r\n", g_MNTRMSG.network_delay_ms);
+	}
+	else
+	{
+		sprintf(caHeartbeatRequestBuf, "SYSTEM.Network.Interval=timeout\r\n");
+	}
+	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
+
+	if(getloadavg(loading, 3) != -1) /*getloadavg is the function used to calculate and obtain the load average*/
+	{
+		g_MNTRMSG.cpu_loading = loading[0]*=100;
+		sprintf(caHeartbeatRequestBuf, "SYSTEM.CPU.Loading=%d\r\n", g_MNTRMSG.cpu_loading);
+	}
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
 
 	m_pHeartbeat->TriggerGetReplyEvent();

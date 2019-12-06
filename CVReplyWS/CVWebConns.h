@@ -11,6 +11,8 @@
 #include <string>
 #include "../CVInclude/Monitor.h"
 
+#define PACKETSIZE  64
+
 using namespace neosmart;
 using namespace std;
 
@@ -31,6 +33,9 @@ struct MNTRMSGS
 {
 	int num_of_thread_Current;
 	int num_of_thread_Max;
+	long network_delay_ms;
+	double process_vm_mb;
+	int cpu_loading;
 };
 
 class CCVServers: public ICVHeartbeatCallback //public CCVThread

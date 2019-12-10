@@ -181,17 +181,22 @@ void CCVServers::OnHeartbeatRequest()
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
 	double RSS_size;
+	char hostname[128];
+
+	gethostname(hostname, sizeof hostname);
 
 	memset(caHeartbeatRequestBuf, 0, 128);
 	mem_usage(g_MNTRMSG.process_vm_mb, RSS_size);
-	sprintf(caHeartbeatRequestBuf, "HTBT_Quote,ServerDate=%d%02d%02d,ServerTime=%02d%02d%02d00\r\n",
-		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	sprintf(caHeartbeatRequestBuf, "{\"Type\":\"Heartbeat\",\"Component\":\"Quote\",\"Hostname\":\"%s\",\"ServerDate\":\"%d%02d%02d\",\"ServerTime\":\"%02d%02d%02d00\"}",
+		hostname, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
 //	FprintfStderrLog("HEARTBEAT REQUEST", -1, 0, NULL, 0,  NULL, 0);
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->m_QueueDAOMonitor;
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
 
-	sprintf(caHeartbeatRequestBuf, "SYSTEM_Quote,CurrentThread=%d,MaxThread=%d,MemoryUsage=%.0f\r\n", g_MNTRMSG.num_of_thread_Current, g_MNTRMSG.num_of_thread_Max, g_MNTRMSG.process_vm_mb);
+	gethostname(hostname, sizeof hostname);
+	sprintf(caHeartbeatRequestBuf, "{\"Type\":\"System\",\"Component\":\"Quote\",\"Hostname\":\"%s\",\"CurrentThread\":\"%d\",\"MaxThread\":\"%d\",\"MemoryUsage\":\"%.0f\"}", 			hostname, g_MNTRMSG.num_of_thread_Current, g_MNTRMSG.num_of_thread_Max, g_MNTRMSG.process_vm_mb);
+
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
 	m_pHeartbeat->TriggerGetReplyEvent();
 }

@@ -185,36 +185,40 @@ void CCVServers::OnHeartbeatRequest()
 	struct timeval timeval_Start;
 	struct timeval timeval_End;
 	double loading[3];
+	char hostname[128];
 
+	gethostname(hostname, sizeof hostname);
 	memset(caHeartbeatRequestBuf, 0, 128);
 	mem_usage(VM_size, RSS_size);
-	sprintf(caHeartbeatRequestBuf, "HTBT_Reply,ServerDate=%d%02d%02d,ServerTime=%02d%02d%02d00\r\n",
-		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	sprintf(caHeartbeatRequestBuf, "{\"Type\":\"Heartbeat\",\"Component\":\"Reply\",\"Hostname\":\"%s\",\"ServerDate\":\"%d%02d%02d\",\"ServerTime\":\"%02d%02d%02d00\"}",
+		hostname, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->m_QueueDAOMonitor;
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
-	sprintf(caHeartbeatRequestBuf, "SYSTEM_Reply,CurrentThread=%d,MaxThread=%d,MemoryUsage=%.0f\r\n",
-		g_MNTRMSG.num_of_thread_Current, g_MNTRMSG.num_of_thread_Max, VM_size);
+	sprintf(caHeartbeatRequestBuf, "{\"Type\":\"System\",\"Component\":\"Reply\",\"Hostname\":\"%s\",\"CurrentThread\":\"%d\",\"MaxThread\":\"%d\",\"MemoryUsage\":\"%.0f\"}",
+		hostname, g_MNTRMSG.num_of_thread_Current, g_MNTRMSG.num_of_thread_Max, VM_size);
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
 
 	gettimeofday (&timeval_Start, NULL) ;
 	if(!ping("www.bitmex.com"))
 	{
+		gethostname(hostname, sizeof hostname);
 		gettimeofday (&timeval_End, NULL) ;
 		g_MNTRMSG.network_delay_ms = (timeval_End.tv_sec-timeval_Start.tv_sec)*1000000L + timeval_End.tv_usec - timeval_Start.tv_usec;
 		g_MNTRMSG.network_delay_ms /= 1000; //ns to ms.
-		sprintf(caHeartbeatRequestBuf, "SYSTEM.Network.Interval=%ld\r\n", g_MNTRMSG.network_delay_ms);
+		sprintf(caHeartbeatRequestBuf, "{\"Type\":\"Host\",\"Component\":\"Network\",\"Hostname\":\"%s\",\"Interval\":\"%ld\"}", hostname, g_MNTRMSG.network_delay_ms);
 	}
 	else
 	{
-		sprintf(caHeartbeatRequestBuf, "SYSTEM.Network.Interval=timeout\r\n");
+		sprintf(caHeartbeatRequestBuf, "{\"Type\":\"Host\",\"Component\":\"Network\",\"Hostname\":\"%s\",\"Interval\":\"Timeout\"}", hostname);
 	}
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
 
 	if(getloadavg(loading, 3) != -1) /*getloadavg is the function used to calculate and obtain the load average*/
 	{
+		gethostname(hostname, sizeof hostname);
 		g_MNTRMSG.cpu_loading = loading[0]*=100;
-		sprintf(caHeartbeatRequestBuf, "SYSTEM.CPU.Loading=%d\r\n", g_MNTRMSG.cpu_loading);
+		sprintf(caHeartbeatRequestBuf, "{\"Type\":\"Host\",\"Component\":\"CPU\",\"Hostname\":\"%s\",\"Loading\":\"%d\"}", hostname, g_MNTRMSG.cpu_loading);
 	}
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
 

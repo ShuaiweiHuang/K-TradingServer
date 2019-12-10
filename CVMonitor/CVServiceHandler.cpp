@@ -102,7 +102,7 @@ void CCVClient::OnHeartbeatRequest()
 
 	memset(caHeartbeatRequestBuf, 0, 128);
 
-	sprintf(caHeartbeatRequestBuf, "HTBT_Monitor,ServerDate=%d%02d%02d,ServerTime=%02d%02d%02d00\r\n",
+	sprintf(caHeartbeatRequestBuf, "{%%22Type%%22:%%22HTBT%%22,%%22Device%%22:%%22Monitor%%22,%%22ServerDate%%22:%%22%d%02d%02d%%22,%%22ServerTime%%22:%%22%02d%02d%02d00%%22}",
 		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
 	bool bSendAll = SendAll("HEARTBEAT_REQUEST", caHeartbeatRequestBuf, sizeof(caHeartbeatRequestBuf));

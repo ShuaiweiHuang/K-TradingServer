@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sys/time.h>
 #include <assert.h>
+#include <curl/curl.h>
 
 #include "CVQueueNode.h"
 #include "CVServer.h"
@@ -42,6 +43,49 @@ CCVQueueDAO::~CCVQueueDAO()
 	}
 }
 
+static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+        ((std::string*)userp)->append((char*)contents, size * nmemb);
+                return size * nmemb;
+}
+
+int CCVQueueDAO::Webapi_Write(char* buffer, int)
+{
+        CURLcode res;
+        CURL *curl = curl_easy_init();
+        char query_str[1024];
+	string monitor_reply;
+
+        if(!curl)
+        {
+                return 0;
+        }
+        sprintf(query_str, "https://intra.cryptovix.com.tw/receive/tm?data=%s", buffer);
+//	printf("\n%s\n", query_str);
+
+        curl_easy_setopt(curl, CURLOPT_URL, query_str);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &monitor_reply);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+
+
+        res = curl_easy_perform(curl);
+//	printf("%s\n", monitor_reply.c_str());
+	sprintf(query_str, "http://intra.cryptovix.com.tw:3001/receive/tm?data=%s", buffer);
+//	printf("\n%s\n", query_str);
+
+        curl_easy_setopt(curl, CURLOPT_URL, query_str);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &monitor_reply);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+
+
+        res = curl_easy_perform(curl);
+//	printf("%s\n", monitor_reply.c_str());
+
+        curl_easy_cleanup(curl);
+}
+
 void* CCVQueueDAO::Run()
 {
 	CCVClients* pClients = CCVClients::GetInstance();
@@ -67,10 +111,12 @@ void* CCVQueueDAO::Run()
 					continue;
 				}
 				if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
-					//pClient->m_pHeartbeat->TriggerGetReplyEvent();
+					pClient->SendAll(NULL, "\n", 1);
+					pClient->m_pHeartbeat->TriggerGetReplyEvent();
 				}
 				iter++;
 			}
+			Webapi_Write(uncaRecvBuf, strlen(uncaRecvBuf));
 		}
 	}
 	return NULL;

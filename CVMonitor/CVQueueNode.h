@@ -17,7 +17,7 @@ class CCVQueueDAO: public CCVThread
 		key_t m_kSendKey;
 		CCVQueue* m_pSendQueue;
 		CCVQueue* m_pRecvQueue;
-
+		int Webapi_Write(char*, int);
 	protected:
 		void* Run();
 

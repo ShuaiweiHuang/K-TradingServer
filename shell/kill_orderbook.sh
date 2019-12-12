@@ -12,7 +12,7 @@ SCRIPTPATH=$(dirname "$ABSPATH")
 cd $SCRIPTPATH
 
 
-ps_name=CVQuote
+ps_name=CVOrderBook
 
 #----------- Kill Proxy -----------#
 ps -ae|
@@ -38,7 +38,7 @@ do
   fi
 done
 
-for i in {101..101};
+for i in {102..102};
 do
 ipcrm -Q $i >/dev/null 2>&1
 done

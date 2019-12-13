@@ -623,6 +623,12 @@ void CCVClient::LoadRiskControl(char* p_username)
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &riskctl_query_reply);
 
 	res = curl_easy_perform(curl);
+	if(res != CURLE_OK) {
+		fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+		curl_easy_cleanup(curl);
+		return;
+	}
 	try {
 		jtable_query_limit = json::parse(riskctl_query_reply.c_str());
 
@@ -792,7 +798,16 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &login_query_reply);
 	res = curl_easy_perform(curl);
-
+	if(res != CURLE_OK) {
+		fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+		curl_easy_cleanup(curl);
+		memcpy(logon_reply.status_code, "NG", 2);//to do
+		memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+		memcpy(logon_reply.error_code, "01", 2);
+		sprintf(logon_reply.error_message, "login db webapi fail");
+		return false;
+	}
 	try {
 		jtable_query_account = json::parse(login_query_reply.c_str());
 
@@ -838,6 +853,16 @@ printf("\ntrader: %s\n", trader.c_str());
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &account_query_reply);
 		res = curl_easy_perform(curl);
+		if(res != CURLE_OK) {
+			fprintf(stderr, "curl_easy_perform() failed: %s\n",
+			curl_easy_strerror(res));
+			curl_easy_cleanup(curl);
+			memcpy(logon_reply.status_code, "NG", 2);//to do
+			memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+			memcpy(logon_reply.error_code, "01", 2);
+			sprintf(logon_reply.error_message, "login db webapi fail");
+			return false;
+		}
 
 	try {
 		jtable_query_exchange = json::parse(account_query_reply.c_str());
@@ -884,6 +909,16 @@ printf("\ntrader: %s\n", trader.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &account_query_reply);
 	res = curl_easy_perform(curl);
+        if(res != CURLE_OK) {
+                fprintf(stderr, "curl_easy_perform() failed: %s\n",
+                curl_easy_strerror(res));
+                curl_easy_cleanup(curl);
+		memcpy(logon_reply.status_code, "NG", 2);//to do
+		memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
+		memcpy(logon_reply.error_code, "01", 2);
+		sprintf(logon_reply.error_message, "login db webapi fail");
+		return false;
+        }
 
 #ifdef DEBUG
 	printf("macoutput = %s\n\n\n", macoutput);

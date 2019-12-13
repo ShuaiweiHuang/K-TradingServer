@@ -40,6 +40,6 @@ done
 
 for i in {121..121};
 do
-ipcrm -Q $i >/dev/null 2>&1
+#ipcrm -Q $i >/dev/null 2>&1
 done
 

@@ -215,10 +215,13 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 	static char timemsg[9];
 	static char epochmsg[20];
 	
+	netmsg[0] = GTA_TAIL_BYTE_1;
+	netmsg[1] = GTA_TAIL_BYTE_2;
 
 	string data_str = msg->get_payload();
 	string time_str, symbol_str, epoch_str;
 	string name_str = "BITMEX";
+
 	int vol_count = 0;
 	json jtable = json::parse(data_str.c_str());
 	static CCVClients* pClients = CCVClients::GetInstance();
@@ -234,6 +237,7 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	pQueueDAO->SendData((char*)jtable.dump().c_str(), jtable.dump().length());
+	pQueueDAO->SendData(netmsg, 2);
 #if 0
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 

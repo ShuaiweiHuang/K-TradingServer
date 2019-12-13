@@ -317,7 +317,7 @@ void CCVServer::Bitmex_Update(json* jtable)
 {
 	char update_match_str[BUFFERSIZE], insert_str[BUFFERSIZE], update_order_str[BUFFERSIZE];
 	string response, exchange_data[30];
-
+	CURLcode res;
 
 	if((*jtable)["table"] == "execution")
 	{
@@ -458,7 +458,11 @@ void CCVServer::Bitmex_Update(json* jtable)
 			curl_easy_setopt(curl, CURLOPT_URL, insert_str);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-			curl_easy_perform(curl);
+			res = curl_easy_perform(curl);
+			if(res != CURLE_OK) {
+				fprintf(stderr, "CVReplyWS:Bitmex_Update:curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			}
+
 	#if 0
 			printf("=============update match:\n%s\n=============\n", update_match_str);
 			curl_easy_setopt(curl, CURLOPT_URL, update_match_str);
@@ -470,7 +474,10 @@ void CCVServer::Bitmex_Update(json* jtable)
 			curl_easy_setopt(curl, CURLOPT_URL, update_order_str);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-			curl_easy_perform(curl);
+			res = curl_easy_perform(curl);
+			if(res != CURLE_OK) {
+				fprintf(stderr, "CVReplyWS:Bitmex_Update:curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			}
 
 			curl_easy_cleanup(curl);
 

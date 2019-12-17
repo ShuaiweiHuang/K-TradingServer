@@ -61,6 +61,7 @@ struct CV_StructTSOrderReply
 	char buysell[1];
 	char exchange_name[10];
 	char commission[10];
+	char trail[2];
 };
 
 using namespace std;

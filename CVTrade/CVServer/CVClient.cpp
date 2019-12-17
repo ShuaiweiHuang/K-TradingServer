@@ -433,11 +433,13 @@ void* CCVClient::Run()
 
 					try
 					{
+#if 0
 						if(pClients->GetClientFromHash(lOrderNumber) != NULL)
 						{
 							throw "Inuse";
 						}
 						else
+#endif
 						{
 							pClients->InsertClientToHash(lOrderNumber, this);
 						}
@@ -458,8 +460,11 @@ void* CCVClient::Run()
 						struct CVOriginalOrder newOriginalOrder;
 						memset(newOriginalOrder.uncaBuf, 0, sizeof(newOriginalOrder.uncaBuf));
 						memcpy(newOriginalOrder.uncaBuf, &cv_order, nSizeOfCVOrder);
-						//std::map<long, struct CVOriginalOrder>::iterator i = m_mOriginalOrder.find(lOrderNumber);
+						//std::map<long, struct CVOriginalOrder>::iterator iter = m_mOriginalOrder.find(lOrderNumber);
+						//printf("Iter = %x\n", iter);
+						//m_mOriginalOrder.erase(iter);
 						m_mOriginalOrder.insert(std::pair<long, struct CVOriginalOrder>(lOrderNumber, newOriginalOrder));
+						printf("Order number = %ld\n", lOrderNumber);
 					}
 					else if(nResult == -1)
 					{

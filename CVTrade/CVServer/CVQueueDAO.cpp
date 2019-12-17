@@ -100,18 +100,22 @@ void* CCVQueueDAO::Run()
 			long lOrderNumber = atol(caOrderNumber);
 
 #ifdef DEBUG
-			printf("Keanu lOrderNumber = %ld\n", lOrderNumber);
 			printf("\nreceive queue %d data with length = %d\n\n", m_kRecvKey, nSizeOfSendSocket);
 #endif
-
 			try
 			{
+				
+
 				if(pClients->GetClientFromHash(lOrderNumber) == NULL)
 				{
 					throw "Lost!";
 				}
-				else
+				else if(pClients->hostname_check_num != (lOrderNumber)/10000000000)
 				{
+					throw "Hostname not match!";
+				}
+				else
+				{	
 					pClient = pClients->GetClientFromHash(lOrderNumber);
 
 					if(pClient->GetStatus() == csOnline)

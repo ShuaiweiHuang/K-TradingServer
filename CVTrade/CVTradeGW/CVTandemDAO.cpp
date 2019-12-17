@@ -846,6 +846,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	}//if(res != CURLE_OK)
 
 	CCVWriteQueueDAO* pWriteQueueDAO = NULL;
+
 	while(pWriteQueueDAO == NULL)
 	{
 		if(m_pWriteQueueDAOs)

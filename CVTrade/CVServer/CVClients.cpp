@@ -28,7 +28,6 @@ CCVClients::CCVClients()
         assert(m_pHeartbeat);
         m_pHeartbeat->SetCallback(NULL);
 	m_pHeartbeat->Start();
-
 #if 0
 	ifstream NodeFile("../ini/CVProxy.ini");
 
@@ -143,7 +142,7 @@ CCVClient* CCVClients::GetClientFromHash(long lOrderNumber)
 void CCVClients::InsertClientToHash(long lOrderNumber, CCVClient* pClient)
 {
 	int nHashNumber = lOrderNumber % AMOUNT_OF_CLIENT_OBJECT_HASH;
-	
+	//printf("nHashNumber = %d\n", nHashNumber);
 	m_ClientObjectHash[nHashNumber] = pClient;
 }
 

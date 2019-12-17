@@ -102,7 +102,6 @@ int CCVQueueDAO::SendData(char* pBuf, int nSize, long lType, int nFlag)
 		CCVClients* pClients = CCVClients::GetInstance();
 		assert(pClients);
 		vector<shared_ptr<CCVClient> >::iterator iter = pClients->m_vClient.begin();
-		printf("TCP: queue data read at key %d, size = %d\n", m_kRecvKey, nSize);
 #ifdef DEBUG
 		printf("TCP: queue data read at key %d, size = %d\n", m_kRecvKey, nSize);
 #endif
@@ -114,7 +113,6 @@ int CCVQueueDAO::SendData(char* pBuf, int nSize, long lType, int nFlag)
 				continue;
 			}
 			if(pClient->SendAll(NULL, pBuf, nSize) != false) {
-				printf("%s\n", pBuf);
 				pClient->m_pHeartbeat->TriggerGetReplyEvent();
 			}
 			iter++;

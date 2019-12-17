@@ -75,7 +75,8 @@ long FillTandemBitcoinOrderFormat(string& strService,
 	else {
 		return TT_ERROR;
 	}
-
+	pClients->hostname_check_num = atol(ucvts.cv_ts_order.key_id) / 10000000000;
+	//printf("checker = %ld\n", pClients->hostname_check_num);
 	memcpy(ucvts.cv_ts_order.trade_type, ucv.cv_order.trade_type, 1);
 
 #ifdef DEBUG	

@@ -530,6 +530,9 @@ void CCVServer::Bitmex_Update(json* jtable)
 					printf("COMMISSION: %s\n", m_trade_reply.commission);
 					printf("===============================\n");
 					CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
+					printf("keanu reply:%d/%s\n", sizeof(m_trade_reply), (char*)&m_trade_reply);
+					m_trade_reply.trail[0] = '\r';
+					m_trade_reply.trail[1] = '\n';
 					pQueueDAO->SendData((char*)&m_trade_reply, sizeof(m_trade_reply));
 				}
 			}//trade

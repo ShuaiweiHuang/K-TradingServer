@@ -19,7 +19,7 @@
 
 using namespace std;
 
-#define AMOUNT_OF_CLIENT_OBJECT_HASH 10000
+#define AMOUNT_OF_CLIENT_OBJECT_HASH 1000000
 
 #ifdef TIMETEST
 
@@ -85,6 +85,7 @@ class CCVClients: public CCVThread, public ICVSocketCallback
 		CCVClient* GetClientFromHash(long lOrderNumber);
 		void InsertClientToHash(long lOrderNumber, CCVClient* pClient);
 		void RemoveClientFromHash(long lOrderNumber);
+		long int hostname_check_num;
 
 		void GetSerialNumber(char* pSerialNumber);
 

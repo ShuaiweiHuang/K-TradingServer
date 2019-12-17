@@ -105,7 +105,7 @@ void CCVClient::OnHeartbeatRequest()
 	sprintf(caHeartbeatRequestBuf, "HTBT_Reply_Timeout,ServerDate=%d%02d%02d,ServerTime=%02d%02d%02d00\r\n",
 		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
-	bool bSendAll = SendAll("HEARTBEAT_REQUEST", caHeartbeatRequestBuf, sizeof(caHeartbeatRequestBuf));
+	bool bSendAll = SendAll("HEARTBEAT_REQUEST", caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
 
 	if(bSendAll == false)
 	{
@@ -129,7 +129,7 @@ bool CCVClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 	int nSend = 0;
 	int nSended = 0;
 	int retry = 3;
-
+printf("size = %d, string = %s\n", nToSend, pBuf);
 	if(nToSend == 0)
 		return true;
 	do

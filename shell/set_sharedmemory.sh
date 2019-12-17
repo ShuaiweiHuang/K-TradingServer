@@ -27,19 +27,19 @@ cd $SCRIPTPATH
 #----------- By Host Set NUM -----------#
 #----------- Take the date of last code and plus on NUM.  -----------#
 DateCode=$(date +"%-m%d")
-SHIFT_BIT=1000000
+SHIFT_BIT=100000
 if [[ $HOSTNAME == "pc-keanuhuang-211" ]]; then
-    NUM=$(( 2110000000000 + $[DateCode * SHIFT_BIT]))
-elif [[ $HOSTNAME == "pc-keanuhuang-119" ]]; then
-    NUM=$(( 1190000000000 + $[DateCode * SHIFT_BIT]))
+    NUM=$(( 1010000000000 + $[DateCode * SHIFT_BIT]))
 elif [[ $HOSTNAME == "server-tm" ]]; then
-    NUM=$(( 2090000000000 + $[DateCode * SHIFT_BIT]))
+    NUM=$(( 1020000000000 + $[DateCode * SHIFT_BIT]))
 elif [[ $HOSTNAME == "server-debug" ]]; then
-    NUM=$(( 2140000000000 + $[DateCode * SHIFT_BIT]))
+    NUM=$(( 1030000000000 + $[DateCode * SHIFT_BIT]))
 elif [[ $HOSTNAME == "server-tm-aws-01" ]]; then
-    NUM=$(( 0010000000000 + $[DateCode * SHIFT_BIT]))
+    NUM=$(( 8010000000000 + $[DateCode * SHIFT_BIT]))
+elif [[ $HOSTNAME == "server-tm-aws-02" ]]; then
+    NUM=$(( 8020000000000 + $[DateCode * SHIFT_BIT]))
 else
-    NUM=$(( 0990000000000 + $[DateCode * SHIFT_BIT]))
+    NUM=$(( 9990000000000 + $[DateCode * SHIFT_BIT]))
     echo -e "${COLOR_RED}Host Wrong!!${COLOR_REST}"
 fi
 

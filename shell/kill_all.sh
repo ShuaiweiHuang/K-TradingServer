@@ -6,3 +6,4 @@ sh $BASEDIR/kill_quote.sh
 sh $BASEDIR/kill_reply.sh
 sh $BASEDIR/kill_replyws.sh
 sh $BASEDIR/kill_trade.sh
+sh $BASEDIR/kill_orderbook.sh

@@ -389,8 +389,8 @@ void* CCVClient::Run()
 						memcpy(Qty, cv_order.cv_order.order_qty, 9);
 						int order_qty = atoi(Qty);
 
-						if(cv_order.cv_order.trade_type[0] == '0')//new order
-							m_bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+						//if(cv_order.cv_order.trade_type[0] == '0')//new order
+						//	m_bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 
 						printf("\n\n\nQty = %s, order_qty = %d, order_limit = %d, side_limit = %d\n", Qty, order_qty, iter->second.bitmex_limit, iter->second.bitmex_side_limit);
 

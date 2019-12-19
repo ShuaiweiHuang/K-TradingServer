@@ -147,8 +147,14 @@ void* CCVQueueDAO::Run()
 					memcpy(Qty, cv_order_reply.cv_reply.original.order_qty, 9);
 					int order_qty = atoi(Qty);
 
-					if(cv_order_reply.cv_reply.original.trade_type[0] == '1' && strcmp(cv_order_reply.cv_reply.error_code, "1000") == 0)//delete order success
-						pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? -(order_qty) : order_qty);
+					if(strcmp(cv_order_reply.cv_reply.error_code, "1000") == 0)
+					{
+						if(cv_order_reply.cv_reply.original.trade_type[0] == '1')//delete order success
+							pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? -(order_qty) : order_qty);
+
+						if(cv_order_reply.cv_reply.original.trade_type[0] == '0')//delete order success
+							pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'S') ? -(order_qty) : order_qty);
+					}
 
 					printf("Reply order_qty = %d, order_limit = %d, side_limit = %d, side_limit_current = %d\n",
 						order_qty, iter->second.bitmex_limit, iter->second.bitmex_side_limit, pClient->m_bitmex_side_limit_current);

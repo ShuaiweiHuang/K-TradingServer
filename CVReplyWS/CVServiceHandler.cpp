@@ -9,13 +9,14 @@
 #include <openssl/ssl.h>
 #include <fstream>
 #include <stdlib.h>
+#include<iostream>
 
 #include "CVServer.h" 
 #include "CVServiceHandler.h" 
 #include "CVWebConns.h"
 #include "CVCommon/CVClientSocket.h"
 #include "CVGlobal.h"
-#include<iostream>
+#include "CVQueueNodes.h"
 
 using namespace std;
 
@@ -99,6 +100,7 @@ void CCVClient::OnHeartbeatRequest()
 	char caHeartbeatRequestBuf[128];
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
+	char hostname[128];
 
 	memset(caHeartbeatRequestBuf, 0, 128);
 
@@ -111,6 +113,13 @@ void CCVClient::OnHeartbeatRequest()
 	{
 		FprintfStderrLog("HEARTBEAT_REQUEST_ERROR", -1, 0, NULL, 0, m_uncaLogonID, sizeof(m_uncaLogonID), g_uncaHeartbeatRequestBuf, sizeof(g_uncaHeartbeatRequestBuf));
 	}
+
+        CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->m_QueueDAOMonitor;
+	gethostname(hostname, sizeof hostname);
+
+        sprintf(caHeartbeatRequestBuf, "{\"Type\":\"Host\",\"Component\":\"Websocket\",\"Hostname\":\"%s\",\"Status\":\"Timeout\"}", hostname);
+        pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
+
 	m_pHeartbeat->TriggerGetReplyEvent();
 }
 

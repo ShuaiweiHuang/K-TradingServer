@@ -461,6 +461,7 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
+	static long int xbt_last_price = -1, eth_last_price = -1;
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
 		static int tick_count = 0;
@@ -476,6 +477,7 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 		if(jtable["data"][i]["price"].dump() == "null")
 			continue;
 
+
 		if(i<jtable["data"].size()-1 && jtable["data"][i]["price"].dump() == jtable["data"][i+1]["price"].dump())
 		{
 			//printf("keanu merge: %s:%d\n", jtable["data"][i]["price"].dump().c_str(), vol_count);
@@ -483,6 +485,35 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 		}
 		else
 		{
+			if(symbol_str == "ETHUSD")
+			{
+
+				if(eth_last_price < 0)
+					eth_last_price = atol(jtable["data"][i]["price"].dump().c_str());
+
+				if(atol(jtable["data"][i]["price"].dump().c_str()) < eth_last_price*0.5 || atol(jtable["data"][i]["price"].dump().c_str()) > eth_last_price*1.5)
+				{
+					printf("%s: Price long int = %ld/%ld\n", symbol_str.c_str(), eth_last_price, atol(jtable["data"][i]["price"].dump().c_str()));
+					continue;
+				}
+				else
+					eth_last_price = atol(jtable["data"][i]["price"].dump().c_str());
+			}
+			if(symbol_str != "ETHUSD")
+			{
+
+				if(xbt_last_price < 0)
+					xbt_last_price = atol(jtable["data"][i]["price"].dump().c_str());
+
+				if(atol(jtable["data"][i]["price"].dump().c_str()) < xbt_last_price*0.5 || atol(jtable["data"][i]["price"].dump().c_str()) > xbt_last_price*1.5)
+				{
+					printf("%s: Price long int = %ld/%ld\n", symbol_str.c_str(), xbt_last_price, atol(jtable["data"][i]["price"].dump().c_str()));
+					continue;
+				}
+				else
+					xbt_last_price = atol(jtable["data"][i]["price"].dump().c_str());
+			}
+
 			//printf("keanu dump: %s:%d\n", jtable["data"][i]["price"].dump().c_str(), vol_count);
 			sprintf(epochmsg, "%.10s %.2s:%.2s:%.2s", time_str.c_str(), time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17);
 			strptime(epochmsg, "%Y-%m-%d %H:%M:%S", &tm_struct);

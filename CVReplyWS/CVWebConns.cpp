@@ -187,13 +187,15 @@ void CCVServers::OnHeartbeatRequest()
 	double loading[3];
 	char hostname[128];
 
+	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->m_QueueDAOMonitor;
+
 	gethostname(hostname, sizeof hostname);
 	memset(caHeartbeatRequestBuf, 0, 128);
 	mem_usage(VM_size, RSS_size);
+
 	sprintf(caHeartbeatRequestBuf, "{\"Type\":\"Heartbeat\",\"Component\":\"Reply\",\"Hostname\":\"%s\",\"ServerDate\":\"%d%02d%02d\",\"ServerTime\":\"%02d%02d%02d00\"}",
 		hostname, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
-	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->m_QueueDAOMonitor;
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));
 	sprintf(caHeartbeatRequestBuf, "{\"Type\":\"System\",\"Component\":\"Reply\",\"Hostname\":\"%s\",\"CurrentThread\":\"%d\",\"MaxThread\":\"%d\",\"MemoryUsage\":\"%.0f\"}",
 		hostname, g_MNTRMSG.num_of_thread_Current, g_MNTRMSG.num_of_thread_Max, VM_size);

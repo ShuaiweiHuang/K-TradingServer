@@ -135,6 +135,7 @@ bool CCVClient::SendAll(const char* pWhat, char* pBuf, int nToSend)
 	do
 	{
 		nToSend -= nSend;
+		nSend = send(m_ClientAddrInfo.nSocket, pBuf + nSended, nToSend, 0);
 #if 0
 		do {
 			nSend = send(m_ClientAddrInfo.nSocket, pBuf + nSended, nToSend, 0);

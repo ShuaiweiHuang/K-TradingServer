@@ -389,6 +389,28 @@ void* CCVClient::Run()
 						memcpy(Qty, cv_order.cv_order.order_qty, 9);
 						int order_qty = atoi(Qty);
 
+						if(cv_order.cv_order.trade_type[0] == '0') {
+
+							m_order_timestamp[m_order_index] = (unsigned)time(NULL);
+
+							m_bitmex_time_limit_current = 0;
+
+							for(int i=0 ; i<MAX_TIME_LIMIT ; i++)
+							{
+								printf("time = %u\n", m_order_timestamp[i]);
+								if(((unsigned)time(NULL) - m_order_timestamp[i]) < 60)
+									m_bitmex_time_limit_current++;
+							}
+							if(m_bitmex_time_limit_current > iter->second.bitmex_time_limit) {
+								m_order_timestamp[m_order_index] = 0;
+								lOrderNumber = RC_TIME_ERROR;
+							}
+							else {
+								m_order_index++;
+								m_order_index %= MAX_TIME_LIMIT;
+							}
+							printf("trade rate limit = %d\n", m_bitmex_time_limit_current);
+						}
 						//if(cv_order.cv_order.trade_type[0] == '0')//new order
 						//	m_bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 
@@ -399,6 +421,7 @@ void* CCVClient::Run()
 
 						if(m_bitmex_side_limit_current >= iter->second.bitmex_side_limit || m_bitmex_side_limit_current <= -(iter->second.bitmex_side_limit))
 							lOrderNumber = RC_SIDE_ERROR;
+
 					}
 #ifdef DEBUG
 					printf("lOrderNumber = %ld\n", lOrderNumber);
@@ -599,13 +622,15 @@ void CCVClient::LoadRiskControl(char* p_username)
 {
 	json jtable_query_limit;
 	CURLcode res;
-	string riskctl_query_reply, order_limit_str, side_order_limit_str, cum_order_limit_str, strategy_str, accno_str;
+	string riskctl_query_reply, order_limit_str, side_order_limit_str, cum_order_limit_str, frequency_order_limit_str, strategy_str, accno_str;
 	struct AccountData acdata;
 	CURL *curl = curl_easy_init();
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
 	char query_str[1024];
 	m_bitmex_side_limit_current = 0;
+	m_bitmex_time_limit_current = 0;
+	m_order_index = 0;
 
 	if(!curl)
 	{
@@ -614,10 +639,10 @@ void CCVClient::LoadRiskControl(char* p_username)
 	}
 #ifdef AWSCODE
 	//sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit,acv_risk_control.side_order_limit,acv_risk_control.cum_order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader==%%27%s%%27%%20", p_username);
-	sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
+	sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,frequency_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
 #else
 	//sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit,acv_risk_control.side_order_limit,acv_risk_control.cum_order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader=%%27%s%%27%%20", p_username);
-	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
+	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,frequency_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
 #endif
 	printf("============================\nquery_str:%s\n============================\n", query_str);
 #ifdef DEBUG
@@ -654,6 +679,7 @@ void CCVClient::LoadRiskControl(char* p_username)
 		order_limit_str = jtable_query_limit[i]["order_limit"].dump();
 		side_order_limit_str = jtable_query_limit[i]["side_order_limit"].dump();
 		cum_order_limit_str = jtable_query_limit[i]["cum_order_limit"].dump();
+		frequency_order_limit_str = jtable_query_limit[i]["frequency_order_limit"].dump();
 		strategy_str = jtable_query_limit[i]["strategy"].dump();
 		accno_str = jtable_query_limit[i]["accounting_no"].dump();
 
@@ -663,15 +689,17 @@ void CCVClient::LoadRiskControl(char* p_username)
 		rcdata.bitmex_limit = atoi(order_limit_str.c_str());
 		rcdata.bitmex_side_limit = atoi(side_order_limit_str.c_str());
 		rcdata.bitmex_cum_limit = atoi(cum_order_limit_str.c_str());
+		rcdata.bitmex_time_limit = atoi(frequency_order_limit_str.c_str());
 
 		m_mRiskControl.insert(pair<string, struct RiskctlData>((accno_str+strategy_str), rcdata));
 #ifdef DEBUG
-		printf("%s%s - %s,%s,%s\n",
+		printf("%s%s - %s,%s,%s,%s\n",
 			accno_str.c_str(),
 			strategy_str.c_str(),
 			order_limit_str.c_str(),
 			side_order_limit_str.c_str(),
-			cum_order_limit_str.c_str());
+			cum_order_limit_str.c_str(),
+			frequency_order_limit_str.c_str());
 #endif
 	}
 
@@ -679,11 +707,12 @@ void CCVClient::LoadRiskControl(char* p_username)
 
 	for(iter = m_mRiskControl.begin(); iter != m_mRiskControl.end() ; iter++)
 	{
-		printf("%s - %d,%d,%d\n",
+		printf("%s - %d,%d,%d,%d\n",
 			iter->first.c_str(),
 			iter->second.bitmex_limit,
 			iter->second.bitmex_side_limit,
-			iter->second.bitmex_cum_limit);
+			iter->second.bitmex_cum_limit,
+			iter->second.bitmex_time_limit);
 	}
 
 	curl_easy_cleanup(curl);

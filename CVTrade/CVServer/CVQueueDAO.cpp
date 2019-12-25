@@ -142,22 +142,38 @@ void* CCVQueueDAO::Run()
 					map<string, struct RiskctlData>::iterator iter;
 
 					iter = pClient->m_mRiskControl.find(strRiskKey);
-					char Qty[10];
+					char Qty[10], Status[5];
 					memset(Qty, 0, 10);
+					memset(Status, 0, 5);
 					memcpy(Qty, cv_order_reply.cv_reply.original.order_qty, 9);
+					memcpy(Status, cv_order_reply.cv_reply.error_code, 4);
 					int order_qty = atoi(Qty);
+					printf("\n\n\n%s\n\n\n", Status);
+					if(strcmp(Status, "1000") == 0) {
 
-					if(strcmp(cv_order_reply.cv_reply.error_code, "1000") == 0)
-					{
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '1')//delete order success
 							pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? -(order_qty) : order_qty);
 
-						if(cv_order_reply.cv_reply.original.trade_type[0] == '0')//delete order success
+						if(cv_order_reply.cv_reply.original.trade_type[0] == '0')//submit order success
 							pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'S') ? -(order_qty) : order_qty);
-					}
 
-					printf("Reply order_qty = %d, order_limit = %d, side_limit = %d, side_limit_current = %d\n",
-						order_qty, iter->second.bitmex_limit, iter->second.bitmex_side_limit, pClient->m_bitmex_side_limit_current);
+					}
+					else{
+#if 1
+						if(cv_order_reply.cv_reply.original.trade_type[0] == '0') {
+							if(pClient->m_order_index > 0) {
+								pClient->m_order_index--;
+							}
+							else {
+								pClient->m_order_index = MAX_TIME_LIMIT-1;
+							}
+							pClient->m_order_timestamp[pClient->m_order_index] = 0;
+						}
+#endif							
+					}
+					printf("order_qty = %d, order_limit = %d\nside_limit = %d, side_limit_current = %d\ntime_limit = %d, time_limit_current = %d\n",
+						order_qty, iter->second.bitmex_limit, iter->second.bitmex_side_limit, pClient->m_bitmex_side_limit_current, 
+						iter->second.bitmex_time_limit, pClient->m_bitmex_time_limit_current);
 
 #endif
 

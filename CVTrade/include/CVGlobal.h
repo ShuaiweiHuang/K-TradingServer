@@ -37,6 +37,7 @@
 #define KI_ERROR	-1116
 #define RC_LIMIT_ERROR	-2000
 #define RC_SIDE_ERROR	-2001
+#define RC_TIME_ERROR	-2002
 #define ERROR_OTHER	-9999
 
 #define HEARTBEATVAL 	60

@@ -8,6 +8,9 @@
 #include <netinet/in.h>
 #include <vector>
 #include <map>
+#include <openssl/aes.h>
+#include <openssl/rsa.h>
+#include <openssl/bn.h>
 
 #include "CVCommon/CVThread.h"
 #include "CVHeartbeat.h"
@@ -19,6 +22,7 @@ using namespace std;
 #define UIDLEN		10
 #define QUEUESIZE	10
 #define MAX_TIME_LIMIT	120
+
 
 struct TCVClientAddrInfo
 {
@@ -77,6 +81,11 @@ class CCVClient: public CCVThread
 		CCVHeartbeat* m_pHeartbeat;
 		pthread_mutex_t m_MutexLockOnClientStatus;
 		char m_username[20];
+#ifdef SSLTLS
+		SSL* m_ssl;
+		BIO* m_accept_bio;
+		BIO* m_bio;
+#endif
 	protected:
 		void* Run();
 		bool LogonAuth(char* p_username, char* p_password, struct CV_StructLogonReply &logon_reply);
@@ -100,5 +109,11 @@ class CCVClient: public CCVThread
 		int m_order_index;
 		int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);
 		map<string, struct RiskctlData> m_mRiskControl;
+#ifdef SSLTLS
+		EVP_PKEY *generatePrivateKey();
+		X509	*generateCertificate(EVP_PKEY *pkey);
+		void	init_openssl();
+#endif
+
 };
 #endif

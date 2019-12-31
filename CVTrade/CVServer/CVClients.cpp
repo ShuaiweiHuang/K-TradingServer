@@ -12,7 +12,24 @@ using namespace std;
 
 CCVClients* CCVClients::instance = NULL;
 pthread_mutex_t CCVClients::ms_mtxInstance = PTHREAD_MUTEX_INITIALIZER;
+extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
+
 struct MNTRMSGS g_MNTRMSG;
+#ifdef SSLTLS
+pthread_mutex_t *ssl_mutex = NULL;
+static void ssl_locking_cb (int mode, int type, const char* file, int line)
+{
+	if (mode & CRYPTO_LOCK)
+		pthread_mutex_lock(&ssl_mutex[type]);
+	else
+		pthread_mutex_unlock(&ssl_mutex[type]);
+}
+
+static unsigned long ssl_id_cb (void)
+{
+	  return (unsigned long)pthread_self();
+}
+#endif
 
 CCVClients::CCVClients() 
 {
@@ -24,10 +41,24 @@ CCVClients::CCVClients()
 	pthread_mutex_init(&m_MutexLockOnSerialNumber, NULL);
 	pthread_mutex_init(&m_MutexLockOnOnlineClientVector, NULL);
 	pthread_mutex_init(&m_MutexLockOnOfflineClientVector, NULL);
-        m_pHeartbeat = new CCVHeartbeat(HEARTBEATVAL);
-        assert(m_pHeartbeat);
-        m_pHeartbeat->SetCallback(NULL);
+	m_pHeartbeat = new CCVHeartbeat(HEARTBEATVAL);
+	assert(m_pHeartbeat);
+	m_pHeartbeat->SetCallback(NULL);
 	m_pHeartbeat->Start();
+#ifdef SSLTLS
+	if ((ssl_mutex = (pthread_mutex_t*)OPENSSL_malloc(sizeof(pthread_mutex_t) * CRYPTO_num_locks())) == NULL) {
+		FprintfStderrLog("SSL_MUTEX_FAIL", 0, 0, 0);
+	}
+
+	for(int i=0 ; i < CRYPTO_num_locks(); i++)
+		pthread_mutex_init(&ssl_mutex[i], NULL);
+
+	/* Set up locking function */
+	CRYPTO_set_locking_callback(ssl_locking_cb);
+	CRYPTO_set_id_callback(ssl_id_cb);
+
+#endif
+
 #if 0
 	ifstream NodeFile("../ini/CVProxy.ini");
 
@@ -94,6 +125,16 @@ CCVClients::~CCVClients()
 	{
 		delete *iter;
 	}
+#ifdef SSLTLS
+	CRYPTO_set_locking_callback(NULL);
+
+	for (int i=0; i<CRYPTO_num_locks(); i++)
+		pthread_mutex_destroy(&ssl_mutex[i]);
+
+	OPENSSL_free(ssl_mutex);
+#endif
+
+
 }
 
 void* CCVClients::Run()
@@ -299,14 +340,14 @@ void CCVClients::FlushLogMessageToFile()
 		while(m_vOnlineClient[index]->m_LogMessageQueue.order_index)
 		{
 			m_fileOrder << m_vOnlineClient[index]->m_LogMessageQueue.order_msg_len[m_vOnlineClient[index]->m_LogMessageQueue.order_index-1] <<  ","
-			            << m_vOnlineClient[index]->m_LogMessageQueue.order_msg_buf[m_vOnlineClient[index]->m_LogMessageQueue.order_index-1] << endl;
+				    << m_vOnlineClient[index]->m_LogMessageQueue.order_msg_buf[m_vOnlineClient[index]->m_LogMessageQueue.order_index-1] << endl;
 			m_vOnlineClient[index]->m_LogMessageQueue.order_index--;
 		}
 
 		while(m_vOnlineClient[index]->m_LogMessageQueue.reply_index)
 		{
 			m_fileReply << m_vOnlineClient[index]->m_LogMessageQueue.reply_msg_len[m_vOnlineClient[index]->m_LogMessageQueue.reply_index-1] <<  ","
-			            << m_vOnlineClient[index]->m_LogMessageQueue.reply_msg_buf[m_vOnlineClient[index]->m_LogMessageQueue.reply_index-1] << endl;
+				    << m_vOnlineClient[index]->m_LogMessageQueue.reply_msg_buf[m_vOnlineClient[index]->m_LogMessageQueue.reply_index-1] << endl;
 			m_vOnlineClient[index]->m_LogMessageQueue.reply_index--;
 		}
 		index++;

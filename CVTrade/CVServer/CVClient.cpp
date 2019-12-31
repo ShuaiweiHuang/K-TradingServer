@@ -11,6 +11,9 @@
 #include <iomanip>
 #include <algorithm>
 #include <openssl/hmac.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 
 #include "CVQueueDAOs.h"
 #include "CVClient.h"
@@ -44,6 +47,13 @@ CCVClient::CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService
 {
 	memset(&m_ClientAddrInfo, 0, sizeof(struct TCVClientAddrInfo));
 	memcpy(&m_ClientAddrInfo, &ClientAddrInfo, sizeof(struct TCVClientAddrInfo));
+#ifdef SSLTLS
+	init_openssl();
+	m_accept_bio = BIO_new_socket(m_ClientAddrInfo.nSocket, BIO_CLOSE);
+	SSL_set_bio(m_ssl, m_accept_bio, m_accept_bio);
+	SSL_accept(m_ssl);
+	m_bio = BIO_pop(m_accept_bio);
+#endif
 
 	m_ClientStatus = csNone;
 	m_strService = strService;
@@ -75,6 +85,13 @@ CCVClient::~CCVClient()
 	}
 
 	pthread_mutex_destroy(&m_MutexLockOnClientStatus);
+#ifdef SSLTLS
+	SSL_shutdown(m_ssl);
+	BIO_free_all(m_bio);
+	BIO_free_all(m_accept_bio);
+	ERR_free_strings();
+#endif
+
 }
 
 void* CCVClient::Run()
@@ -411,8 +428,8 @@ void* CCVClient::Run()
 							}
 							printf("trade rate limit = %d\n", m_bitmex_time_limit_current);
 						}
-						//if(cv_order.cv_order.trade_type[0] == '0')//new order
-						//	m_bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+						if(cv_order.cv_order.trade_type[0] == '0')//new order
+							m_bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 
 						printf("\n\n\nQty = %s, order_qty = %d, order_limit = %d, side_limit = %d\n", Qty, order_qty, iter->second.bitmex_limit, iter->second.bitmex_side_limit);
 
@@ -526,9 +543,11 @@ bool CCVClient::SendAll(const unsigned char* pBuf, int nToSend)
 	do
 	{
 		nToSend -= nSend;
-
+#ifdef SSLTLS
+		nSend = SSL_write(m_ssl, pBuf + nSended, nToSend);
+#else
 		nSend = send(m_ClientAddrInfo.nSocket, pBuf + nSended, nToSend, 0);
-
+#endif
 		if(nSend == -1)
 		{
 			break;
@@ -556,8 +575,11 @@ bool CCVClient::RecvAll(unsigned char* pBuf, int nToRecv)
 	do
 	{
 		nToRecv -= nRecv;
+#ifdef SSLTLS
+		nRecv = SSL_read(m_ssl, pBuf + nRecved, nToRecv);
+#else
 		nRecv = recv(m_ClientAddrInfo.nSocket, pBuf + nRecved, nToRecv, 0);
-
+#endif
 		if(nRecv > 0)
 		{
 			if(m_pHeartbeat)
@@ -943,16 +965,16 @@ printf("\ntrader: %s\n", trader.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &account_query_reply);
 	res = curl_easy_perform(curl);
-        if(res != CURLE_OK) {
-                fprintf(stderr, "curl_easy_perform() failed: %s\n",
-                curl_easy_strerror(res));
-                curl_easy_cleanup(curl);
+	if(res != CURLE_OK) {
+		fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+		curl_easy_cleanup(curl);
 		memcpy(logon_reply.status_code, "NG", 2);//to do
 		memcpy(logon_reply.backup_ip, BACKUP_IP, 15);
 		memcpy(logon_reply.error_code, "01", 2);
 		sprintf(logon_reply.error_message, "login db webapi fail");
 		return false;
-        }
+	}
 
 #ifdef DEBUG
 	printf("macoutput = %s\n\n\n", macoutput);
@@ -972,3 +994,58 @@ int CCVClient::GetClientSocket()
 {
 	return m_ClientAddrInfo.nSocket;
 }
+
+#ifdef SSLTLS
+int password_cb(char *buf, int size, int rwflag, void *password)
+{
+	strncpy(buf, (char *)(password), size);
+	buf[size - 1] = '\0';
+	return strlen(buf);
+}
+
+void CCVClient::init_openssl()
+{
+	SSL_load_error_strings();
+	ERR_load_crypto_strings();
+	SSL_library_init();
+	SSL_CTX *ctx = SSL_CTX_new(TLSv1_2_server_method());
+	if (ctx == NULL) {
+		printf("errored; unable to load context.\n");
+		ERR_print_errors_fp(stderr);
+	}
+	EVP_PKEY* pkey = generatePrivateKey();
+	X509* x509 = generateCertificate(pkey);
+	SSL_CTX_use_certificate(ctx, x509);
+	SSL_CTX_set_default_passwd_cb(ctx, password_cb);
+	SSL_CTX_use_PrivateKey(ctx, pkey);
+	SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, 0);
+	m_ssl = SSL_new(ctx);
+}
+
+
+EVP_PKEY *CCVClient::generatePrivateKey()
+{
+	EVP_PKEY *pkey = NULL;
+	EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+	EVP_PKEY_keygen_init(pctx);
+	EVP_PKEY_CTX_set_rsa_keygen_bits(pctx, 2048);
+	EVP_PKEY_keygen(pctx, &pkey);
+	return pkey;
+}
+
+X509 *CCVClient::generateCertificate(EVP_PKEY *pkey)
+{
+	X509 *x509 = X509_new();
+	X509_set_version(x509, 2);
+	ASN1_INTEGER_set(X509_get_serialNumber(x509), 0);
+	X509_gmtime_adj(X509_get_notBefore(x509), 0);
+	X509_gmtime_adj(X509_get_notAfter(x509), (long)60*60*24*365);
+	X509_set_pubkey(x509, pkey);
+
+	X509_NAME *name = X509_get_subject_name(x509);
+	X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (const unsigned char*)"TW", -1, -1, 0);
+	X509_set_issuer_name(x509, name);
+	X509_sign(x509, pkey, EVP_md5());
+	return x509;
+}
+#endif

@@ -154,11 +154,13 @@ void* CCVQueueDAO::Run()
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '1')//delete order success
 							pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? -(order_qty) : order_qty);
 
-						if(cv_order_reply.cv_reply.original.trade_type[0] == '0')//submit order success
-							pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'S') ? -(order_qty) : order_qty);
+						//if(cv_order_reply.cv_reply.original.trade_type[0] == '0')//submit order success
+						//	pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'S') ? -(order_qty) : order_qty);
 
 					}
 					else{
+						if(cv_order_reply.cv_reply.original.trade_type[0] == '0')//submit order success
+							pClient->m_bitmex_side_limit_current += ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? -(order_qty) : order_qty);
 #if 1
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '0') {
 							if(pClient->m_order_index > 0) {

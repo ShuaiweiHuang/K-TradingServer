@@ -147,7 +147,7 @@ void CCVServer::OnConnect()
 				m_cfd.set_message_handler(bind(&OnData_Bitmex_Index,&m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BITMEXFUND") {
-				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_MIN);
+				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_HOUR);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
 				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
 				m_cfd.set_message_handler(bind(&OnData_Bitmex_Funding,&m_cfd,::_1,::_2));
@@ -314,7 +314,7 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 #ifdef DEBUG
 	printf("[on_message_bitmex_funding]\n");
 #endif
-	static char netmsg[BUFFERSIZE];
+	static char fundmsg[BUFFERSIZE];
 	static char timemsg[9];
 	static char epochmsg[20];
 
@@ -339,7 +339,7 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 		//if(jtable["data"][i]["symbol"] != "XBTUSD" && jtable["data"][i]["symbol"] != "ETHUSD")
 		//	continue;
 
-		memset(netmsg, 0, BUFFERSIZE);
+		memset(fundmsg, 0, BUFFERSIZE);
 		memset(timemsg, 0, 8);
 		memset(epochmsg, 0, 20);
 
@@ -357,19 +357,20 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 		size_t epoch = std::mktime(&tm_struct);
 		sprintf(epochmsg, "%d.%.3s", epoch, time_str.c_str()+20);
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
-		sprintf(netmsg, "01_ID=%s_FR.BMEX,ECC.1=%d,Time=%s,C=%lf,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
+		sprintf(fundmsg, "01_ID=%s_FR.BMEX,ECC.1=%d,Time=%s,C=%lf,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
 			symbol_str.c_str(), tick_count, timemsg, funding_rate, size_str.c_str(), tick_count, pClients->m_strEPIDNum.c_str(), tick_count, epochmsg);
+		printf("%s\n", fundmsg);
 		tick_count++;
 
-		int msglen = strlen(netmsg);
-		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
-		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
+		int msglen = strlen(fundmsg);
+		fundmsg[strlen(fundmsg)] = GTA_TAIL_BYTE_1;
+		fundmsg[strlen(fundmsg)] = GTA_TAIL_BYTE_2;
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
-		pQueueDAO->SendData(netmsg, strlen(netmsg));
+		pQueueDAO->SendData(fundmsg, strlen(fundmsg));
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
-		cout << netmsg << endl;
+		cout << fundmsg << endl;
 #endif
 	}
 
@@ -728,6 +729,7 @@ void CCVServer::OnHeartbeatRequest()
 		if(msg.message() != "SUCCESS" && msg.message() != "Success")
 		{
 			FprintfStderrLog("Server PING/PONG Fail", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
+			printf("ping/pong fail\n");
 #ifdef EXIT_VERSION
 			exit(-1);
 #endif
@@ -735,6 +737,7 @@ void CCVServer::OnHeartbeatRequest()
 		}
 		else
 		{
+			printf("ping/pong success\n");
 			m_pHeartbeat->TriggerGetReplyEvent();
 			m_heartbeat_count++;
 		}

@@ -429,8 +429,8 @@ void* CCVClient::Run()
 							printf("trade rate limit = %d\n", m_bitmex_time_limit_current);
 						}
 
-//						if(cv_order.cv_order.trade_type[0] == '0')//submit new order
-//							m_bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+						if(cv_order.cv_order.trade_type[0] == '0')//submit new order
+							m_bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 
 						printf("\n\n\nQty = %s, order_qty = %d, order_limit = %d, side_limit = %d\n", Qty, order_qty, iter->second.bitmex_limit, iter->second.bitmex_side_limit);
 
@@ -439,7 +439,7 @@ void* CCVClient::Run()
 
 						if(m_bitmex_side_limit_current >= iter->second.bitmex_side_limit || m_bitmex_side_limit_current <= -(iter->second.bitmex_side_limit))
 						{
-							//m_bitmex_side_limit_current -= ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+							m_bitmex_side_limit_current -= ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 							lOrderNumber = RC_SIDE_ERROR;
 						}
 

@@ -928,7 +928,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 
 	if(option == OPT_ADD) {
 #ifdef AWSCODE
-		sprintf(insert_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query==insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
 #else
 		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
 #endif
@@ -941,7 +941,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 	}
 	if(option == OPT_DELETE) {
 #ifdef AWSCODE
-		sprintf(insert_str,"http://127.0.0.1:2011/mysql?db=cryptovix&query=update%%20bitmex_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27", exchange_data[7].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[16].c_str());
+		sprintf(insert_str,"https://127.0.0.1:2012/mysql/?query=update%%20bitmex_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27", exchange_data[7].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[16].c_str());
 #else
 		sprintf(insert_str,"http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20bitmex_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27", exchange_data[7].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[16].c_str());
 #endif
@@ -959,6 +959,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 	curl_easy_setopt(curl, CURLOPT_URL, insert_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
 	curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
 	//printf("================response\n%s\n===============\n", response.c_str());
@@ -1027,7 +1028,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 #endif
 
 #ifdef AWSCODE
-		sprintf(insert_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=insert%%20into%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%.19s%%27,match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27,order_price=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.30s%%27,trader=%%27%.20s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27",
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%.19s%%27,match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27,order_price=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.30s%%27,trader=%%27%.20s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27",
 		exchange_data[2].c_str(), exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[13].c_str(),
 		exchange_data[6].c_str(), exchange_data[11].c_str(), exchange_data[3].c_str(), time_str,
 		exchange_data[7].c_str(), exchange_data[4].c_str(), exchange_data[14].c_str(), exchange_data[5].c_str(),
@@ -1043,7 +1044,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 
 	if(option == OPT_DELETE) {
 #ifdef AWSCODE
-		sprintf(insert_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str());
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str());
 #else
 		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str());
 #endif
@@ -1060,6 +1061,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 	curl_easy_setopt(curl, CURLOPT_URL, insert_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
 	curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
 #ifdef DEBUG

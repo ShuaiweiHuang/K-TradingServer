@@ -665,7 +665,7 @@ void CCVClient::LoadRiskControl(char* p_username)
 	}
 #ifdef AWSCODE
 	//sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit,acv_risk_control.side_order_limit,acv_risk_control.cum_order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader==%%27%s%%27%%20", p_username);
-	sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,frequency_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
+	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,frequency_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
 #else
 	//sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit,acv_risk_control.side_order_limit,acv_risk_control.cum_order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader=%%27%s%%27%%20", p_username);
 	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,frequency_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
@@ -677,6 +677,7 @@ void CCVClient::LoadRiskControl(char* p_username)
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &riskctl_query_reply);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
 
 	res = curl_easy_perform(curl);
 	if(res != CURLE_OK) {
@@ -844,7 +845,7 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 
 #ifdef AWSCODE
 	//sprintf(query_str, "http://127.0.0.1:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
-	sprintf(query_str, "http://127.0.0.1:2011/mysql?query=select%%20accounting_no,broker_no,exchange_no,trader%%20from%%20(select%%20DISTINCT%%20accounting_no,broker_no,exchange_no,trader,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_accounting.trader)%%20as%%20sub_trader,(select%%201%%20from%%20acv_employee%%20where%%20acv_employee.account=%%27%s%%27%%20and%%20acv_employee.password=%%27%s%%27%%20)%%20as%%20login_check%%20from%%20view_accounting%%20)%%20as%%20t1%%20where%%20login_check=1%%20and%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username, p_password, p_username);
+	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20accounting_no,broker_no,exchange_no,trader%%20from%%20(select%%20DISTINCT%%20accounting_no,broker_no,exchange_no,trader,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_accounting.trader)%%20as%%20sub_trader,(select%%201%%20from%%20acv_employee%%20where%%20acv_employee.account=%%27%s%%27%%20and%%20acv_employee.password=%%27%s%%27%%20)%%20as%%20login_check%%20from%%20view_accounting%%20)%%20as%%20t1%%20where%%20login_check=1%%20and%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username, p_password, p_username);
 #else
 	//sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
 	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20accounting_no,broker_no,exchange_no,trader%%20from%%20(select%%20DISTINCT%%20accounting_no,broker_no,exchange_no,trader,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_accounting.trader)%%20as%%20sub_trader,(select%%201%%20from%%20acv_employee%%20where%%20acv_employee.account=%%27%s%%27%%20and%%20acv_employee.password=%%27%s%%27%%20)%%20as%%20login_check%%20from%%20view_accounting%%20)%%20as%%20t1%%20where%%20login_check=1%%20and%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username, p_password, p_username);
@@ -857,6 +858,8 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &login_query_reply);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+
 	res = curl_easy_perform(curl);
 	if(res != CURLE_OK) {
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",
@@ -901,7 +904,7 @@ printf("\ntrader: %s\n", trader.c_str());
 		brno.erase(remove(brno.begin(), brno.end(), '\"'), brno.end());
 		trader.erase(remove(trader.begin(), trader.end(), '\"'), trader.end());
 #ifdef AWSCODE
-		sprintf(query_str, "http://127.0.0.1:2011/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
+		sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 #else
 		sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 #endif
@@ -912,6 +915,8 @@ printf("\ntrader: %s\n", trader.c_str());
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &account_query_reply);
+		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+
 		res = curl_easy_perform(curl);
 		if(res != CURLE_OK) {
 			fprintf(stderr, "curl_easy_perform() failed: %s\n",
@@ -959,7 +964,7 @@ printf("\ntrader: %s\n", trader.c_str());
 
 	memcpy(logon_reply.access_token, macoutput, 64);
 #ifdef AWSCODE
-	sprintf(query_str, "http://127.0.0.1:2011/mysql?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27",
+	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27",
 		macoutput, p_username);
 #else
 	sprintf(query_str, "http://tm1.cryptovix.com.tw:2011/mysql?query=update%%20acv_trader%%20set%%20access_token=%%27%.64s%%27where%%20trader_name=%%27%s%%27",
@@ -968,6 +973,7 @@ printf("\ntrader: %s\n", trader.c_str());
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &account_query_reply);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
 	res = curl_easy_perform(curl);
 	if(res != CURLE_OK) {
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",

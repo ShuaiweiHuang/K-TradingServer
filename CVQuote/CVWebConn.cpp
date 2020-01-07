@@ -149,7 +149,7 @@ void CCVServer::OnConnect()
 			else if(m_strName == "BITMEXFUND") {
 				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_HOUR);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_HOUR);
 				m_cfd.set_message_handler(bind(&OnData_Bitmex_Funding,&m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BINANCE") {

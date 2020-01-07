@@ -74,7 +74,7 @@ int CCVQueueDAO::Webapi_Write(char* buffer, int)
 	}
 	else
 		printf("%s\n", monitor_reply.c_str());
-
+#if 0
 	sprintf(query_str, "http://intra.cryptovix.com.tw:3001/receive/tm?data=%s", buffer);
 	printf("\n%s\n", query_str);
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
@@ -89,7 +89,7 @@ int CCVQueueDAO::Webapi_Write(char* buffer, int)
 	}
 	else
 		printf("%s\n", monitor_reply.c_str());
-
+#endif
 	curl_easy_cleanup(curl);
 }
 

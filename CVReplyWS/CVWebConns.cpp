@@ -219,7 +219,7 @@ void CCVServers::OnHeartbeatRequest()
 	if(getloadavg(loading, 3) != -1) /*getloadavg is the function used to calculate and obtain the load average*/
 	{
 		gethostname(hostname, sizeof hostname);
-		g_MNTRMSG.cpu_loading = loading[0]*=100;
+		g_MNTRMSG.cpu_loading = (loading[0]*=100)/(sysconf(_SC_NPROCESSORS_ONLN));
 		sprintf(caHeartbeatRequestBuf, "{\"Type\":\"Host\",\"Component\":\"CPU\",\"Hostname\":\"%s\",\"Loading\":\"%d\"}", hostname, g_MNTRMSG.cpu_loading);
 	}
 	pQueueDAO->SendData(caHeartbeatRequestBuf, strlen(caHeartbeatRequestBuf));

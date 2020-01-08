@@ -57,6 +57,7 @@ struct RiskctlData
 {
 	int bitmex_limit;
 	int bitmex_side_limit;
+	int bitmex_side_limit_current;
 	int bitmex_cum_limit;
 	int bitmex_time_limit;
 };
@@ -109,6 +110,7 @@ class CCVClient: public CCVThread
 		int m_order_index;
 		int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);
 		map<string, struct RiskctlData> m_mRiskControl;
+		map<string, struct RiskctlData>::iterator m_iter;
 #ifdef SSLTLS
 		EVP_PKEY *generatePrivateKey();
 		X509	*generateCertificate(EVP_PKEY *pkey);

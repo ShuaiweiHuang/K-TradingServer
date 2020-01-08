@@ -399,8 +399,8 @@ void* CCVClient::Run()
 						//Risk Control
 						string strRiskKey(cv_order.cv_order.sub_acno_id);
 						printf("strRiskKey = %s\n", strRiskKey.c_str());
-						map<string, struct RiskctlData>::iterator iter;
-						iter = m_mRiskControl.find(strRiskKey);
+						//map<string, struct RiskctlData>::iterator iter;
+						m_iter = m_mRiskControl.find(strRiskKey);
 						char Qty[10];
 						memset(Qty, 0, 10);
 						memcpy(Qty, cv_order.cv_order.order_qty, 9);
@@ -418,7 +418,7 @@ void* CCVClient::Run()
 								if(((unsigned)time(NULL) - m_order_timestamp[i]) < 60)
 									m_bitmex_time_limit_current++;
 							}
-							if(m_bitmex_time_limit_current > iter->second.bitmex_time_limit) {
+							if(m_bitmex_time_limit_current > m_iter->second.bitmex_time_limit) {
 								m_order_timestamp[m_order_index] = 0;
 								lOrderNumber = RC_TIME_ERROR;
 							}
@@ -430,19 +430,20 @@ void* CCVClient::Run()
 						}
 
 
-						printf("\n\n\nQty = %s, order_qty = %d, order_limit = %d, side_limit = %d\n", Qty, order_qty, iter->second.bitmex_limit, iter->second.bitmex_side_limit);
+						printf("\n\n\nQty = %s, order_qty = %d, order_limit = %d, side_limit = %d\n", Qty, order_qty, m_iter->second.bitmex_limit, m_iter->second.bitmex_side_limit);
 
-						if(order_qty >= iter->second.bitmex_limit)
+						if(order_qty >= m_iter->second.bitmex_limit)
 							lOrderNumber = RC_LIMIT_ERROR;
 
 						if(cv_order.cv_order.trade_type[0] == '0')//submit new order
 						{
 							printf("risk Qty = %s\n", Qty);
-							m_bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+							m_iter->second.bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 
-							if(m_bitmex_side_limit_current >= iter->second.bitmex_side_limit || m_bitmex_side_limit_current <= -(iter->second.bitmex_side_limit))
+							if(m_iter->second.bitmex_side_limit_current >= m_iter->second.bitmex_side_limit ||
+								m_iter->second.bitmex_side_limit_current <= -(m_iter->second.bitmex_side_limit))
 							{
-								m_bitmex_side_limit_current -= ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+								m_iter->second.bitmex_side_limit_current -= ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 								lOrderNumber = RC_SIDE_ERROR;
 							}
 						}
@@ -714,6 +715,7 @@ void CCVClient::LoadRiskControl(char* p_username)
 		accno_str.erase(remove(accno_str.begin(), accno_str.end(), '\"'), accno_str.end());
 
 		rcdata.bitmex_limit = atoi(order_limit_str.c_str());
+		rcdata.bitmex_side_limit_current = 0;
 		rcdata.bitmex_side_limit = atoi(side_order_limit_str.c_str());
 		rcdata.bitmex_cum_limit = atoi(cum_order_limit_str.c_str());
 		rcdata.bitmex_time_limit = atoi(frequency_order_limit_str.c_str());

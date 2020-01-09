@@ -13,7 +13,7 @@ LIB = -lssl -lcrypto -pthread -lboost_system -L /usr/local/lib
 
 OUTPUT_PATH = ../bin
 
-all: CVQuote
+all: CVQuoteFR
 
 CVMain.o: CVMain.cpp
 	${CC} $(CFLAGS) -c `pkg-config --cflags --libs glib-2.0` CVMain.cpp
@@ -22,8 +22,8 @@ CVMain.o: CVMain.cpp
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
 clean:
-	@rm -f ${SERVER_OBJS} ${OUTPUT_PATH}/CVQuote *.o
+	@rm -f ${SERVER_OBJS} ${OUTPUT_PATH}/CVQuoteFR *.o
 
-CVQuote: ${SERVER_OBJS}
+CVQuoteFR: ${SERVER_OBJS}
 	mkdir -p ${OUTPUT_PATH}
-	${CC} $(CFLAGS) `pkg-config --cflags --libs glib-2.0` -o ${OUTPUT_PATH}/CVQuote ${SERVER_OBJS} ${INC} ${LIB}
+	${CC} $(CFLAGS) `pkg-config --cflags --libs glib-2.0` -o ${OUTPUT_PATH}/CVQuoteFR ${SERVER_OBJS} ${INC} ${LIB}

@@ -148,9 +148,9 @@ void CCVServer::OnConnect()
 				m_cfd.set_message_handler(bind(&OnData_Bitmex_Index,&m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BITMEXFUND") {
-				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_MIN/6);
+				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_MIN/3);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN);
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_MIN/3);
 				m_cfd.set_message_handler(bind(&OnData_Bitmex_Funding,&m_cfd,::_1,::_2));
 			}
 			else if(m_strName == "BINANCE") {
@@ -360,7 +360,6 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 		sprintf(timemsg, "%.2s%.2s%.2s%.2s", time_str.c_str()+11, time_str.c_str()+14, time_str.c_str()+17, time_str.c_str()+20);
 		sprintf(fundmsg, "01_ID=%s_FR.BMEX,ECC.1=%d,Time=%s,C=%lf,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
 			symbol_str.c_str(), tick_count, timemsg, funding_rate, size_str.c_str(), tick_count, pClients->m_strEPIDNum.c_str(), tick_count, epochmsg);
-		printf("%s\n", fundmsg);
 		tick_count++;
 
 		int msglen = strlen(fundmsg);
@@ -368,13 +367,13 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 		fundmsg[strlen(fundmsg)] = GTA_TAIL_BYTE_2;
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
+		printf("%s\n", fundmsg);
 		pQueueDAO->SendData(fundmsg, strlen(fundmsg));
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << fundmsg << endl;
 #endif
 	}
-
 }
 
 void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, client::message_ptr msg)

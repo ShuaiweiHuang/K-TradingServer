@@ -1,5 +1,6 @@
 all:
 	(cd CVQuote; make all)
+	(cd CVQuoteFR; make all)
 	(cd CVTrade; make all)
 	(cd CVMonitor; make all)
 	(cd CVReplyWS; make all)
@@ -8,6 +9,7 @@ all:
 
 clean:
 	(cd CVQuote; make clean)
+	(cd CVQuoteFR; make clean)
 	(cd CVTrade; make clean)
 	(cd CVMonitor; make clean)
 	(cd CVReplyWS; make clean)

@@ -150,8 +150,6 @@ void CCVServers::CheckClientVector()
 
 			for(int j=0 ; j<m_vServerConfig.at(0)->nServerCount ; j++)
 			{
-				if(m_vServerConfig.at(0)->vServerInfo.at(j)->strName == "BITMEXFUND")
-					continue;
 				if(m_vServerConfig.at(0)->vServerInfo.at(j)->strName == (m_vServerPool[i])->m_strName)
 				{
 					CCVServer* pServer = new CCVServer(

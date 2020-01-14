@@ -332,7 +332,7 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
-
+	int sendflag = 0;
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
 		static int tick_count=0;
@@ -369,11 +369,14 @@ void CCVServer::OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl con
 		assert(pClients);
 		printf("%s\n", fundmsg);
 		pQueueDAO->SendData(fundmsg, strlen(fundmsg));
+		sendflag = 1;
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << fundmsg << endl;
 #endif
 	}
+	if(sendflag)
+		exit(-1);
 }
 
 void CCVServer::OnData_Bitmex_Test(client* c, websocketpp::connection_hdl con, client::message_ptr msg)

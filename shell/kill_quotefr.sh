@@ -12,7 +12,7 @@ SCRIPTPATH=$(dirname "$ABSPATH")
 cd $SCRIPTPATH
 
 
-ps_name=CVQuoteFR
+ps_name=CVQFR
 
 #----------- Kill Proxy -----------#
 ps -ae|

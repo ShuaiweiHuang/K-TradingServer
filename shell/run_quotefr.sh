@@ -14,7 +14,7 @@ MM=`date +%m`
 DD=`date +%d`
 
 #----------- Run Proxy -----------#
-PSNAME=CVQuoteFR
+PSNAME=CVQFR
 
 PSNUMBER=`ps -ae | grep $PSNAME | wc -l`
 if [ $PSNUMBER -lt 1 ]; then

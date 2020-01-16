@@ -127,34 +127,9 @@ bool CCVTandemDAO::IsInuse()
 	return m_bInuse;
 }
 
-bool CCVTandemDAO::RiskControl()
-{
-#if 0
-	if(limit <10)
-		return true;
-#endif	
-	return false;
-}
-
 bool CCVTandemDAO::SendOrder(const unsigned char* pBuf, int nSize)
 {
-	if(RiskControl())
-		return FillRiskMsg(pBuf, nSize);
-	else
-		return OrderSubmit(pBuf, nSize);
-}
-
-bool CCVTandemDAO::FillRiskMsg(const unsigned char* pBuf, int nSize)
-{
-	struct CV_StructTSOrder cv_ts_order;
-	memcpy(&cv_ts_order, pBuf, nSize);
-	//add reply message
-	//memcpy(&m_tandem_reply.original, &cv_ts_order, sizeof(cv_ts_order));
-	memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
-	memcpy(m_tandem_reply.status_code, "1002", 4);
-	sprintf(m_tandem_reply.reply_msg, "submit fail, due to risk control issue");
-	SetStatus(tsMsgReady);
-	return true;
+	return OrderSubmit(pBuf, nSize);
 }
 
 static size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp)
@@ -211,16 +186,37 @@ bool CCVTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 
 	if(!strcmp(exname, "BITMEX_T") || !strcmp(exname, "BITMEX"))
 	{
-		return OrderSubmit_Bitmex(cv_ts_order, nToSend);
+		switch(cv_ts_order.trade_type[0])
+		{
+			case '0':
+			case '1':
+			case '2':
+				return OrderSubmit_Bitmex(cv_ts_order, nToSend, 0);
+				break;
+			case '3':
+			case '4':
+				return OrderModify_Bitmex(cv_ts_order, nToSend);
+				break;
+			case '5':
+				return OCOSubmit_Bitmex(cv_ts_order, nToSend);
+				break;
+			default:
+				FprintfStderrLog("ERROR_TRADE_TYPE", -1, 0, 0);
+				break;
+	
+		}
 	}
+#if 0
 	if(!strcmp(exname, "BINANCE_FT") || !strcmp(exname, "BINANCE") || !strcmp(exname, "BINANCE_F"))
 	{
 		return OrderSubmit_Binance(cv_ts_order, nToSend);
 	}
+#endif
 	SetInuse(false);
 	return true;
 }
 
+#if 0
 bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nToSend)
 {
 	CURLcode res;
@@ -492,9 +488,28 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 
 	return true;
 }
+#endif
 
+bool CCVTandemDAO::OCOSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
+{
+	return true;
+}
 
-bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
+bool CCVTandemDAO::OrderModify_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
+{
+	char chOpt = cv_ts_order.trade_type[0];
+
+	cv_ts_order.trade_type[0] = '1';
+
+	if( OrderSubmit_Bitmex(cv_ts_order, nToSend, 1) ) {
+		cv_ts_order.trade_type[0] = chOpt;
+		OrderSubmit_Bitmex(cv_ts_order, nToSend, 0);
+		return true;
+	}
+	return false;
+}
+
+bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend, int nSilent)
 {
 	CURLcode res;
 	string buysell_str;
@@ -568,13 +583,14 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	if(!strcmp(cv_ts_order.exchange_id, "BITMEX"))
 	{
 		order_url = "https://www.bitmex.com/api/v1/order";
-		//order_url = "https://intra.cryptovix.com.tw/error_tes";
 		order_all_url = "https://www.bitmex.com/api/v1/order/all";
 	}
 
 	switch(cv_ts_order.trade_type[0])
 	{
 		case '0'://new order
+		case '3':
+		case '4':
 #ifdef DEBUG
 			printf("Receive new order\n");
 #endif
@@ -635,9 +651,8 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 			curl_easy_setopt(m_curl, CURLOPT_URL, order_all_url.c_str());
 			break;
-		case '3'://change qty
-		case '4'://change price
 		default :
+			FprintfStderrLog("ERROR_TRADE_TYPE", -1, 0, 0);
 			break;
 	}
 
@@ -719,6 +734,8 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 		switch(cv_ts_order.trade_type[0])
 		{
 			case '0'://new
+			case '3':
+			case '4':
 			{
 				int i;
 				for(i=0 ; i<response.length() ; i++)
@@ -757,7 +774,12 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 						memcpy(m_tandem_reply.lastQty, jtable["lastQty"].dump().c_str(), jtable["lastQty"].dump().length());
 						memcpy(m_tandem_reply.cumQty, jtable["cumQty"].dump().c_str(), jtable["cumQty"].dump().length());
 						memcpy(m_tandem_reply.transactTime, jtable["transactTime"].dump().c_str()+1, jtable["transactTime"].dump().length()-2);
-						sprintf(m_tandem_reply.reply_msg, "submit order success - [%s]", jtable["text"].dump().c_str());
+						if(cv_ts_order.trade_type[0] == '0')
+							sprintf(m_tandem_reply.reply_msg, "submit order success - [%s]", jtable["text"].dump().c_str());
+						if(cv_ts_order.trade_type[0] == '3')
+							sprintf(m_tandem_reply.reply_msg, "change qty success - [%s]", jtable["text"].dump().c_str());
+						if(cv_ts_order.trade_type[0] == '4')
+							sprintf(m_tandem_reply.reply_msg, "change price success - [%s]", jtable["text"].dump().c_str());
 		#ifdef DEBUG
 						printf("\n\n\ntext = %s\n", text.c_str());
 						printf("==============================\nsubmit order success\n");
@@ -845,25 +867,28 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 		}//switch
 	}//if(res != CURLE_OK)
 
-	CCVWriteQueueDAO* pWriteQueueDAO = NULL;
+	if( !nSilent ) {
 
-	while(pWriteQueueDAO == NULL)
-	{
-		if(m_pWriteQueueDAOs)
-			pWriteQueueDAO = m_pWriteQueueDAOs->GetAvailableDAO();
+		CCVWriteQueueDAO* pWriteQueueDAO = NULL;
 
-		if(pWriteQueueDAO)
+		while(pWriteQueueDAO == NULL)
 		{
-			FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
-			pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
-			pWriteQueueDAO->TriggerWakeUpEvent();
-			SetStatus(tsServiceOn);
-			SetInuse(false);
-		}
-		else
-		{
-			FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
-			usleep(1000);
+			if(m_pWriteQueueDAOs)
+				pWriteQueueDAO = m_pWriteQueueDAOs->GetAvailableDAO();
+
+			if(pWriteQueueDAO)
+			{
+				FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
+				pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
+				pWriteQueueDAO->TriggerWakeUpEvent();
+				SetStatus(tsServiceOn);
+				SetInuse(false);
+			}
+			else
+			{
+				FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
+				usleep(1000);
+			}
 		}
 	}
 	return true;

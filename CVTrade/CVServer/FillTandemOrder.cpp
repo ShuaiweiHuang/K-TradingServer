@@ -56,7 +56,7 @@ long FillTandemBitcoinOrderFormat(string& strService,
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
 		memcpy(ucv.cv_order.key_id, ucvts.cv_ts_order.key_id, 13); 
 	}
-	else if(ucv.cv_order.trade_type[0] >= '1' && ucv.cv_order.trade_type[0] <= '3')
+	else if(ucv.cv_order.trade_type[0] >= '1' && ucv.cv_order.trade_type[0] <= '4')
 	{
 		//todo : check key id valid
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
@@ -66,11 +66,6 @@ long FillTandemBitcoinOrderFormat(string& strService,
 			if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F")||!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_FT"))
 				return TT_ERROR;
 		}
-		if(ucv.cv_order.trade_type[0] >= '3') {
-			if(!strcmp(ucvts.cv_ts_order.exchange_id, "BITMEX"))
-				return TT_ERROR;
-		}
-
 	}
 	else {
 		return TT_ERROR;

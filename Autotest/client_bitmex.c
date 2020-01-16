@@ -223,10 +223,10 @@ void* test_run(void *arg)
 			memcpy(ts_order.trade_type, "0", 1);//0:new 1:delete 2:delete all 3:change qty 4:change price
 			memcpy(ts_order.order_bookno, "000000000000000000000000000000000000", 36);
 			memcpy(ts_order.price_mark, "0", 1);
-			memcpy(ts_order.order_price, "072400000", 9);
+			memcpy(ts_order.order_price, "091900000", 9);
 			memcpy(ts_order.touch_price, "096000000", 9);
 			memcpy(ts_order.qty_mark, "0", 1);
-			memcpy(ts_order.order_qty, "000000030", 9);
+			memcpy(ts_order.order_qty, "000015000", 9);
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
 				printf("send order %d: %.1s %.9s(%.9s) %s\n", order_loop, ts_order.order_buysell, ts_order.order_price, ts_order.order_qty, ts_order.order_mark=='0'?"MARKET":"Limit");

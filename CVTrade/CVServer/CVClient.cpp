@@ -100,7 +100,6 @@ void* CCVClient::Run()
 	unsigned char uncaMessageBuf[MAXDATA];
 	unsigned char uncaOverheadMessageBuf[BUFSIZE];
 	unsigned char uncaOrder[BUFSIZE];
-	unsigned char uncaSendBuf[BUFSIZE];
 	unsigned char uncaEscapeBuf[2];
 	struct CV_StructHeartbeat HeartbeatRP;
 	struct CV_StructHeartbeat HeartbeatRQ;
@@ -108,8 +107,6 @@ void* CCVClient::Run()
 	memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
 	memset(uncaMessageBuf, 0, sizeof(uncaMessageBuf));
 	memset(uncaOverheadMessageBuf, 0, sizeof(uncaOverheadMessageBuf));
-	memset(uncaSendBuf, 0, sizeof(uncaSendBuf));
-	uncaSendBuf[0] = ESCAPE;// for order reply
 
 	HeartbeatRQ.header_bit[0] = ESCAPE;
 	HeartbeatRQ.header_bit[1] = HEARTBEATREQ;
@@ -145,7 +142,6 @@ void* CCVClient::Run()
 		nSizeOfRecvSocket = sizeof(struct CV_StructOrder);
 		nSizeOfSendSocket = sizeof(struct CV_StructOrderReply);
 		nSizeOfErrorMessage = sizeof(struct CV_StructTSOrderReply);
-		uncaSendBuf[1] = ORDERREP;
 	}
 
 	m_pHeartbeat = new CCVHeartbeat(nTimeIntervals);
@@ -158,7 +154,7 @@ void* CCVClient::Run()
 	{
 		memset(uncaEscapeBuf, 0, sizeof(uncaEscapeBuf));
 
-		bool bRecvAll = RecvAll(uncaEscapeBuf, 2);
+		bool bRecvAll = RecvAll(uncaEscapeBuf, HEADER_SIZE);
 
 		if(bRecvAll == false)
 		{
@@ -178,16 +174,17 @@ void* CCVClient::Run()
 			switch(uncaEscapeBuf[1])
 			{
 				case LOGREQ:
-					nToRecv = sizeof(struct CV_StructLogon)-2;
+					nToRecv = sizeof(struct CV_StructLogon)-HEADER_SIZE;
 					break;
 				case HEARTBEATREQ:
-					nToRecv = sizeof(struct CV_StructHeartbeat)-2;
+					nToRecv = sizeof(struct CV_StructHeartbeat)-HEADER_SIZE;
 					break;
 				case HEARTBEATREP:
-					nToRecv = sizeof(struct CV_StructHeartbeat)-2;
+					nToRecv = sizeof(struct CV_StructHeartbeat)-HEADER_SIZE;
 					break;
 				case ORDERREQ:
-					nToRecv = sizeof(struct CV_StructOrder)-2;
+				case ORDEROCOREQ:
+					nToRecv = sizeof(struct CV_StructOrder)-HEADER_SIZE;
 					break;
 				case DISCONNMSG:
 					FprintfStderrLog("RECV_CV_DISCONNECT", 0, 0, 0);
@@ -213,9 +210,9 @@ void* CCVClient::Run()
 			}
 		}
 
-		memcpy(uncaMessageBuf, uncaEscapeBuf, 2);
-		memcpy(uncaMessageBuf+2, uncaRecvBuf, nToRecv);
-		nSizeOfRecvedCVMessage = 2 + nToRecv;	
+		memcpy(uncaMessageBuf, uncaEscapeBuf, HEADER_SIZE);
+		memcpy(uncaMessageBuf+HEADER_SIZE, uncaRecvBuf, nToRecv);
+		nSizeOfRecvedCVMessage = HEADER_SIZE + nToRecv;	
 
 		if(nToRecv >= 0)
 		{
@@ -312,7 +309,7 @@ void* CCVClient::Run()
 
 			else if(uncaMessageBuf[1] == HEARTBEATREQ)//heartbeat message
 			{
-				if(memcmp(uncaMessageBuf + 2, HeartbeatRQ.heartbeat_msg, 4) == 0)
+				if(memcmp(uncaMessageBuf + HEADER_SIZE, HeartbeatRQ.heartbeat_msg, 4) == 0)
 				{
 					FprintfStderrLog("RECV_CV_HBRQ", 0, NULL, 0);
 
@@ -329,26 +326,26 @@ void* CCVClient::Run()
 				}
 				else
 				{
-					FprintfStderrLog("RECV_CV_HBRQ_ERROR", -1, uncaMessageBuf + 2, 4);
+					FprintfStderrLog("RECV_CV_HBRQ_ERROR", -1, uncaMessageBuf + HEADER_SIZE, 4);
 				}
 			}
 
 			else if(uncaMessageBuf[1] == HEARTBEATREP)//heartbeat message
 			{
-				if(memcmp(uncaMessageBuf + 2, HeartbeatRP.heartbeat_msg, 4) == 0)
+				if(memcmp(uncaMessageBuf + HEADER_SIZE, HeartbeatRP.heartbeat_msg, 4) == 0)
 				{
 					FprintfStderrLog("RECV_CV_HBRP", 0, NULL, 0);
 				}
 				else
 				{
-					FprintfStderrLog("RECV_CV_HBRP_ERROR", -1, uncaMessageBuf + 2, 4);
+					FprintfStderrLog("RECV_CV_HBRP_ERROR", -1, uncaMessageBuf + HEADER_SIZE, 4);
 				}
 			}
 			
-			else if(uncaMessageBuf[1] == ORDERREQ)
+			else if(uncaMessageBuf[1] == ORDERREQ || uncaMessageBuf[1] == ORDEROCOREQ)
 			{
 #ifdef DEBUG
-				printf("receive ORDERREQ\n\n\n");
+				printf("receive ORDERREQ/ORDEROCOREQ\n\n\n");
 #endif
 				FprintfStderrLog("RECV_CV_ORDER", 0, uncaMessageBuf, nSizeOfRecvedCVMessage);
 
@@ -358,7 +355,11 @@ void* CCVClient::Run()
 					int errorcode = -LG_ERROR;
 					memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
 					replymsg.header_bit[0] = ESCAPE;
-					replymsg.header_bit[1] = ORDERREP;
+					if(uncaMessageBuf[1] == ORDERREQ)
+						replymsg.header_bit[1] = ORDERREP;
+					if(uncaMessageBuf[1] == ORDEROCOREQ)
+						replymsg.header_bit[1] = ORDEROCOREP;
+					
 
 					memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
 					sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
@@ -458,7 +459,10 @@ void* CCVClient::Run()
 
 						memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
 						replymsg.header_bit[0] = ESCAPE;
-						replymsg.header_bit[1] = ORDERREP;
+						if(uncaMessageBuf[1] == ORDERREQ)
+							replymsg.header_bit[1] = ORDERREP;
+						if(uncaMessageBuf[1] == ORDEROCOREQ)
+							replymsg.header_bit[1] = ORDEROCOREP;
 
 						memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
 						sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
@@ -749,29 +753,29 @@ void CCVClient::LoadRiskControl(char* p_username)
 
 void CCVClient::ReplyAccountContents()
 {
-	char AcclistReplyBuf[MAXDATA];
+	char AcclistReplyBuf[ACCMAXDATA];
 	map<string, struct AccountData>::iterator iter;
-	memset(AcclistReplyBuf, 0, MAXDATA);
+	memset(AcclistReplyBuf, 0, ACCMAXDATA);
 	AcclistReplyBuf[0] = ESCAPE;
 	AcclistReplyBuf[1] = ACCLISTREP;
 	int i = 0, len;
 
 	for(iter = m_mBranchAccount.begin(); iter != m_mBranchAccount.end() ; iter++, i++)
 	{
-		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2), iter->second.broker_id.c_str(), iter->second.broker_id.length());
-		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, iter->first.c_str(), iter->first.length());
-		memcpy(AcclistReplyBuf + 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, iter->second.exchange_name.c_str(), iter->second.exchange_name.length());
+		memcpy(AcclistReplyBuf + HEADER_SIZE + i*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE), iter->second.broker_id.c_str(), iter->second.broker_id.length());
+		memcpy(AcclistReplyBuf + HEADER_SIZE + i*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE)+4, iter->first.c_str(), iter->first.length());
+		memcpy(AcclistReplyBuf + HEADER_SIZE + i*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE)+11, iter->second.exchange_name.c_str(), iter->second.exchange_name.length());
 #ifdef DEBUG
 		printf("(%s) (%s), %d\n", iter->second.broker_id.c_str(), 
-				AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2), 2 + i*(sizeof(struct CV_StructAcclistReply)-2));
+				AcclistReplyBuf+ HEADER_SIZE + i*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE), HEADER_SIZE + i*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE));
 		printf("(%s) (%s), %d\n", iter->first.c_str(),
-				AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+4);
+				AcclistReplyBuf+ HEADER_SIZE + i*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE)+4, HEADER_SIZE + i*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE)+4);
 		printf("(%s) (%s), %d\n", iter->second.exchange_name.c_str(),
-				AcclistReplyBuf+ 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11, 2 + i*(sizeof(struct CV_StructAcclistReply)-2)+11);
+				AcclistReplyBuf+ HEADER_SIZE + i*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE)+11, HEADER_SIZE + i*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE)+11);
 #endif
 	}
 
-	len = 2+(i)*(sizeof(struct CV_StructAcclistReply)-2);
+	len = HEADER_SIZE + (i)*(sizeof(struct CV_StructAcclistReply)-HEADER_SIZE);
 #ifdef DEBUG
 	printf("account contents len = %d\n", len);
 #endif

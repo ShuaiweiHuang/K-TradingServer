@@ -63,7 +63,18 @@ struct CV_StructOrder
 	char qty_mark[1];
 	char order_qty[9];
 	char order_kind[2];
-	char reserved[74];
+	char order_buysell_oco[1];
+	char order_bookno_oco[36];
+	char order_cond_oco[1];
+	char order_mark_oco[1];
+	char trade_type_oco[1];
+	char price_mark_oco[1];
+	char order_price_oco[9];
+	char touch_price_oco[9];
+	char qty_mark_oco[1];
+	char order_qty_oco[9];
+	char order_kind_oco[2];
+	char reserved[3];
 };
 
 struct CV_StructOrderReply
@@ -137,6 +148,17 @@ struct CV_StructTSOrder
 	char order_kind[2];
 	char apiKey_order[65];
 	char apiSecret_order[65];
+	char order_buysell_oco[1];
+	char order_bookno_oco[36];
+	char order_cond_oco[1];
+	char order_mark_oco[1];
+	char trade_type_oco[1];
+	char price_mark_oco[1];
+	char order_price_oco[9];
+	char touch_price_oco[9];
+	char qty_mark_oco[1];
+	char order_qty_oco[9];
+	char order_kind_oco[2];
 };
 
 struct CV_StructTSOrderReply

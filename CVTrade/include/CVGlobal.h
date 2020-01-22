@@ -1,6 +1,7 @@
 #define BACKUP_IP "192.168.101.211"
 
 #define MAXDATA		1024
+#define ACCMAXDATA	8196
 #define MAXHISTORY	100
 #define ESCAPE		0x1b
 #define LOGREQ		0x00
@@ -13,6 +14,8 @@
 #define HEARTBEATREP	0x07
 #define ORDERREQ	0x40
 #define ORDERREP	0x41
+#define ORDEROCOREQ	0x42
+#define ORDEROCOREP	0x43
 #define DEALREP		0x50
 #define CONTROLREQ	0x60
 #define CONTROLREP	0x61
@@ -40,6 +43,7 @@
 #define RC_TIME_ERROR	-2002
 #define ERROR_OTHER	-9999
 
+#define HEADER_SIZE	2
 #define HEARTBEATVAL 	60
 #define SCALE_TPYE_1	10000
 #define SCALE_TPYE_2	1000000000

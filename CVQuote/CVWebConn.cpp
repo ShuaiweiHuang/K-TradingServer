@@ -501,7 +501,7 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 				else
 					eth_last_price = atol(jtable["data"][i]["price"].dump().c_str());
 			}
-			if(symbol_str != "ETHUSD")
+			if(symbol_str == "XBTUSD")
 			{
 
 				if(xbt_last_price < 0)
@@ -537,6 +537,7 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 			pQueueDAO->SendData(netmsg, strlen(netmsg));
 			vol_count = 0;
 		}
+		cout << netmsg << endl;
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;

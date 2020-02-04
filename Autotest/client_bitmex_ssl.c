@@ -138,8 +138,33 @@ void* test_run(void *arg)
 			is_conn = 0;
 			break;
 		}
+		method = TLSv1_2_client_method();
+		if ( (ctx = SSL_CTX_new(method)) == NULL) {
+			perror("Error: Unable to create a new SSL context structure.\n");
+			ret = -1;
+			is_conn = 0;
+			break;
+		}
+
+		ssl = SSL_new(ctx);
+
+		if(ssl == NULL) {
+			perror("Error: create ssl session fail.\n");
+			ret = -1;
+			is_conn = 0;
+			break;
+		}
+
+		SSL_set_fd(ssl, server);
 
 		conn_retry = CONNRETRY;
+
+		if ( SSL_connect(ssl) != 1 ) {
+			ret = -1;
+			is_conn = 0;
+			perror("Error: Could not build a SSL session \n");
+			break;
+		}
 
 		int packs=1, len;
 		if(is_login && is_conn) {
@@ -151,7 +176,7 @@ void* test_run(void *arg)
 			memcpy(data+52, "MC", 2);
 			memcpy(data+54, "3.0.0.20", 8);
 
-			if (write(server, data, 64) <= 0) 
+			if (SSL_write(server, data, 64) <= 0) 
 			{
 				perror("write to server error !");
 				ret = -1;
@@ -161,7 +186,7 @@ void* test_run(void *arg)
 
 			while(packs--)
 			{
-				if ((len=read(server, data, 192)) <= 0) 
+				if ((len=SSL_read(server, data, 192)) <= 0) 
 				{
 					perror ("read from aptrader_server error !");
 					ret = -1;
@@ -171,7 +196,7 @@ void* test_run(void *arg)
 
 				printf("login: len=%d,%x,%x,%.2s,%.40s,%.2s,%.82s,%.64s\n", len, data[0], data[1], data+2, data+4, data+44, data+46, data+128);
 
-				if ((len=read(server, data, 3)) <= 0) 
+				if ((len=SSL_read(server, data, 3)) <= 0) 
 				{
 					perror ("read from aptrader_server error !");
 					ret = -1;
@@ -184,7 +209,7 @@ void* test_run(void *arg)
 					account_num = (data[2] );
 					printf("account num: packet len=%d, %x, %x, %x\n", len, data[0], data[1], data[2]);
 				}
-				if ((len=read(server, data, 2+account_num*21)) <= 0) 
+				if ((len=SSL_read(server, data, 2+account_num*21)) <= 0) 
 				{
 					perror ("read from aptrader_server error !");
 					ret = -1;
@@ -230,7 +255,7 @@ void* test_run(void *arg)
 			memcpy(ts_order.order_kind,"0", 1);
 			memset(&ts_order.reserved, ' ', 91);
 				printf("send order %d: %.1s %.9s(%.9s) %s\n", order_loop, ts_order.order_buysell, ts_order.order_price, ts_order.order_qty, ts_order.order_mark=='0'?"MARKET":"Limit");
-				if (write(server, (&ts_order.header_bit[0]), 256) <= 0) {
+				if (SSL_write(server, (&ts_order.header_bit[0]), 256) <= 0) {
 					perror("write to server error !");
 					is_conn = 0;
 					ret = -1;
@@ -286,6 +311,14 @@ void* test_run(void *arg)
 		if(server != -1) {
 			close(server);
 			server = -1;
+			if(ctx) {
+				SSL_CTX_free(ctx);
+				ctx = NULL;
+			}
+			if(ssl) {
+				SSL_free(ssl);
+				ssl = NULL;
+			}
 		}
 		pthread_mutex_unlock(&conn_mutex);
 
@@ -296,7 +329,12 @@ void* test_run(void *arg)
 			close(server);
 		pthread_mutex_unlock(&conn_mutex);
 
+		if(ctx)
+			SSL_CTX_free(ctx);
+		if(ssl)
+			SSL_free(ssl);
 	}
+	
 	*(int*)arg = ret;
 	pthread_mutex_lock(&count_mutex);
 	count--;

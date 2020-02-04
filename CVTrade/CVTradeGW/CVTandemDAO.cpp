@@ -23,6 +23,9 @@
 using json = nlohmann::json;
 using namespace std;
 
+extern string g_TandemEth0;
+extern string g_TandemEth1;
+
 extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMessage1, int nMessage1Length, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 static size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp);
 static size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userdata);
@@ -688,7 +691,16 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
-
+#if 1
+		if(cv_ts_order.sub_acno_id[6] %= INTERFACE_NUM) {
+			printf("Account %s submit with Eth:%s\n", cv_ts_order.sub_acno_id, g_TandemEth0.c_str());
+			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth0.c_str());
+		}
+		else {
+			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth1.c_str());
+			printf("Account %s submit with Eth:%s\n", cv_ts_order.sub_acno_id, g_TandemEth1.c_str());
+		}
+#endif
 		if(atoi(m_request_remain.c_str()) < 20 && atoi(m_request_remain.c_str()) > 10) {
 			printf("sleep 1 second for delay submit (%s)\n", m_request_remain.c_str());
 			sleep(1);

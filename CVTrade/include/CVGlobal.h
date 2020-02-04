@@ -42,6 +42,7 @@
 #define RC_SIDE_ERROR	-2001
 #define RC_TIME_ERROR	-2002
 #define ERROR_OTHER	-9999
+#define INTERFACE_NUM	2
 
 #define HEADER_SIZE	2
 #define HEARTBEATVAL 	60

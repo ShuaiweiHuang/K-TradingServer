@@ -7,7 +7,6 @@
 #include <iostream>
 
 #include "../include/CVType.h"
-#include "../include/CVGlobal.h"
 #include "CVClients.h"
 
 using namespace std;

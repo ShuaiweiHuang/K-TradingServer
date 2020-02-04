@@ -41,7 +41,7 @@ class CCVServerSocket
 		CCVServerSocket( ICVSocketCallback* pSocketCallback);
 		virtual ~CCVServerSocket();
 
-		void Listen(string strPort, int nBacklog = 20);
+		void Listen(string strPort, int nBacklog = 64);
 		int Accept(struct sockaddr_storage* pClientAddr);
 
 		void ShutdownServer();

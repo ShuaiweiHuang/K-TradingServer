@@ -5,7 +5,6 @@
 
 #include "CVClients.h"
 #include "CVHeartbeat.h"
-#include "../include/CVGlobal.h"
 
 #include<iostream>
 using namespace std;
@@ -90,7 +89,6 @@ CCVClients::~CCVClients()
 		delete m_pServerSocket;
 		m_pServerSocket = NULL;
 	}
-
 	if(m_pSharedMemoryOfSerialNumber)
 	{
 		m_pSharedMemoryOfSerialNumber->DetachSharedMemory();
@@ -155,8 +153,6 @@ void* CCVClients::Run()
 		struct sockaddr_in *sin = (struct sockaddr_in *)&ClientAddrInfo.ClientAddr;
 		unsigned char *ip = (unsigned char *)&sin->sin_addr.s_addr;
 		sprintf(ClientAddrInfo.caIP, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);//to do
-
-
 		CCVClient* pNewClient = NULL;
 		pNewClient = new CCVClient(ClientAddrInfo, m_strService);
 		cout << "Accept! Client IP = " << ClientAddrInfo.caIP << endl;

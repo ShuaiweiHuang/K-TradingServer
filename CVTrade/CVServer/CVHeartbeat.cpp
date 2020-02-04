@@ -9,7 +9,6 @@
 #include "CVClients.h"
 #include "CVQueueDAO.h"
 #include "CVQueueDAOs.h"
-#include "../include/CVGlobal.h"
 
 #include <iostream>
 

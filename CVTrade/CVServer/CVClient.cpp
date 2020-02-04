@@ -21,7 +21,7 @@
 #include "CVNet/CVSocket.h"
 #include "CVErrorMessage.h"
 #include "../include/CVType.h"
-#include "../include/CVGlobal.h"
+
 
 using json = nlohmann::json;
 using namespace std;

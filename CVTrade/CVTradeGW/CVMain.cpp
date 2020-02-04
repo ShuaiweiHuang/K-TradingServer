@@ -35,6 +35,9 @@ void term(int signum)
 	done = 1;
 }
 
+string g_TandemEth0;
+string g_TandemEth1;
+
 int main(int argc, char *argv[])
 {
 	string strService;
@@ -112,6 +115,13 @@ void ReadTandemDAOConfigFile(	string strConfigFileName, string& strService, int&
 	kWriteQueueDAOStartKey = g_key_file_get_integer(keyfile, "Tandem", "WriteQueueDAOStartKey", NULL);
 	kWriteQueueDAOEndKey = g_key_file_get_integer(keyfile, "Tandem", "WriteQueueDAOEndKey", NULL);
 	kQueueDAOMonitorKey = g_key_file_get_integer(keyfile, "Tandem", "QueueNodeMonitorKey", NULL);
+	kQueueDAOMonitorKey = g_key_file_get_integer(keyfile, "Tandem", "QueueNodeMonitorKey", NULL);
+#if 1
+	g_TandemEth0 = g_key_file_get_string(keyfile, "Tandem", "TandemEth0", NULL);
+	g_TandemEth1 = g_key_file_get_string(keyfile, "Tandem", "TandemEth1", NULL);
+	printf("Eth0: %s\n", g_TandemEth0.c_str());
+	printf("Eth1: %s\n", g_TandemEth1.c_str());
+#endif
 }
 
 void ReadReadQueueDAOConfigFile(string strConfigFileName, string& strOTSID, int& nNumberOfReadQueueDAO, 

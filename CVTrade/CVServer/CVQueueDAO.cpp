@@ -12,7 +12,6 @@
 #include "CVQueueDAOs.h"
 #include "CVClients.h"
 #include "../include/CVType.h"
-#include "../include/CVGlobal.h"
 
 using namespace std;
 

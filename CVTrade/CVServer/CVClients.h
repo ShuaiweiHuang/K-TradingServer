@@ -16,6 +16,7 @@
 #include "CVNet/CVServerSocket.h"
 #include "CVClient.h"
 #include "CVHeartbeat.h"
+#include "../include/CVGlobal.h"
 
 using namespace std;
 

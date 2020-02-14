@@ -72,6 +72,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		int m_nReplyMsgLength;//for reply_msg[78] reply_msg[80]
 		int m_nPoolIndex;
 		int m_heartbeat_count;
+		bool m_FTX_enable;
 
 		pthread_mutex_t m_pmtxServerStatusLock;
 		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
@@ -82,6 +83,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		static void OnData_Binance(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Binance_F(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Binance_FT(client* c, websocketpp::connection_hdl, client::message_ptr msg);
+		static void OnData_FTX(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_Bitstamp(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 	protected:
 		void* Run();

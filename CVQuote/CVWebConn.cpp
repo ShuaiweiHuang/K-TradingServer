@@ -826,7 +826,7 @@ void CCVServer::OnHeartbeatRequest()
 				{
 					printf("ping/pong success\n");
 					m_pHeartbeat->TriggerGetReplyEvent();
-					m_heartbeat_count++;
+					//m_heartbeat_count++;
 				}
 
 			}

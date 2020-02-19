@@ -309,6 +309,7 @@ void CCVServer::OnData_FTX(client* c, websocketpp::connection_hdl con, client::m
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
+		cout << netmsg << endl;
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;
 		cout << netmsg << endl;
@@ -809,8 +810,10 @@ void CCVServer::OnHeartbeatRequest()
 			{
 				auto j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"trades\", \"market\": \"BTC-PERP\" }");
 				auto msg = m_conn->send(j.dump());
-				j = json::parse("{ \"op\": \"ping\"}");
-				msg = m_conn->send(j.dump());
+				//auto j = json::parse("{ \"op\": \"ping\"}");
+				//auto msg = m_conn->send(j.dump());
+				//j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"trades\", \"market\": \"BTC-PERP\" }");
+				//msg = m_conn->send(j.dump());
 				sprintf(replymsg, "%s send PING message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
 				FprintfStderrLog("PING/PONG protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
 
@@ -826,7 +829,7 @@ void CCVServer::OnHeartbeatRequest()
 				{
 					printf("ping/pong success\n");
 					m_pHeartbeat->TriggerGetReplyEvent();
-					//m_heartbeat_count++;
+					m_heartbeat_count++;
 				}
 
 			}

@@ -1,6 +1,6 @@
 CC =g++
 
-CFLAGS =-O2 -std=c++11 -DDEBUG_OFF -DEXIT_VERSION
+CFLAGS =-O2 -std=c++11 -DDEBUG_OFF -DEXIT_VERSION_OFF
 
 SRC = CVHeartbeat.cpp CVServer.cpp CVWebConns.cpp CVDumpErrLog.cpp CVGlobal.cpp CVRequest.cpp CVWebConn.cpp CVServiceHandler.cpp ./CVCommon/CVClientSocket.cpp ./CVCommon/CVPevents.cpp ./CVCommon/CVServerSocket.cpp ./CVCommon/CVSharedMemory.cpp ./CVCommon/CVThread.cpp ./CVCommon/CVQueue.cpp CVQueueNode.cpp CVQueueNodes.cpp
  

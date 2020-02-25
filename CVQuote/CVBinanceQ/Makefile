@@ -11,9 +11,9 @@ INC = -I ./INCLUDE
 
 LIB = -lssl -lcrypto -pthread -lboost_system -L /usr/local/lib
 
-OUTPUT_PATH = ../bin
+OUTPUT_PATH = ../../bin
 
-all: CVBitmex
+all: CVBinance
 
 CVMain.o: CVMain.cpp
 	${CC} $(CFLAGS) -c `pkg-config --cflags --libs glib-2.0` CVMain.cpp
@@ -22,8 +22,8 @@ CVMain.o: CVMain.cpp
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
 clean:
-	@rm -f ${SERVER_OBJS} ${OUTPUT_PATH}/CVBitmex *.o
+	@rm -f ${SERVER_OBJS} ${OUTPUT_PATH}/CVBinance *.o
 
-CVBitmex: ${SERVER_OBJS}
+CVBinance: ${SERVER_OBJS}
 	mkdir -p ${OUTPUT_PATH}
-	${CC} $(CFLAGS) `pkg-config --cflags --libs glib-2.0` -o ${OUTPUT_PATH}/CVBitmex ${SERVER_OBJS} ${INC} ${LIB}
+	${CC} $(CFLAGS) `pkg-config --cflags --libs glib-2.0` -o ${OUTPUT_PATH}/CVBinance ${SERVER_OBJS} ${INC} ${LIB}

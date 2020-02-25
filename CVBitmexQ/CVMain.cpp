@@ -44,12 +44,11 @@ int main()
 	DECLARE_CONFIG_DATA(TSConfig);
 
 	string strListenPort, strHeartBeatTime, strEPIDNum;
-	ReadClientConfigFile("../ini/CVQuote.ini", strListenPort, strHeartBeatTime, strEPIDNum);
+	ReadClientConfigFile("../ini/CVBitmex.ini", strListenPort, strHeartBeatTime, strEPIDNum);
 
 	int nService = 0;
 	printf("Quote program start\n");
-	ReadConfigFile("../ini/CVQuote.ini", "EXCHANGE", struTSConfig);
-
+	ReadConfigFile("../ini/CVBitmex.ini", "EXCHANGE", struTSConfig);
 	//Web connection service.
 	CCVServers* pServers = NULL;
 	try
@@ -65,9 +64,8 @@ int main()
 	{
 		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
 	}
-	
 	//Queue init.
-	ReadQueueDAOConfigFile("../ini/CVQuote.ini", strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey, kQueueDAOMonitorKey);
+	ReadQueueDAOConfigFile("../ini/CVBitmex.ini", strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey, kQueueDAOMonitorKey);
 	//printf("%d, %d, %d, %d\n", kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
 	CCVQueueDAOs* pQueueDAOs = CCVQueueDAOs::GetInstance();
 	assert(pQueueDAOs);
@@ -84,12 +82,11 @@ int main()
 			throw "GET_SERVER_MANAGEMENT_ERROR";
 
 		pClients->SetConfiguration(strListenPort, strHeartBeatTime, strEPIDNum, nService);
-
 		//Disconnection check.
 		while(1)
 		{
 			pClients->CheckClientVector();
-			//pServers->CheckClientVector();
+			pServers->CheckClientVector();
 			sleep(1);
 		}
 	}

@@ -54,3 +54,31 @@ echo "$service is running!!!"
 else
 sh $BASEDIR/restart_orderbook.sh; 
 fi
+
+service=CVBitmex
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_bitmexq.sh; 
+fi
+
+service=CVBinance
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_binanceq.sh; 
+fi
+
+service=CVFTX
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_ftxq.sh; 
+fi
+

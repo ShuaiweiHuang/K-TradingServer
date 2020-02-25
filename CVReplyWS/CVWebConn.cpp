@@ -483,17 +483,37 @@ void CCVServer::Bitmex_Update(json* jtable)
 			}
 
 			curl_easy_cleanup(curl);
+#if 0
+struct CV_StructTSOrderReply
+{
+        char status_code[4];
+        char key_id[13];
+        char bookno[36];
+        char price[10];
+        char avgPx[10];
+        char orderQty[10];
+        char lastQty[10];
+        char cumQty[10];
+        char transactTime[24];
+        char reply_msg[129];
+        char symbol[10];
+        char buysell[1];
+        char exchange_name[10];
+        char commission[10];
+        char trail[2];
+};
+#endif
 
 			//if(exchange_data[8] == "Trade")
 			{
 				memset(&m_trade_reply, 0, sizeof(m_trade_reply));
-				memcpy(m_trade_reply.bookno, (*jtable)["data"][i]["orderID"].dump().c_str()+1, 36);
 
 				string text = (*jtable)["data"][i]["error"].dump();
 				if(text != "null")
 				{
 					memcpy(m_trade_reply.status_code, "1001", 4);
 					sprintf(m_trade_reply.reply_msg, "reply fail, error message - [%s]", text.c_str());
+					memcpy(m_trade_reply.bookno, (*jtable)["data"][i]["orderID"].dump().c_str()+1, 36);
 					printf("Error: %s\n", m_trade_reply.reply_msg);
 				}
 				else
@@ -505,11 +525,11 @@ void CCVServer::Bitmex_Update(json* jtable)
 						memcpy(m_trade_reply.avgPx, (*jtable)["data"][i]["stopPx"].dump().c_str(),         (*jtable)["data"][i]["stopPx"].dump().length());
 					else
 						memcpy(m_trade_reply.avgPx, (*jtable)["data"][i]["avgPx"].dump().c_str(),          (*jtable)["data"][i]["avgPx"].dump().length());
-
 					memcpy(m_trade_reply.orderQty,      (*jtable)["data"][i]["orderQty"].dump().c_str(),       (*jtable)["data"][i]["orderQty"].dump().length());
 					memcpy(m_trade_reply.lastQty,       (*jtable)["data"][i]["lastQty"].dump().c_str(),        (*jtable)["data"][i]["lastQty"].dump().length());
 					memcpy(m_trade_reply.cumQty,        (*jtable)["data"][i]["cumQty"].dump().c_str(),         (*jtable)["data"][i]["cumQty"].dump().length());
 					memcpy(m_trade_reply.key_id,        (*jtable)["data"][i]["clOrdID"].dump().c_str()+1,      (*jtable)["data"][i]["clOrdID"].dump().length()-2);
+					memcpy(m_trade_reply.bookno,        (*jtable)["data"][i]["orderID"].dump().c_str()+1, 36);
 					memcpy(m_trade_reply.transactTime,  (*jtable)["data"][i]["transactTime"].dump().c_str()+1, (*jtable)["data"][i]["transactTime"].dump().length()-2);
 					memcpy(m_trade_reply.symbol,		(*jtable)["data"][i]["symbol"].dump().c_str()+1,	(*jtable)["data"][i]["symbol"].dump().length()-2);
 					memcpy(m_trade_reply.buysell,		(*jtable)["data"][i]["side"].dump().c_str()+1, 1);

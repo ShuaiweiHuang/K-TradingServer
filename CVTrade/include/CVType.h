@@ -73,8 +73,7 @@ struct CV_StructOrder
 	char touch_price_oco[9];
 	char qty_mark_oco[1];
 	char order_qty_oco[9];
-	char order_kind_oco[2];
-	char reserved[3];
+	char reserved[5];
 };
 
 struct CV_StructOrderReply
@@ -119,6 +118,7 @@ struct CV_StructHeartbeatReply
 
 struct CV_StructTSOrder
 {
+	char order_type[1];
 	char client_ip[16];
 	char username[20];
 	char sub_acno_id[7];
@@ -127,6 +127,7 @@ struct CV_StructTSOrder
 	char broker_id[4];
 	char exchange_id[10];
 	char key_id[13];
+	char key_id_oco[13];
 	char seq_id[13];
 	char symbol_name[10];
 	char symbol_type[1];
@@ -158,7 +159,6 @@ struct CV_StructTSOrder
 	char touch_price_oco[9];
 	char qty_mark_oco[1];
 	char order_qty_oco[9];
-	char order_kind_oco[2];
 };
 
 struct CV_StructTSOrderReply
@@ -173,21 +173,16 @@ struct CV_StructTSOrderReply
 	char cumQty[10];
 	char transactTime[24];	
 	char reply_msg[129];
-};
-
-struct CV_StructTSDealReply
-{
-	char status_code[4];
-	char key_id[13];
-	char orderID[36];
-	char execID[36];
-	char price[10];
-	char lastPx[10];
-	char lastQty[10];
-	char orderQty[10];
-	char cumQty[10];
-	char transactTime[24];	
-	char reply_msg[130];
+	char status_code_oco[4];
+	char key_id_oco[13];
+	char bookno_oco[36];
+	char price_oco[10];
+	char avgPx_oco[10];
+	char orderQty_oco[10];
+	char lastQty_oco[10];
+	char cumQty_oco[10];
+	char transactTime_oco[24];	
+	char reply_msg_oco[129];
 };
 
 union CV_ORDER

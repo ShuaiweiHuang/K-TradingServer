@@ -12,13 +12,14 @@
 #include <curl/curl.h>
 #include <algorithm>
 #include <openssl/hmac.h>
+#include <nlohmann/json.hpp>
+#include <iomanip>
 
 #include "CVTandemDAO.h"
 #include "CVReadQueueDAOs.h"
 #include "CVTandemDAOs.h"
 #include "CVTIG/CVTandems.h"
-#include <nlohmann/json.hpp>
-#include <iomanip>
+
 
 using json = nlohmann::json;
 using namespace std;
@@ -194,14 +195,19 @@ bool CCVTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			case '0':
 			case '1':
 			case '2':
+#ifndef OCOMODE
 				return OrderSubmit_Bitmex(cv_ts_order, nToSend, 0);
+#else
+				if(cv_ts_order.order_type[0] == ORDERREQ) 
+					return OrderSubmit_Bitmex(cv_ts_order, nToSend, 0);
+				else if(cv_ts_order.order_type[0] == ORDEROCOREQ)
+					return OCOSubmit_Bitmex(cv_ts_order, nToSend);
+#endif						
 				break;
 			case '3':
 			case '4':
 				return OrderModify_Bitmex(cv_ts_order, nToSend);
 				break;
-			case '5':
-				return OCOSubmit_Bitmex(cv_ts_order, nToSend);
 				break;
 			default:
 				FprintfStderrLog("ERROR_TRADE_TYPE", -1, 0, 0);
@@ -493,26 +499,30 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 }
 #endif
 
-bool CCVTandemDAO::OCOSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
-{
-	return true;
-}
-
 bool CCVTandemDAO::OrderModify_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
 {
 	char chOpt = cv_ts_order.trade_type[0];
 
-	cv_ts_order.trade_type[0] = '1';
+	cv_ts_order.trade_type[0] = '1';//modify to delete
 
-	if( OrderSubmit_Bitmex(cv_ts_order, nToSend, 1) ) {
+	if( OrderSubmit_Bitmex(cv_ts_order, nToSend, MODE_SILENT) ) { //delete order
 		cv_ts_order.trade_type[0] = chOpt;
-		OrderSubmit_Bitmex(cv_ts_order, nToSend, 0);
+		OrderSubmit_Bitmex(cv_ts_order, nToSend, MODE_NORMAL); //new order
 		return true;
 	}
 	return false;
 }
+#ifdef OCOMODE
+bool CCVTandemDAO::OCOSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
+{
+	OrderSubmit_Bitmex(cv_ts_order, nToSend, MODE_OCO_SILENT);
+	memcpy(cv_ts_order.key_id, cv_ts_order.key_id_oco, 13);
+	sleep(1);
+	OrderSubmit_Bitmex(cv_ts_order, nToSend, MODE_OCO);
+}
+#endif
 
-bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend, int nSilent)
+bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend, int nMode)
 {
 	CURLcode res;
 	string buysell_str;
@@ -526,6 +536,47 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	string response;
 	json jtable;
 
+#ifdef OCOMODE
+	if(nMode == MODE_OCO)
+	{
+#if 0
+		printf("cv_ts_order.order_buysell:%.1s\n", cv_ts_order.order_buysell);
+		printf("cv_ts_order.order_bookno:%.36s\n", cv_ts_order.order_bookno);
+		printf("cv_ts_order.order_cond:%.1s\n", cv_ts_order.order_cond);
+		printf("cv_ts_order.order_mark:%.1s\n", cv_ts_order.order_mark);
+		printf("cv_ts_order.trade_type:%.1s\n", cv_ts_order.trade_type);
+		printf("cv_ts_order.price_mark:%.1s\n", cv_ts_order.price_mark);
+		printf("cv_ts_order.order_price:%.9s\n", cv_ts_order.order_price);
+		printf("cv_ts_order.touch_price:%.9s\n", cv_ts_order.touch_price);
+		printf("cv_ts_order.qty_mark:%.1s\n", cv_ts_order.qty_mark);
+		printf("cv_ts_order.order_qty:%.9s\n", cv_ts_order.order_qty);
+		printf("cv_ts_order.key_id:%.13s\n", cv_ts_order.key_id);
+#endif
+		memcpy(cv_ts_order.order_buysell, cv_ts_order.order_buysell_oco, 1);
+		memcpy(cv_ts_order.order_bookno, cv_ts_order.order_bookno_oco, 36);
+		memcpy(cv_ts_order.order_cond, cv_ts_order.order_cond_oco, 1);
+		memcpy(cv_ts_order.order_mark, cv_ts_order.order_mark_oco, 1);
+		memcpy(cv_ts_order.price_mark, cv_ts_order.price_mark_oco, 1);
+		memcpy(cv_ts_order.order_price, cv_ts_order.order_price_oco, 9);
+		memcpy(cv_ts_order.touch_price, cv_ts_order.touch_price_oco, 9);
+		memcpy(cv_ts_order.qty_mark, cv_ts_order.qty_mark_oco, 1);
+		memcpy(cv_ts_order.order_qty, cv_ts_order.order_qty_oco, 9);
+		memcpy(cv_ts_order.key_id, cv_ts_order.key_id_oco, 13);
+#if 0
+		printf("cv_ts_order.order_buysell_oco:%.1s\n", cv_ts_order.order_buysell_oco);
+		printf("cv_ts_order.order_bookno_oco:%.36s\n", cv_ts_order.order_bookno_oco);
+		printf("cv_ts_order.order_cond_oco:%.1s\n", cv_ts_order.order_cond_oco);
+		printf("cv_ts_order.order_mark_oco:%.1s\n", cv_ts_order.order_mark_oco);
+		printf("cv_ts_order.trade_type:%.1s\n", cv_ts_order.trade_type);
+		printf("cv_ts_order.price_mark_oco:%.1s\n", cv_ts_order.price_mark_oco);
+		printf("cv_ts_order.order_price_oco:%.9s\n", cv_ts_order.order_price_oco);
+		printf("cv_ts_order.touch_price_oco:%.9s\n", cv_ts_order.touch_price_oco);
+		printf("cv_ts_order.qty_mark_oco:%.1s\n", cv_ts_order.qty_mark_oco);
+		printf("cv_ts_order.order_qty_oco:%.9s\n", cv_ts_order.order_qty_oco);
+		printf("cv_ts_order.key_id_oco:%.13s\n", cv_ts_order.key_id_oco);
+#endif
+	}
+#endif
 	memset(commandstr, 0, sizeof(commandstr));
 	memset(qty, 0, sizeof(qty));
 	memset(oprice, 0, sizeof(oprice));
@@ -534,8 +585,10 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	memcpy(qty, cv_ts_order.order_qty, 9);
 	memcpy(oprice, cv_ts_order.order_price, 9);
 	memcpy(tprice, cv_ts_order.touch_price, 9);
+
 	if(cv_ts_order.order_buysell[0] == 'B')
 		buysell_str = "Buy";
+
 	if(cv_ts_order.order_buysell[0] == 'S')
 		buysell_str = "Sell";
 
@@ -606,19 +659,19 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.1f&ordType=Limit&timeInForce=GoodTillCancel&text=%.7s|%.30s|%.20s",
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.9f&ordType=Limit&timeInForce=GoodTillCancel&text=%.7s|%.30s|%.20s",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice,
 					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '3'://stop market
-					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&stopPx=%.1f&execInst=LastPrice&ordType=Stop&text=%.7s|%.30s|%.20s",
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&stopPx=%.9f&execInst=LastPrice&ordType=Stop&text=%.7s|%.30s|%.20s",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), dtprice,
 					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
 					break;
 				case '4'://stop limit
-					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.1f&stopPx=%.1f&execInst=LastPrice&ordType=StopLimit&text=%.7s|%.30s|%.20s",
+					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.9f&stopPx=%.9f&execInst=LastPrice&ordType=StopLimit&text=%.7s|%.30s|%.20s",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice, dtprice,
 					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
@@ -712,7 +765,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 
 		res = curl_easy_perform(m_curl);
 //		printf("\n\n\nexecution_str = %100s\n\n\n", execution_str);
-#ifdef DEBUG
+#if 1
 		printf("apikey_str = %s\n", apikey_str);
 		printf("execution_str = %s\n", execution_str);
 		printf("\n===================\n%s\n===================\n", response.c_str());
@@ -779,7 +832,11 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 					else
 					{
 						memcpy(m_tandem_reply.status_code, "1000", 4);
-						memcpy(m_tandem_reply.bookno, jtable["orderID"].dump().c_str()+1, 36);
+						if(nMode != MODE_OCO)
+							memcpy(m_tandem_reply.bookno, jtable["orderID"].dump().c_str()+1, 36);
+						else
+							memcpy(m_tandem_reply.bookno_oco, jtable["orderID"].dump().c_str()+1, 36);
+
 						memcpy(m_tandem_reply.price, jtable["price"].dump().c_str(), jtable["price"].dump().length());
 						memcpy(m_tandem_reply.avgPx, jtable["avgPx"].dump().c_str(), jtable["avgPx"].dump().length());
 						memcpy(m_tandem_reply.orderQty, jtable["orderQty"].dump().c_str(), jtable["orderQty"].dump().length());
@@ -797,7 +854,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 						printf("==============================\nsubmit order success\n");
 						printf("orderID = %s\n=======================\n", m_tandem_reply.bookno);
 		#endif
-						LogOrderReplyDB_Bitmex(&jtable, OPT_ADD);
+						LogOrderReplyDB_Bitmex(&jtable, &cv_ts_order, OPT_ADD);
 					}
 				}
 				SetStatus(tsMsgReady);
@@ -855,7 +912,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 							memcpy(m_tandem_reply.status_code, "1000", 4);
 							sprintf(m_tandem_reply.reply_msg, "delete order success - [%s]", jtable[i]["text"].dump().c_str());
 							if(jarray)
-								LogOrderReplyDB_Bitmex(&jtable[i], OPT_DELETE);
+								LogOrderReplyDB_Bitmex(&jtable[i], &cv_ts_order, OPT_DELETE);
 						}
 
 						if(!jarray)
@@ -879,7 +936,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 		}//switch
 	}//if(res != CURLE_OK)
 
-	if( !nSilent ) {
+	if( nMode != MODE_SILENT && nMode != MODE_OCO_SILENT) {
 
 		CCVWriteQueueDAO* pWriteQueueDAO = NULL;
 
@@ -906,7 +963,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	return true;
 }
 
-bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
+bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option)
 {
 	char insert_str[MAXDATA], delete_str[MAXDATA];
 
@@ -965,7 +1022,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 
 	if(option == OPT_ADD) {
 #ifdef AWSCODE
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27,source_ip=%%27%.15s%%27,agent_id=%%27%.2s%%27,seq_id=%%27%.13s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str(), cv_ts_order->client_ip, cv_ts_order->agent_id, cv_ts_order->seq_id);
 #else
 		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=insert%%20into%%20bitmex_order_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27,insert_user=%%27trade.server%%27,update_user=%%27trade.server%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[5].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[11].c_str(), exchange_data[12].c_str(), exchange_data[13].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str());
 #endif
@@ -990,7 +1047,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 		if(insert_str[i] == ' ')
 			insert_str[i] = '+';
 	}
-
+	printf("%s\n", insert_str);
 	CURL *curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_URL, insert_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
@@ -998,7 +1055,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Bitmex(json* jtable, int option)
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
 	curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
-	//printf("================response\n%s\n===============\n", response.c_str());
+	printf("================response\n%s\n===============\n", response.c_str());
 	return true;
 }
 

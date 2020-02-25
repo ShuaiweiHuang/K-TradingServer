@@ -81,7 +81,7 @@ public:
 	bool OrderModify_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool OCOSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nSize);
-	bool LogOrderReplyDB_Bitmex(json* jtable, int option);
+	bool LogOrderReplyDB_Bitmex(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option);
 	bool LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option);
 
 	TCVTandemDAOStatus GetStatus();

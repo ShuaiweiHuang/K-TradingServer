@@ -50,17 +50,30 @@ long FillTandemBitcoinOrderFormat(string& strService,
 
 
 //key id
-	if(ucv.cv_order.trade_type[0] == '0')
+	if(ucv.cv_order.trade_type[0] == '0')// new order
 	{
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
-		memcpy(ucv.cv_order.key_id, ucvts.cv_ts_order.key_id, 13); 
+		memcpy(ucv.cv_order.key_id, ucvts.cv_ts_order.key_id, 13);
+#ifdef OCOMDOE//OCO
+		if(ucv.cv_order.header_bit[1] == ORDEROCOREQ)
+		{
+			pClients->GetSerialNumber(ucvts.cv_ts_order.key_id_oco);
+			//memcpy(ucv.cv_order.key_id_oco, ucvts.cv_ts_order.key_id_oco, 13);
+		}
+#endif
 	}
-	else if(ucv.cv_order.trade_type[0] >= '1' && ucv.cv_order.trade_type[0] <= '4')
+	else if(ucv.cv_order.trade_type[0] >= '1' && ucv.cv_order.trade_type[0] <= '4')// delete, deleteall, modify price, modify quantity
 	{
 		//todo : check key id valid
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
-		//memcpy(ucvts.cv_ts_order.key_id, ucv.cv_order.key_id, 13);
 		memcpy(ucvts.cv_ts_order.order_bookno, ucv.cv_order.order_bookno, 36);
+#ifdef OCOMODE//OCO
+		if(ucv.cv_order.header_bit[1] == ORDEROCOREQ)
+		{
+			pClients->GetSerialNumber(ucvts.cv_ts_order.key_id_oco);
+			memcpy(ucvts.cv_ts_order.order_bookno_oco, ucv.cv_order.order_bookno_oco, 36);
+		}
+#endif
 		if(ucv.cv_order.trade_type[0] >= '2') { // delete all
 			if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F")||!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_FT"))
 				return TT_ERROR;
@@ -72,6 +85,7 @@ long FillTandemBitcoinOrderFormat(string& strService,
 	pClients->hostname_check_num = atol(ucvts.cv_ts_order.key_id) / 10000000000;
 	//printf("checker = %ld\n", pClients->hostname_check_num);
 	memcpy(ucvts.cv_ts_order.trade_type, ucv.cv_order.trade_type, 1);
+	memcpy(ucvts.cv_ts_order.order_type, ucv.cv_order.header_bit+1, 1);
 
 #ifdef DEBUG	
 	printf("ucv.cv_order.seq_id = %.13s\n", ucv.cv_order.seq_id);
@@ -155,6 +169,118 @@ long FillTandemBitcoinOrderFormat(string& strService,
 			return OT_ERROR;
 	}
 #endif
+#ifdef OCOMODE//OCC
+	if(ucv.cv_order.header_bit[1] == ORDEROCOREQ)
+	{
+		printf("OCO check...\n");
+	//Order Buy/sell
+		switch(ucv.cv_order.order_buysell_oco[0])
+		{
+			case 'B':
+			case 'S':
+				memcpy(ucvts.cv_ts_order.order_buysell_oco, ucv.cv_order.order_buysell_oco, 1);
+				break;
+			default:
+				return BS_ERROR;
+		}
+	//Order Condition
+		switch(ucv.cv_order.order_cond_oco[0])
+		{
+			case '0'://ROD
+			case '1'://IOC
+			case '2'://FOK
+				memcpy(ucvts.cv_ts_order.order_cond_oco, ucv.cv_order.order_cond_oco, 1);
+				break;
+			default:
+				return OC_ERROR;
+		}
+	//Order Mark
+		switch(ucv.cv_order.order_mark_oco[0])
+		{
+			case '0':
+			case '1':
+			case '4':
+				memcpy(ucvts.cv_ts_order.order_mark_oco, ucv.cv_order.order_mark_oco, 1);
+				break;
+			case '3':
+				if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F"))
+					return OM_ERROR;
+				memcpy(ucvts.cv_ts_order.order_mark_oco, ucv.cv_order.order_mark_oco, 1);
+				break;
+			case '2':
+				//if(!strcmp(ucvts.cv_ts_order.exchange_id, "BINANCE_F")) // add this if exchange support
+					return OM_ERROR;
+				break;
+			default:
+				return OM_ERROR;
+		}
+
+	//Price Mark
+		switch(ucv.cv_order.price_mark[0])
+		{
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+				memcpy(ucvts.cv_ts_order.price_mark_oco, ucv.cv_order.price_mark_oco, 1);
+				break;
+			default:
+				return PM_ERROR;
+		}
+	//Order Price
+		memset(caOrderPrice, 0, sizeof(caOrderPrice));
+		memcpy(caOrderPrice, ucv.cv_order.order_price_oco, sizeof(ucv.cv_order.order_price_oco));
+		string strOrderPrice(caOrderPrice);
+
+		if(!IsNum(strOrderPrice, sizeof(ucv.cv_order.order_price_oco)))
+			return PR_ERROR;
+
+		memcpy(ucvts.cv_ts_order.order_price_oco, ucv.cv_order.order_price_oco, 9);
+
+	//Touch Price
+		memset(caOrderPrice, 0, sizeof(caOrderPrice));
+		memcpy(caOrderPrice, ucv.cv_order.touch_price_oco, sizeof(ucv.cv_order.touch_price_oco));
+		string strTouchPrice_oco(caOrderPrice);
+
+		if(!IsNum(strTouchPrice_oco, sizeof(ucv.cv_order.touch_price_oco)))
+			return TR_ERROR;
+		memcpy(ucvts.cv_ts_order.touch_price_oco, ucv.cv_order.touch_price_oco, 9);
+
+	//Qty Mark
+		switch(ucv.cv_order.qty_mark_oco[0])
+		{
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+				memcpy(ucvts.cv_ts_order.qty_mark_oco, ucv.cv_order.qty_mark_oco, 1);
+				break;
+			default:
+				return QM_ERROR;
+		}
+	//Quantity
+		memset(caQty, 0, sizeof(caQty));
+		memcpy(caQty, ucv.cv_order.order_qty_oco, sizeof(ucv.cv_order.order_qty_oco));
+		string strQty(caQty);
+
+		if(!IsNum(strQty, sizeof(ucv.cv_order.order_qty_oco)))
+			return QT_ERROR;
+		memcpy(ucvts.cv_ts_order.order_qty_oco, ucv.cv_order.order_qty_oco, 9);
+#if 0
+		switch(ucv.cv_order.order_kind_oco[0])
+		{
+			case '0':
+			case '1':
+			case '2':
+				memcpy(ucvts.cv_ts_order.order_kind_oco, ucv.cv_order.order_kind_oco, 1);
+				break;
+			default:
+				return OK_ERROR;
+		}
+#endif
+	}
+#endif
+
 //Order Buy/sell
 	switch(ucv.cv_order.order_buysell[0])
 	{

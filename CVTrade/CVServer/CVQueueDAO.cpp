@@ -151,12 +151,12 @@ void* CCVQueueDAO::Run()
 					if(strcmp(Status, "1000") == 0) {
 
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '1')//delete order success
-							pClient->m_iter->second.bitmex_side_limit_current -= ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+							pClient->m_iter->second.riskctl_side_limit_current -= ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 						printf("\n\n\ndelete order = %d\n\n\n", order_qty);
 					}
 					else{
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '0')//submit order fail
-							pClient->m_iter->second.bitmex_side_limit_current -= ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+							pClient->m_iter->second.riskctl_side_limit_current -= ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 #if 1
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '0') {
 							if(pClient->m_order_index > 0) {
@@ -170,8 +170,8 @@ void* CCVQueueDAO::Run()
 #endif							
 					}
 					printf("order_qty = %d, order_limit = %d\nside_limit = %d, side_limit_current = %d\ntime_limit = %d, time_limit_current = %d\n",
-						order_qty, pClient->m_iter->second.bitmex_limit, pClient->m_iter->second.bitmex_side_limit, pClient->m_iter->second.bitmex_side_limit_current,
-						pClient->m_iter->second.bitmex_time_limit, pClient->m_bitmex_time_limit_current);
+						order_qty, pClient->m_iter->second.riskctl_limit, pClient->m_iter->second.riskctl_side_limit, pClient->m_iter->second.riskctl_side_limit_current,
+						pClient->m_iter->second.riskctl_time_limit, pClient->m_riskctl_time_limit_current);
 
 #endif
 

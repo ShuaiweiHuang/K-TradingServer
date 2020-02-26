@@ -55,11 +55,11 @@ struct AccountData
 
 struct RiskctlData
 {
-	int bitmex_limit;
-	int bitmex_side_limit;
-	int bitmex_side_limit_current;
-	int bitmex_cum_limit;
-	int bitmex_time_limit;
+	int riskctl_limit;
+	int riskctl_side_limit;
+	int riskctl_side_limit_current;
+	int riskctl_cum_limit;
+	int riskctl_time_limit;
 };
 
 class CCVClient: public CCVThread
@@ -104,8 +104,8 @@ class CCVClient: public CCVThread
 		void SetStatus(TCVClientStauts csStatus);
 		void GetOriginalOrder(long nOrderNumber, int nOrderSize, union CV_ORDER_REPLY &cv_order_reply);
 		int GetClientSocket();
-		int m_bitmex_side_limit_current;
-		int m_bitmex_time_limit_current;
+		int m_riskctl_side_limit_current;
+		int m_riskctl_time_limit_current;
 		int m_order_timestamp[MAX_TIME_LIMIT];
 		int m_order_index;
 		int HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length);

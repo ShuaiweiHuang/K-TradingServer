@@ -395,6 +395,7 @@ void* CCVClient::Run()
 					lOrderNumber = fpFillTandemOrder(m_strService, m_username, m_ClientAddrInfo.caIP,
 									m_mBranchAccount, cv_order, cv_ts_order);
 
+					int order_qty;
 					if(lOrderNumber > 0) //valid order
 					{
 						//Risk Control
@@ -405,21 +406,21 @@ void* CCVClient::Run()
 						char Qty[10];
 						memset(Qty, 0, 10);
 						memcpy(Qty, cv_order.cv_order.order_qty, 9);
-						int order_qty = atoi(Qty);
+						order_qty = atoi(Qty);
 
 						if(cv_order.cv_order.trade_type[0] == '0') {
 
 							m_order_timestamp[m_order_index] = (unsigned)time(NULL);
 
-							m_bitmex_time_limit_current = 0;
+							m_riskctl_time_limit_current = 0;
 
 							for(int i=0 ; i<MAX_TIME_LIMIT ; i++)
 							{
 								printf("time = %u\n", m_order_timestamp[i]);
 								if(((unsigned)time(NULL) - m_order_timestamp[i]) < 60)
-									m_bitmex_time_limit_current++;
+									m_riskctl_time_limit_current++;
 							}
-							if(m_bitmex_time_limit_current > m_iter->second.bitmex_time_limit) {
+							if(m_riskctl_time_limit_current > m_iter->second.riskctl_time_limit) {
 								m_order_timestamp[m_order_index] = 0;
 								lOrderNumber = RC_TIME_ERROR;
 							}
@@ -427,24 +428,24 @@ void* CCVClient::Run()
 								m_order_index++;
 								m_order_index %= MAX_TIME_LIMIT;
 							}
-							printf("trade rate limit = %d\n", m_bitmex_time_limit_current);
+							printf("trade rate limit = %d\n", m_riskctl_time_limit_current);
 						}
 
 
-						printf("\n\n\nQty = %s, order_qty = %d, order_limit = %d, side_limit = %d\n", Qty, order_qty, m_iter->second.bitmex_limit, m_iter->second.bitmex_side_limit);
+						printf("\n\n\nQty = %s, order_qty = %d, order_limit = %d, side_limit = %d\n", Qty, order_qty, m_iter->second.riskctl_limit, m_iter->second.riskctl_side_limit);
 
-						if(order_qty >= m_iter->second.bitmex_limit)
+						if(order_qty >= m_iter->second.riskctl_limit)
 							lOrderNumber = RC_LIMIT_ERROR;
 
 						if(cv_order.cv_order.trade_type[0] == '0')//submit new order
 						{
 							printf("risk Qty = %s\n", Qty);
-							m_iter->second.bitmex_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+							m_iter->second.riskctl_side_limit_current += ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 
-							if(m_iter->second.bitmex_side_limit_current >= m_iter->second.bitmex_side_limit ||
-								m_iter->second.bitmex_side_limit_current <= -(m_iter->second.bitmex_side_limit))
+							if(m_iter->second.riskctl_side_limit_current >= m_iter->second.riskctl_side_limit ||
+								m_iter->second.riskctl_side_limit_current <= -(m_iter->second.riskctl_side_limit))
 							{
-								m_iter->second.bitmex_side_limit_current -= ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+								m_iter->second.riskctl_side_limit_current -= ((cv_order.cv_order.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 								lOrderNumber = RC_SIDE_ERROR;
 							}
 						}
@@ -466,11 +467,18 @@ void* CCVClient::Run()
 
 						memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
 						sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
+						memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(-errorcode),strlen(pErrorMessage->GetErrorMessage(-errorcode)));
 
-						memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(-errorcode),
-							strlen(pErrorMessage->GetErrorMessage(-errorcode)));
+						if(errorcode == -RC_LIMIT_ERROR)
+							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", replymsg.reply_msg, order_qty, m_iter->second.riskctl_limit);
+						if(errorcode == -RC_SIDE_ERROR)
+							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", m_iter->second.riskctl_side_limit_current, m_iter->second.riskctl_side_limit);
+						if(errorcode == -RC_TIME_ERROR)
+							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", replymsg.reply_msg, m_riskctl_time_limit_current, m_iter->second.riskctl_time_limit);
+						printf("keanu debug = %s\n", replymsg.reply_msg);
 
 						int nSendData = SendData((unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
+
 						if(nSendData)
 						{
 							FprintfStderrLog("SEND_FILL_TANDEM_ORDER_CODE", -lOrderNumber, (unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
@@ -662,8 +670,8 @@ void CCVClient::LoadRiskControl(char* p_username)
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
 	char query_str[1024];
-	m_bitmex_side_limit_current = 0;
-	m_bitmex_time_limit_current = 0;
+	m_riskctl_side_limit_current = 0;
+	m_riskctl_time_limit_current = 0;
 	m_order_index = 0;
 
 	if(!curl)
@@ -718,11 +726,11 @@ void CCVClient::LoadRiskControl(char* p_username)
 		strategy_str.erase(remove(strategy_str.begin(), strategy_str.end(), '\"'), strategy_str.end());
 		accno_str.erase(remove(accno_str.begin(), accno_str.end(), '\"'), accno_str.end());
 
-		rcdata.bitmex_limit = atoi(order_limit_str.c_str());
-		rcdata.bitmex_side_limit_current = 0;
-		rcdata.bitmex_side_limit = atoi(side_order_limit_str.c_str());
-		rcdata.bitmex_cum_limit = atoi(cum_order_limit_str.c_str());
-		rcdata.bitmex_time_limit = atoi(frequency_order_limit_str.c_str());
+		rcdata.riskctl_limit = atoi(order_limit_str.c_str());
+		rcdata.riskctl_side_limit_current = 0;
+		rcdata.riskctl_side_limit = atoi(side_order_limit_str.c_str());
+		rcdata.riskctl_cum_limit = atoi(cum_order_limit_str.c_str());
+		rcdata.riskctl_time_limit = atoi(frequency_order_limit_str.c_str());
 
 		m_mRiskControl.insert(pair<string, struct RiskctlData>((accno_str+strategy_str), rcdata));
 #ifdef DEBUG
@@ -742,10 +750,10 @@ void CCVClient::LoadRiskControl(char* p_username)
 	{
 		printf("%s - %d,%d,%d,%d\n",
 			iter->first.c_str(),
-			iter->second.bitmex_limit,
-			iter->second.bitmex_side_limit,
-			iter->second.bitmex_cum_limit,
-			iter->second.bitmex_time_limit);
+			iter->second.riskctl_limit,
+			iter->second.riskctl_side_limit,
+			iter->second.riskctl_cum_limit,
+			iter->second.riskctl_time_limit);
 	}
 
 	curl_easy_cleanup(curl);

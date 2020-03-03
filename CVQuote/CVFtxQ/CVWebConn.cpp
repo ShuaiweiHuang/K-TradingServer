@@ -801,6 +801,8 @@ void CCVServer::OnHeartbeatRequest()
 			{
 				auto j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"trades\", \"market\": \"BTC-PERP\" }");
 				auto msg = m_conn->send(j.dump());
+				j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"trades\", \"market\": \"ETH-PERP\" }");
+				msg = m_conn->send(j.dump());
 				m_FTX_enable = true;
 				sprintf(replymsg, "%s send subscribe message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
 				FprintfStderrLog("initial protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
@@ -809,6 +811,8 @@ void CCVServer::OnHeartbeatRequest()
 			{
 				auto j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"trades\", \"market\": \"BTC-PERP\" }");
 				auto msg = m_conn->send(j.dump());
+				j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"trades\", \"market\": \"ETH-PERP\" }");
+				msg = m_conn->send(j.dump());
 				//auto j = json::parse("{ \"op\": \"ping\"}");
 				//auto msg = m_conn->send(j.dump());
 				//j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"trades\", \"market\": \"BTC-PERP\" }");

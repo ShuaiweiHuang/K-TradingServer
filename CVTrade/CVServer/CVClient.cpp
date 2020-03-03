@@ -224,21 +224,21 @@ void* CCVClient::Run()
 
 				if(m_ClientStatus == csLogoning)
 				{
-					struct CV_StructLogon logon_type;
+					//struct CV_StructLogon m_logon_type;
 					bool bLogon;
-					memset(&logon_type, 0, sizeof(struct CV_StructLogon));
-					memcpy(&logon_type, uncaMessageBuf, sizeof(struct CV_StructLogon));
+					memset(&m_logon_type, 0, sizeof(struct CV_StructLogon));
+					memcpy(&m_logon_type, uncaMessageBuf, sizeof(struct CV_StructLogon));
 
 					struct CV_StructLogonReply logon_reply;
 					memset(&logon_reply, 0, m_nLengthOfLogonReplyMessage);
 					memset(m_uncaLogonID, 0, sizeof(m_uncaLogonID));
-					memcpy(m_uncaLogonID, logon_type.logon_id, sizeof(logon_type.logon_id));
-					memcpy(m_username, logon_type.logon_id, 20);
+					memcpy(m_uncaLogonID, m_logon_type.logon_id, sizeof(m_logon_type.logon_id));
+					memcpy(m_username, m_logon_type.logon_id, 20);
 					
-					FprintfStderrLog("LOGON_MESSAGE", 0, (unsigned char*)logon_type.logon_id, strlen(logon_type.logon_id),
-							(unsigned char*)logon_type.password, strlen(logon_type.password));
+					FprintfStderrLog("LOGON_MESSAGE", 0, (unsigned char*)m_logon_type.logon_id, strlen(m_logon_type.logon_id),
+							(unsigned char*)m_logon_type.password, strlen(m_logon_type.password));
 
-					bLogon = LogonAuth(logon_type.logon_id, logon_type.password, logon_reply);//logon & get logon reply data
+					bLogon = LogonAuth(m_logon_type.logon_id, m_logon_type.password, logon_reply);//logon & get logon reply data
 
 					memset(uncaSendLogonBuf, 0, sizeof(uncaSendLogonBuf));
 
@@ -265,7 +265,7 @@ void* CCVClient::Run()
 					{
 						SetStatus(csOnline);
 						ReplyAccountNum();
-						LoadRiskControl(logon_type.logon_id);
+						LoadRiskControl(m_logon_type.logon_id);
 						m_pHeartbeat->Start();
 					}
 					else//logon failed
@@ -504,6 +504,10 @@ void* CCVClient::Run()
 #endif
 						{
 							pClients->InsertClientToHash(lOrderNumber, this);
+#ifdef OCOMODE
+							if(uncaMessageBuf[1] == ORDEROCOREQ)
+								pClients->InsertClientToHash(lOrderNumber+1, this);
+#endif
 						}
 					}
 					catch(char const* pExceptionMessage)

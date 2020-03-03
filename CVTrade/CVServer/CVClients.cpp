@@ -237,6 +237,7 @@ void CCVClients::SetConfiguration(string strService, string strListenPort, key_t
 void CCVClients::CheckOnlineClientVector()
 {
 	int index = 0;
+	static int counter_for_RCLoad = 0;
 	while(index < m_vOnlineClient.size())
 	{
 		if(m_vOnlineClient[index]->GetStatus() == csOffline)
@@ -245,9 +246,12 @@ void CCVClients::CheckOnlineClientVector()
 		}
 		else
 		{
+			if(!counter_for_RCLoad%300)
+				m_vOnlineClient[index]->LoadRiskControl((m_vOnlineClient[index])->m_logon_type.logon_id);
 			index++;
 		}
 	}
+	counter_for_RCLoad++;
 }
 
 void CCVClients::MoveOnlineClientToOfflineVector(CCVClient* pClient)

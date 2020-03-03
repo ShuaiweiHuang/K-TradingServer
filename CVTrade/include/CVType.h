@@ -1,12 +1,3 @@
-struct CV_StructLogon
-{
-	char header_bit[2];
-	char logon_id[20];
-	char password[30];
-	char source[2];
-	char Version[10];
-};
-
 struct CV_StructLogonReply
 {
 	char header_bit[2];

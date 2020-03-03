@@ -24,6 +24,15 @@ using namespace std;
 #define MAX_TIME_LIMIT	120
 
 
+struct CV_StructLogon
+{
+        char header_bit[2];
+        char logon_id[20];
+        char password[30];
+        char source[2];
+        char Version[10];
+};
+
 struct TCVClientAddrInfo
 {
 	int nSocket;
@@ -92,9 +101,9 @@ class CCVClient: public CCVThread
 		bool LogonAuth(char* p_username, char* p_password, struct CV_StructLogonReply &logon_reply);
 		void ReplyAccountContents();
 		void ReplyAccountNum();
-		void LoadRiskControl(char* p_username);
 
 	public:
+		void LoadRiskControl(char* p_username);
 		CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService);
 		TCVClientStauts GetStatus();
 		virtual ~CCVClient();
@@ -103,6 +112,7 @@ class CCVClient: public CCVThread
 		bool RecvAll(unsigned char* pBuf, int nToRecv);
 		void SetStatus(TCVClientStauts csStatus);
 		void GetOriginalOrder(long nOrderNumber, int nOrderSize, union CV_ORDER_REPLY &cv_order_reply);
+		struct CV_StructLogon m_logon_type;
 		int GetClientSocket();
 		int m_riskctl_side_limit_current;
 		int m_riskctl_time_limit_current;

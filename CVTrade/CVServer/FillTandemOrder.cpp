@@ -52,15 +52,21 @@ long FillTandemBitcoinOrderFormat(string& strService,
 //key id
 	if(ucv.cv_order.trade_type[0] == '0')// new order
 	{
-		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
-		memcpy(ucv.cv_order.key_id, ucvts.cv_ts_order.key_id, 13);
 #ifdef OCOMDOE//OCO
 		if(ucv.cv_order.header_bit[1] == ORDEROCOREQ)
 		{
+			pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
 			pClients->GetSerialNumber(ucvts.cv_ts_order.key_id_oco);
+			memcpy(ucv.cv_order.key_id, ucvts.cv_ts_order.key_id, 13);
 			//memcpy(ucv.cv_order.key_id_oco, ucvts.cv_ts_order.key_id_oco, 13);
 		}
+		else
 #endif
+		{
+
+			pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
+			memcpy(ucv.cv_order.key_id, ucvts.cv_ts_order.key_id, 13);
+		}
 	}
 	else if(ucv.cv_order.trade_type[0] >= '1' && ucv.cv_order.trade_type[0] <= '4')// delete, deleteall, modify price, modify quantity
 	{

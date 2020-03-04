@@ -112,6 +112,7 @@ class CCVClient: public CCVThread
 		bool RecvAll(unsigned char* pBuf, int nToRecv);
 		void SetStatus(TCVClientStauts csStatus);
 		void GetOriginalOrder(long nOrderNumber, int nOrderSize, union CV_ORDER_REPLY &cv_order_reply);
+		map<long int, long int> m_OCO_keyid;
 		struct CV_StructLogon m_logon_type;
 		int GetClientSocket();
 		int m_riskctl_side_limit_current;

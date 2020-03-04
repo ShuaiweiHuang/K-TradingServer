@@ -505,8 +505,11 @@ void* CCVClient::Run()
 						{
 							pClients->InsertClientToHash(lOrderNumber, this);
 #ifdef OCOMODE
-							if(uncaMessageBuf[1] == ORDEROCOREQ)
+							if(uncaMessageBuf[1] == ORDEROCOREQ) {
 								pClients->InsertClientToHash(lOrderNumber+1, this);
+								m_OCO_keyid.insert(pair<long int, long int>(lOrderNumber, lOrderNumber+1));
+								m_OCO_keyid.insert(pair<long int, long int>(lOrderNumber+1, lOrderNumber));
+							}
 #endif
 						}
 					}

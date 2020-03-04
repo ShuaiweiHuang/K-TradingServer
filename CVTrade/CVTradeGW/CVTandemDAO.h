@@ -77,11 +77,18 @@ public:
 
 	bool SendOrder(const unsigned char* pBuf, int nSize);
 	bool OrderSubmit(const unsigned char* pBuf, int nSize);
+
 	bool OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize, int nSilent);
 	bool OrderModify_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool OCOSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nSize);
-	bool OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool LogOrderReplyDB_Bitmex(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option);
+
+	bool OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nSize, int nSilent);
+	bool OrderModify_FTX(struct CV_StructTSOrder cv_ts_order, int nSize);
+	bool OCOSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nSize);
+	bool LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option);
+
+	bool OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option);
 
 	TCVTandemDAOStatus GetStatus();

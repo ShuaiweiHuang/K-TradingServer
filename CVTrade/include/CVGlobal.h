@@ -50,9 +50,9 @@
 #define SCALE_TPYE_2	1000000000
 
 #define MODE_NORMAL	0
-#define MODE_OCO	1
-#define MODE_SILENT	2
-#define MODE_OCO_SILENT	3
+#define MODE_OCO_1	1
+#define MODE_OCO_2	2
+#define MODE_SILENT	3
 union U_ByteSint
 {
    unsigned char uncaByte[16];

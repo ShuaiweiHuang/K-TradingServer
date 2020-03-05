@@ -11,7 +11,6 @@ void FillBitcoinReplyFormat(union CV_ORDER_REPLY &cv_order_reply, union CV_TS_OR
 	memcpy(cv_order_reply.cv_reply.error_code, cv_ts_order_reply.cv_ts_reply.status_code, 4);
 	sprintf(cv_order_reply.cv_reply.reply_msg, "%s", cv_ts_order_reply.cv_ts_reply.reply_msg);
 	memcpy(cv_order_reply.cv_reply.original.order_bookno, cv_ts_order_reply.cv_ts_reply.bookno, 36);
-	memcpy(cv_order_reply.cv_reply.original.order_bookno_oco, cv_ts_order_reply.cv_ts_reply.bookno_oco, 36);
 	memcpy(cv_order_reply.cv_reply.price, cv_ts_order_reply.cv_ts_reply.price, 10);
 	memcpy(cv_order_reply.cv_reply.avgPx, cv_ts_order_reply.cv_ts_reply.avgPx, 10);
 	memcpy(cv_order_reply.cv_reply.orderQty, cv_ts_order_reply.cv_ts_reply.orderQty, 10);

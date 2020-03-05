@@ -164,16 +164,6 @@ struct CV_StructTSOrderReply
 	char cumQty[10];
 	char transactTime[24];	
 	char reply_msg[129];
-	char status_code_oco[4];
-	char key_id_oco[13];
-	char bookno_oco[36];
-	char price_oco[10];
-	char avgPx_oco[10];
-	char orderQty_oco[10];
-	char lastQty_oco[10];
-	char cumQty_oco[10];
-	char transactTime_oco[24];	
-	char reply_msg_oco[129];
 };
 
 union CV_ORDER

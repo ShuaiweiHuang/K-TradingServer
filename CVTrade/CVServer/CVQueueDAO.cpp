@@ -50,12 +50,15 @@ CCVQueueDAO::~CCVQueueDAO()
 
 void* CCVQueueDAO::Run()
 {
-	unsigned char uncaRecvBuf[BUFSIZE];
-	unsigned char uncaSendBuf[BUFSIZE];
-	char caOrderNumber[14];// 13 + \0
+	unsigned char ReplyQueueMsg[BUFSIZE];
+	unsigned char ReplyClientMsg[BUFSIZE];
+	char caKeyID[14];// 13 + \0
+	char caStatus[5];// 5 + \0
+	char caorderQty[11];// 5 + \0
+	char cacumQty[11];// 5 + \0
 
-	memset(uncaSendBuf, 0, sizeof(uncaSendBuf));
-	uncaSendBuf[0] = 0x1b;// for order reply
+	memset(ReplyClientMsg, 0, sizeof(ReplyClientMsg));
+	ReplyClientMsg[0] = 0x1b;// for order reply
 
 	int nSizeOfOriginalOrder;
 	int nSizeOfTIGReply;
@@ -79,7 +82,7 @@ void* CCVQueueDAO::Run()
 
 		nSizeOfSendSocket = sizeof(struct CV_StructOrderReply);
 		
-		uncaSendBuf[1] = ORDERREP;// for order reply
+		ReplyClientMsg[1] = ORDERREP;// for order reply
 	}
 	else
 	{
@@ -88,15 +91,21 @@ void* CCVQueueDAO::Run()
 
 	while(m_pRecvQueue)
 	{
-		memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
-		int nGetMessage = m_pRecvQueue->GetMessage(uncaRecvBuf);
+		memset(ReplyQueueMsg, 0, sizeof(ReplyQueueMsg));
+		int nGetMessage = m_pRecvQueue->GetMessage(ReplyQueueMsg);
 		if(nGetMessage > 0)
 		{
-			FprintfStderrLog("RECV_Q", 0, uncaRecvBuf, nGetMessage);
+			FprintfStderrLog("RECV_Q", 0, ReplyQueueMsg, nGetMessage);
 
-			memset(caOrderNumber, 0, sizeof(caOrderNumber));
-			memcpy(caOrderNumber, uncaRecvBuf+4, 13);
-			long lOrderNumber = atol(caOrderNumber);
+			memset(caKeyID, 0, sizeof(caKeyID));
+			memset(caStatus, 0, sizeof(caStatus));
+			memset(caorderQty, 0, sizeof(caorderQty));
+			memset(cacumQty, 0, sizeof(cacumQty));
+			memcpy(caKeyID, ReplyQueueMsg+4, 13);
+			memcpy(caStatus, ReplyQueueMsg, 4);
+			memcpy(caorderQty, ReplyQueueMsg+73, 10);
+			memcpy(cacumQty, ReplyQueueMsg+93, 10);
+			long lOrderNumber = atol(caKeyID);
 
 #ifdef DEBUG
 			printf("\nreceive queue %d data with length = %d\n\n", m_kRecvKey, nSizeOfSendSocket);
@@ -119,20 +128,36 @@ void* CCVQueueDAO::Run()
 
 					if(pClient->GetStatus() == csOnline)
 					{
+#if 1
 						memset(&cv_order_reply, 0, sizeof(union CV_ORDER_REPLY));
 						pClient->GetOriginalOrder(lOrderNumber, nSizeOfOriginalOrder, cv_order_reply);
+						map<long, long>::iterator pair_keyid_iter;
+						pair_keyid_iter = pClient->m_OCO_keyid.find(lOrderNumber);
+
+//status_code[4]; key_id[13]; bookno[36]; price[10]; avgPx[10]; orderQty[10]; lastQty[10]; cumQty[10]; transactTime[24]; reply_msg[129];
+
+						//if(!strcmp(caStatus, "1000") && !strcmp(caorderQty, cacumQty) && pair_keyid_iter != pClient->m_OCO_keyid.end())
+						printf("Read Queue.\n");
+						if(pair_keyid_iter != pClient->m_OCO_keyid.end())
+						{
+							union CV_ORDER_REPLY cv_order_reply_oco;
+							memset(&cv_order_reply_oco, 0, sizeof(union CV_ORDER_REPLY));
+							pClient->GetOriginalOrder(pair_keyid_iter->second, nSizeOfOriginalOrder, cv_order_reply_oco);
+							printf("OCO pair = %ld, %ld", lOrderNumber, pair_keyid_iter->second);
+						}
+#endif
 					}
 					else 
 					{
-						FprintfStderrLog("CLIENT_NOT_ONLINE", -1, uncaRecvBuf, nGetMessage);
+						FprintfStderrLog("CLIENT_NOT_ONLINE", -1, ReplyQueueMsg, nGetMessage);
 						pClients->RemoveClientFromHash(lOrderNumber);
 						continue;
 					}
 					memset(&tig_reply, 0, sizeof(union CV_TS_ORDER_REPLY));
-					memcpy(&tig_reply, uncaRecvBuf, nSizeOfTIGReply);
+					memcpy(&tig_reply, ReplyQueueMsg, nSizeOfTIGReply);
 
 					fpFillCVReply(cv_order_reply, tig_reply);
-					memcpy(uncaSendBuf , &cv_order_reply, sizeof(union CV_ORDER_REPLY));
+					memcpy(ReplyClientMsg , &cv_order_reply, sizeof(union CV_ORDER_REPLY));
 #if 1
 					//Risk control check
 					string strRiskKey(cv_order_reply.cv_reply.original.sub_acno_id);
@@ -179,22 +204,22 @@ void* CCVQueueDAO::Run()
 
 					if(pClient->GetStatus() == csOnline)//weird if(pClient) not working
 					{
-						bSendData = pClient->SendData(uncaSendBuf, nSizeOfSendSocket);
+						bSendData = pClient->SendData(ReplyClientMsg, nSizeOfSendSocket);
 					}
 					else
 					{
-						FprintfStderrLog("CLIENT_NOT_ONLINE", -1, uncaRecvBuf, nGetMessage);
+						FprintfStderrLog("CLIENT_NOT_ONLINE", -1, ReplyQueueMsg, nGetMessage);
 						pClients->RemoveClientFromHash(lOrderNumber);
 						continue;
 					}
 					if(bSendData == true)
 					{
-						FprintfStderrLog("SEND_CV_ORDER_REPLY", 0, uncaSendBuf, nSizeOfSendSocket);
+						FprintfStderrLog("SEND_CV_ORDER_REPLY", 0, ReplyClientMsg, nSizeOfSendSocket);
 						//pClients->RemoveClientFromHash(lOrderNumber);
 					}
 					else
 					{
-						FprintfStderrLog("SEND_CV_ORDER_REPLY_ERROR", -1, uncaSendBuf, nSizeOfSendSocket);
+						FprintfStderrLog("SEND_CV_ORDER_REPLY_ERROR", -1, ReplyClientMsg, nSizeOfSendSocket);
 						perror("SEND_SOCKET_ERROR");
 						throw "Send Data Error!";
 					}
@@ -208,7 +233,7 @@ void* CCVQueueDAO::Run()
 		}
 		else
 		{
-			FprintfStderrLog("RECV_Q_ERROR", -1, uncaRecvBuf, 0);
+			FprintfStderrLog("RECV_Q_ERROR", -1, ReplyQueueMsg, 0);
 			perror("RECV_Q_ERROR");
 			//todo
 		}

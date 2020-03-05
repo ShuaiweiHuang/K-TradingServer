@@ -532,7 +532,13 @@ void* CCVClient::Run()
 						//std::map<long, struct CVOriginalOrder>::iterator iter = m_mOriginalOrder.find(lOrderNumber);
 						//printf("Iter = %x\n", iter);
 						//m_mOriginalOrder.erase(iter);
+						
 						m_mOriginalOrder.insert(std::pair<long, struct CVOriginalOrder>(lOrderNumber, newOriginalOrder));
+
+						if(uncaMessageBuf[1] == ORDEROCOREQ)
+						{
+							m_mOriginalOrder.insert(std::pair<long, struct CVOriginalOrder>(lOrderNumber+1, newOriginalOrder));
+						}
 						printf("Order number = %ld\n", lOrderNumber);
 					}
 					else if(nResult == -1)

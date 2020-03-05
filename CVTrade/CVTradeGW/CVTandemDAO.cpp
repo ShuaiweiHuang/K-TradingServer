@@ -862,7 +862,6 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 					{
 						memcpy(m_tandem_reply.status_code, "1000", 4);
 						memcpy(m_tandem_reply.bookno, jtable["orderID"].dump().c_str()+1, 36);
-						//memcpy(m_tandem_reply.bookno_oco, jtable["orderID"].dump().c_str()+1, 36);
 
 						memcpy(m_tandem_reply.price, jtable["price"].dump().c_str(), jtable["price"].dump().length());
 						memcpy(m_tandem_reply.avgPx, jtable["avgPx"].dump().c_str(), jtable["avgPx"].dump().length());
@@ -1208,8 +1207,12 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 	string buysell_str;
 	unsigned char * mac = NULL;
 	unsigned int mac_length = 0;
-	int expires = (int)time(NULL)+1000, ret;
-	printf("expires = %d\n", expires);
+	//int expires = (int)time(NULL)+1000, ret;
+	int ret;
+	struct timeval  tv;
+	gettimeofday(&tv, NULL);
+	double expires = (tv.tv_sec) * 1000 ;
+	printf("expires = %.01lf\n", expires);
 	sleep(10);
 	char encrystr[256], commandstr[256], macoutput[256], execution_str[256], apikey_str[256];
 	char qty[10], oprice[10], tprice[10];
@@ -1332,25 +1335,25 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 				case '0'://Market
 					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&ordType=Market&text=%.7s|%.30s|%.20s",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
-					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
+					sprintf(encrystr, "POST/api/orders.01f%s", expires, commandstr);
 					break;
 				case '1'://Limit
 					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.9f&ordType=Limit&timeInForce=GoodTillCancel&text=%.7s|%.30s|%.20s",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice,
 					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
-					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
+					sprintf(encrystr, "POST/api/orders%d%s", expires, commandstr);
 					break;
 				case '3'://stop market
 					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&stopPx=%.9f&execInst=LastPrice&ordType=Stop&text=%.7s|%.30s|%.20s",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), dtprice,
 					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
-					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
+					sprintf(encrystr, "POST/api/orders%d%s", expires, commandstr);
 					break;
 				case '4'://stop limit
 					sprintf(commandstr, "clOrdID=%.13s&symbol=%s&side=%s&orderQty=%d&price=%.9f&stopPx=%.9f&execInst=LastPrice&ordType=StopLimit&text=%.7s|%.30s|%.20s",
 					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), atoi(qty), doprice, dtprice,
 					cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
-					sprintf(encrystr, "POST/api/v1/order%d%s", expires, commandstr);
+					sprintf(encrystr, "POST/api/orders%d%s", expires, commandstr);
 					break;
 				case '2'://Protect
 				default:
@@ -1509,7 +1512,6 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 					{
 						memcpy(m_tandem_reply.status_code, "1000", 4);
 						memcpy(m_tandem_reply.bookno, jtable["orderID"].dump().c_str()+1, 36);
-						//memcpy(m_tandem_reply.bookno_oco, jtable["orderID"].dump().c_str()+1, 36);
 
 						memcpy(m_tandem_reply.price, jtable["price"].dump().c_str(), jtable["price"].dump().length());
 						memcpy(m_tandem_reply.avgPx, jtable["avgPx"].dump().c_str(), jtable["avgPx"].dump().length());

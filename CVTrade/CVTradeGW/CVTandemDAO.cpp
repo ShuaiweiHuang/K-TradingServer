@@ -195,14 +195,7 @@ bool CCVTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			case '0':
 			case '1':
 			case '2':
-#ifndef OCOMODE
 				return OrderSubmit_Bitmex(cv_ts_order, nToSend, 0);
-#else
-				if(cv_ts_order.order_type[0] == ORDERREQ) 
-					return OrderSubmit_Bitmex(cv_ts_order, nToSend, 0);
-				else if(cv_ts_order.order_type[0] == ORDEROCOREQ)
-					return OCOSubmit_Bitmex(cv_ts_order, nToSend);
-#endif						
 				break;
 			case '3':
 			case '4':
@@ -229,14 +222,7 @@ bool CCVTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 			case '0':
 			case '1':
 			case '2':
-#ifndef OCOMODE
 				return OrderSubmit_FTX(cv_ts_order, nToSend, 0);
-#else
-				if(cv_ts_order.order_type[0] == ORDERREQ) 
-					return OrderSubmit_FTX(cv_ts_order, nToSend, 0);
-				else if(cv_ts_order.order_type[0] == ORDEROCOREQ)
-					return OCOSubmit_FTX(cv_ts_order, nToSend);
-#endif						
 				break;
 			case '3':
 			case '4':
@@ -540,17 +526,6 @@ bool CCVTandemDAO::OrderModify_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	}
 	return false;
 }
-#ifdef OCOMODE
-bool CCVTandemDAO::OCOSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
-{
-	if(OrderSubmit_Bitmex(cv_ts_order, nToSend, MODE_OCO_1))
-	{
-		sleep(1);
-		return OrderSubmit_Bitmex(cv_ts_order, nToSend, MODE_OCO_2);
-	}
-	return false;
-}
-#endif
 
 bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend, int nMode)
 {
@@ -566,46 +541,6 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 	string response;
 	json jtable;
 
-#ifdef OCOMODE
-	if(nMode == MODE_OCO_2)
-	{
-		memcpy(cv_ts_order.key_id, cv_ts_order.key_id_oco, 13);
-		memcpy(cv_ts_order.order_buysell, cv_ts_order.order_buysell_oco, 1);
-		memcpy(cv_ts_order.order_bookno, cv_ts_order.order_bookno_oco, 36);
-		memcpy(cv_ts_order.order_cond, cv_ts_order.order_cond_oco, 1);
-		memcpy(cv_ts_order.order_mark, cv_ts_order.order_mark_oco, 1);
-		memcpy(cv_ts_order.price_mark, cv_ts_order.price_mark_oco, 1);
-		memcpy(cv_ts_order.order_price, cv_ts_order.order_price_oco, 9);
-		memcpy(cv_ts_order.touch_price, cv_ts_order.touch_price_oco, 9);
-		memcpy(cv_ts_order.qty_mark, cv_ts_order.qty_mark_oco, 1);
-		memcpy(cv_ts_order.order_qty, cv_ts_order.order_qty_oco, 9);
-		memcpy(cv_ts_order.key_id, cv_ts_order.key_id_oco, 13);
-#if 1
-		printf("cv_ts_order.order_buysell:%.1s\n", cv_ts_order.order_buysell);
-		printf("cv_ts_order.order_bookno:%.36s\n", cv_ts_order.order_bookno);
-		printf("cv_ts_order.order_cond:%.1s\n", cv_ts_order.order_cond);
-		printf("cv_ts_order.order_mark:%.1s\n", cv_ts_order.order_mark);
-		printf("cv_ts_order.trade_type:%.1s\n", cv_ts_order.trade_type);
-		printf("cv_ts_order.price_mark:%.1s\n", cv_ts_order.price_mark);
-		printf("cv_ts_order.order_price:%.9s\n", cv_ts_order.order_price);
-		printf("cv_ts_order.touch_price:%.9s\n", cv_ts_order.touch_price);
-		printf("cv_ts_order.qty_mark:%.1s\n", cv_ts_order.qty_mark);
-		printf("cv_ts_order.order_qty:%.9s\n", cv_ts_order.order_qty);
-		printf("cv_ts_order.key_id:%.13s\n", cv_ts_order.key_id);
-		printf("cv_ts_order.order_buysell_oco:%.1s\n", cv_ts_order.order_buysell_oco);
-		printf("cv_ts_order.order_bookno_oco:%.36s\n", cv_ts_order.order_bookno_oco);
-		printf("cv_ts_order.order_cond_oco:%.1s\n", cv_ts_order.order_cond_oco);
-		printf("cv_ts_order.order_mark_oco:%.1s\n", cv_ts_order.order_mark_oco);
-		printf("cv_ts_order.trade_type:%.1s\n", cv_ts_order.trade_type);
-		printf("cv_ts_order.price_mark_oco:%.1s\n", cv_ts_order.price_mark_oco);
-		printf("cv_ts_order.order_price_oco:%.9s\n", cv_ts_order.order_price_oco);
-		printf("cv_ts_order.touch_price_oco:%.9s\n", cv_ts_order.touch_price_oco);
-		printf("cv_ts_order.qty_mark_oco:%.1s\n", cv_ts_order.qty_mark_oco);
-		printf("cv_ts_order.order_qty_oco:%.9s\n", cv_ts_order.order_qty_oco);
-		printf("cv_ts_order.key_id_oco:%.13s\n", cv_ts_order.key_id_oco);
-#endif
-	}
-#endif
 	memset(commandstr, 0, sizeof(commandstr));
 	memset(qty, 0, sizeof(qty));
 	memset(oprice, 0, sizeof(oprice));
@@ -1189,17 +1124,6 @@ bool CCVTandemDAO::OrderModify_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 	}
 	return false;
 }
-#ifdef OCOMODE
-bool CCVTandemDAO::OCOSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToSend)
-{
-	if(OrderSubmit_FTX(cv_ts_order, nToSend, MODE_OCO_1))
-	{
-		sleep(1);
-		return OrderSubmit_FTX(cv_ts_order, nToSend, MODE_OCO_2);
-	}
-	return false;
-}
-#endif
 
 bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToSend, int nMode)
 {
@@ -1221,46 +1145,6 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 	string response;
 	json jtable;
 
-#ifdef OCOMODE
-	if(nMode == MODE_OCO_2)
-	{
-		memcpy(cv_ts_order.key_id, cv_ts_order.key_id_oco, 13);
-		memcpy(cv_ts_order.order_buysell, cv_ts_order.order_buysell_oco, 1);
-		memcpy(cv_ts_order.order_bookno, cv_ts_order.order_bookno_oco, 36);
-		memcpy(cv_ts_order.order_cond, cv_ts_order.order_cond_oco, 1);
-		memcpy(cv_ts_order.order_mark, cv_ts_order.order_mark_oco, 1);
-		memcpy(cv_ts_order.price_mark, cv_ts_order.price_mark_oco, 1);
-		memcpy(cv_ts_order.order_price, cv_ts_order.order_price_oco, 9);
-		memcpy(cv_ts_order.touch_price, cv_ts_order.touch_price_oco, 9);
-		memcpy(cv_ts_order.qty_mark, cv_ts_order.qty_mark_oco, 1);
-		memcpy(cv_ts_order.order_qty, cv_ts_order.order_qty_oco, 9);
-		memcpy(cv_ts_order.key_id, cv_ts_order.key_id_oco, 13);
-#if 1
-		printf("cv_ts_order.order_buysell:%.1s\n", cv_ts_order.order_buysell);
-		printf("cv_ts_order.order_bookno:%.36s\n", cv_ts_order.order_bookno);
-		printf("cv_ts_order.order_cond:%.1s\n", cv_ts_order.order_cond);
-		printf("cv_ts_order.order_mark:%.1s\n", cv_ts_order.order_mark);
-		printf("cv_ts_order.trade_type:%.1s\n", cv_ts_order.trade_type);
-		printf("cv_ts_order.price_mark:%.1s\n", cv_ts_order.price_mark);
-		printf("cv_ts_order.order_price:%.9s\n", cv_ts_order.order_price);
-		printf("cv_ts_order.touch_price:%.9s\n", cv_ts_order.touch_price);
-		printf("cv_ts_order.qty_mark:%.1s\n", cv_ts_order.qty_mark);
-		printf("cv_ts_order.order_qty:%.9s\n", cv_ts_order.order_qty);
-		printf("cv_ts_order.key_id:%.13s\n", cv_ts_order.key_id);
-		printf("cv_ts_order.order_buysell_oco:%.1s\n", cv_ts_order.order_buysell_oco);
-		printf("cv_ts_order.order_bookno_oco:%.36s\n", cv_ts_order.order_bookno_oco);
-		printf("cv_ts_order.order_cond_oco:%.1s\n", cv_ts_order.order_cond_oco);
-		printf("cv_ts_order.order_mark_oco:%.1s\n", cv_ts_order.order_mark_oco);
-		printf("cv_ts_order.trade_type:%.1s\n", cv_ts_order.trade_type);
-		printf("cv_ts_order.price_mark_oco:%.1s\n", cv_ts_order.price_mark_oco);
-		printf("cv_ts_order.order_price_oco:%.9s\n", cv_ts_order.order_price_oco);
-		printf("cv_ts_order.touch_price_oco:%.9s\n", cv_ts_order.touch_price_oco);
-		printf("cv_ts_order.qty_mark_oco:%.1s\n", cv_ts_order.qty_mark_oco);
-		printf("cv_ts_order.order_qty_oco:%.9s\n", cv_ts_order.order_qty_oco);
-		printf("cv_ts_order.key_id_oco:%.13s\n", cv_ts_order.key_id_oco);
-#endif
-	}
-#endif
 	memset(commandstr, 0, sizeof(commandstr));
 	memset(qty, 0, sizeof(qty));
 	memset(oprice, 0, sizeof(oprice));

@@ -14,8 +14,6 @@
 #define HEARTBEATREP	0x07
 #define ORDERREQ	0x40
 #define ORDERREP	0x41
-#define ORDEROCOREQ	0x42
-#define ORDEROCOREP	0x43
 #define DEALREP		0x50
 #define CONTROLREQ	0x60
 #define CONTROLREP	0x61
@@ -50,8 +48,6 @@
 #define SCALE_TPYE_2	1000000000
 
 #define MODE_NORMAL	0
-#define MODE_OCO_1	1
-#define MODE_OCO_2	2
 #define MODE_SILENT	3
 union U_ByteSint
 {

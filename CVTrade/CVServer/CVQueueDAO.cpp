@@ -128,24 +128,8 @@ void* CCVQueueDAO::Run()
 
 					if(pClient->GetStatus() == csOnline)
 					{
-#if 1
 						memset(&cv_order_reply, 0, sizeof(union CV_ORDER_REPLY));
 						pClient->GetOriginalOrder(lOrderNumber, nSizeOfOriginalOrder, cv_order_reply);
-						map<long, long>::iterator pair_keyid_iter;
-						pair_keyid_iter = pClient->m_OCO_keyid.find(lOrderNumber);
-
-//status_code[4]; key_id[13]; bookno[36]; price[10]; avgPx[10]; orderQty[10]; lastQty[10]; cumQty[10]; transactTime[24]; reply_msg[129];
-
-						//if(!strcmp(caStatus, "1000") && !strcmp(caorderQty, cacumQty) && pair_keyid_iter != pClient->m_OCO_keyid.end())
-						printf("Read Queue.\n");
-						if(pair_keyid_iter != pClient->m_OCO_keyid.end())
-						{
-							union CV_ORDER_REPLY cv_order_reply_oco;
-							memset(&cv_order_reply_oco, 0, sizeof(union CV_ORDER_REPLY));
-							pClient->GetOriginalOrder(pair_keyid_iter->second, nSizeOfOriginalOrder, cv_order_reply_oco);
-							printf("OCO pair = %ld, %ld", lOrderNumber, pair_keyid_iter->second);
-						}
-#endif
 					}
 					else 
 					{
@@ -176,13 +160,15 @@ void* CCVQueueDAO::Run()
 					if(strcmp(Status, "1000") == 0) {
 
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '1')//delete order success
-							pClient->m_iter->second.riskctl_side_limit_current -= ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+							pClient->m_iter->second.riskctl_side_limit_current -= 
+								((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? order_qty : -(order_qty));
 						printf("\n\n\ndelete order = %d\n\n\n", order_qty);
 					}
 					else{
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '0')//submit order fail
-							pClient->m_iter->second.riskctl_side_limit_current -= ((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? order_qty : -(order_qty));
-#if 1
+							pClient->m_iter->second.riskctl_side_limit_current -=
+								((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? order_qty : -(order_qty));
+
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '0') {
 							if(pClient->m_order_index > 0) {
 								pClient->m_order_index--;
@@ -192,7 +178,6 @@ void* CCVQueueDAO::Run()
 							}
 							pClient->m_order_timestamp[pClient->m_order_index] = 0;
 						}
-#endif							
 					}
 					printf("order_qty = %d, order_limit = %d\nside_limit = %d, side_limit_current = %d\ntime_limit = %d, time_limit_current = %d\n",
 						order_qty, pClient->m_iter->second.riskctl_limit, pClient->m_iter->second.riskctl_side_limit, pClient->m_iter->second.riskctl_side_limit_current,

@@ -183,7 +183,6 @@ void* CCVClient::Run()
 					nToRecv = sizeof(struct CV_StructHeartbeat)-HEADER_SIZE;
 					break;
 				case ORDERREQ:
-				case ORDEROCOREQ:
 					nToRecv = sizeof(struct CV_StructOrder)-HEADER_SIZE;
 					break;
 				case DISCONNMSG:
@@ -342,11 +341,8 @@ void* CCVClient::Run()
 				}
 			}
 			
-			else if(uncaMessageBuf[1] == ORDERREQ || uncaMessageBuf[1] == ORDEROCOREQ)
+			else if(uncaMessageBuf[1] == ORDERREQ)
 			{
-#ifdef DEBUG
-				printf("receive ORDERREQ/ORDEROCOREQ\n\n\n");
-#endif
 				FprintfStderrLog("RECV_CV_ORDER", 0, uncaMessageBuf, nSizeOfRecvedCVMessage);
 
 				if(m_ClientStatus == csLogoning)
@@ -357,8 +353,6 @@ void* CCVClient::Run()
 					replymsg.header_bit[0] = ESCAPE;
 					if(uncaMessageBuf[1] == ORDERREQ)
 						replymsg.header_bit[1] = ORDERREP;
-					if(uncaMessageBuf[1] == ORDEROCOREQ)
-						replymsg.header_bit[1] = ORDEROCOREP;
 					
 
 					memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
@@ -464,8 +458,6 @@ void* CCVClient::Run()
 						replymsg.header_bit[0] = ESCAPE;
 						if(uncaMessageBuf[1] == ORDERREQ)
 							replymsg.header_bit[1] = ORDERREP;
-						if(uncaMessageBuf[1] == ORDEROCOREQ)
-							replymsg.header_bit[1] = ORDEROCOREP;
 
 						memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
 						sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
@@ -495,23 +487,7 @@ void* CCVClient::Run()
 
 					try
 					{
-#if 0
-						if(pClients->GetClientFromHash(lOrderNumber) != NULL)
-						{
-							throw "Inuse";
-						}
-						else
-#endif
-						{
-							pClients->InsertClientToHash(lOrderNumber, this);
-#ifdef OCOMODE
-							if(uncaMessageBuf[1] == ORDEROCOREQ) {
-								pClients->InsertClientToHash(lOrderNumber+1, this);
-								m_OCO_keyid.insert(pair<long int, long int>(lOrderNumber, lOrderNumber+1));
-								m_OCO_keyid.insert(pair<long int, long int>(lOrderNumber+1, lOrderNumber));
-							}
-#endif
-						}
+						pClients->InsertClientToHash(lOrderNumber, this);
 					}
 					catch(char const* pExceptionMessage)
 					{
@@ -535,11 +511,7 @@ void* CCVClient::Run()
 						
 						m_mOriginalOrder.insert(std::pair<long, struct CVOriginalOrder>(lOrderNumber, newOriginalOrder));
 
-						if(uncaMessageBuf[1] == ORDEROCOREQ)
-						{
-							m_mOriginalOrder.insert(std::pair<long, struct CVOriginalOrder>(lOrderNumber+1, newOriginalOrder));
-						}
-						printf("Order number = %ld\n", lOrderNumber);
+						printf("[OrderNum]:%ld\n", lOrderNumber);
 					}
 					else if(nResult == -1)
 					{

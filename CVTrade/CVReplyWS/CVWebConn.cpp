@@ -269,12 +269,8 @@ void CCVServer::Binance_Update(json* jtable)
 		char time_str[30];
 		struct tm *tm_time  = localtime(&tt_time);
 		strftime(time_str, 30, "%Y-%m-%d %H:%M:%S", tm_time);
-#ifdef AWSCODE
 		sprintf(update_str, "https://127.0.0.1:2012/mysql/?query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27,match_price=%%27%s%%27,update_user=%%27reply.server%%27%20where%%20order_no=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str(), exchange_data[5].c_str(), exchange_data[1].c_str());
-#else
-		sprintf(update_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27,match_price=%%27%s%%27,update_user=%%27reply.server%%27%20where%%20order_no=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str(), exchange_data[5].c_str(), exchange_data[1].c_str());
-#endif
-		printf("=============\n%s\n=============\n", update_str);
+		printf("[UpdateSQL]:%s\n", update_str);
 		CURL *curl = curl_easy_init();
 		curl_easy_setopt(curl, CURLOPT_URL, update_str);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
@@ -286,7 +282,6 @@ void CCVServer::Binance_Update(json* jtable)
 		if(exchange_data[14] == "TRADE")
 		{
 			memset(&m_trade_reply, 0, sizeof(m_trade_reply));
-			printf("size = %d\n", sizeof(m_trade_reply));
 			memcpy(m_trade_reply.status_code, "1000", 4);
 			memcpy(m_trade_reply.bookno,		(*jtable)["o"]["i"].dump().c_str(),	(*jtable)["o"]["i"].dump().length());
 			memcpy(m_trade_reply.price,		(*jtable)["o"]["p"].dump().c_str()+1,	(*jtable)["o"]["p"].dump().length()-2);
@@ -298,16 +293,15 @@ void CCVServer::Binance_Update(json* jtable)
 			memcpy(m_trade_reply.transactTime, time_str, strlen(time_str));
 			sprintf(m_trade_reply.reply_msg, "trade reply - [%s]", (*jtable)["data"][0]["X"].dump().c_str());
 
-			printf("===============================\n");
-			printf("KEYID: %.13s\n", m_trade_reply.key_id);
-			printf("BOOKNO: %s\n", m_trade_reply.bookno);
-			printf("PRICE: %s\n", m_trade_reply.price);
-			printf("MATCHPRICE: %s\n", m_trade_reply.avgPx);
-			printf("ORDERQTY: %s\n", m_trade_reply.orderQty);
-			printf("MATCHQTY: %s\n", m_trade_reply.lastQty);
-			printf("CUMQTY: %s\n", m_trade_reply.cumQty);
-			printf("TIME: %s\n", m_trade_reply.transactTime);
-			printf("===============================\n");
+			printf("Dump reply message:\n");
+			printf("[KEYID] %.13s\n", m_trade_reply.key_id);
+			printf("[BOOKNO] %s\n", m_trade_reply.bookno);
+			printf("[PRICE] %s\n", m_trade_reply.price);
+			printf("[MATCHPRICE] %s\n", m_trade_reply.avgPx);
+			printf("[ORDERQTY] %s\n", m_trade_reply.orderQty);
+			printf("[MATCHQTY] %s\n", m_trade_reply.lastQty);
+			printf("[CUMQTY] %s\n", m_trade_reply.cumQty);
+			printf("[TIME] %s\n", m_trade_reply.transactTime);
 
 			CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 			pQueueDAO->SendData((char*)&m_trade_reply, sizeof(m_trade_reply));
@@ -325,10 +319,8 @@ void CCVServer::Bitmex_Update(json* jtable)
 	{
 		for(int i=0 ; i<(*jtable)["data"].size() ; i++)
 		{
-			printf("%d:%s\n", i, (*jtable)["data"][i]["execType"].dump().c_str());
 			if(((*jtable)["data"][i]["execType"].dump()) != "\"Trade\"")
 				continue;
-			printf("%d:%s\n", i, (*jtable)["data"][i]["execType"].dump().c_str());
 
 			exchange_data[0] = ((*jtable)["data"][i]["account"].dump());
 			exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
@@ -392,11 +384,7 @@ void CCVServer::Bitmex_Update(json* jtable)
 
 			exchange_data[20] = ((*jtable)["data"][i]["text"].dump());
 			exchange_data[20] = exchange_data[20].substr(1, exchange_data[20].length()-2);
-	#ifdef AWSCODE
 			sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[12].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str(), exchange_data[17].c_str(), exchange_data[18].c_str(), exchange_data[19].c_str(), exchange_data[20].c_str());
-	#else
-			sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=insert%%20into%%20bitmex_match_history%%20set%%20exchange=%27BITMEX%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[12].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str(), exchange_data[17].c_str(), exchange_data[18].c_str(), exchange_data[19].c_str(), exchange_data[20].c_str());
-	#endif
 
 			if(exchange_data[4] != "null")
 				sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, exchange_data[4].c_str());
@@ -410,11 +398,7 @@ void CCVServer::Bitmex_Update(json* jtable)
 				sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, exchange_data[13].c_str());
 
 			sprintf(insert_str, "%s,insert_user=%%27reply.server%%27,update_user=%%27reply.server%%27", insert_str);
-	#ifdef AWSCODE
 			sprintf(update_match_str, "https://127.0.0.1:2012/mysql/?query=update%%20bitmex_match_history%%20set%%20match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
-	#else
-			sprintf(update_match_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20bitmex_match_history%%20set%%20match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
-	#endif
 			if(exchange_data[4] != "null")
 				sprintf(update_match_str, "%s,match_price=%%27%s%%27", update_match_str, exchange_data[4].c_str());
 			if(exchange_data[5] != "null")
@@ -426,11 +410,7 @@ void CCVServer::Bitmex_Update(json* jtable)
 			sprintf(update_match_str, "%s,update_user=%%27reply.server%%27", update_match_str);
 			sprintf(update_match_str, "%s%%20where%%20match_no=%%27%s%%27", update_match_str, exchange_data[1].c_str());
 
-	#ifdef AWSCODE
 			sprintf(update_order_str, "https://127.0.0.1:2012/mysql/?query=update%%20bitmex_order_history%%20set%%20remaining_qty=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[7].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
-	#else
-			sprintf(update_order_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20bitmex_order_history%%20set%%20remaining_qty=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[7].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
-	#endif
 			if(exchange_data[4] != "null")
 				sprintf(update_order_str, "%s,match_price=%%27%s%%27", update_order_str, exchange_data[4].c_str());
 			if(exchange_data[5] != "null")
@@ -514,7 +494,7 @@ struct CV_StructTSOrderReply
 					memcpy(m_trade_reply.status_code, "1001", 4);
 					sprintf(m_trade_reply.reply_msg, "reply fail, error message - [%s]", text.c_str());
 					memcpy(m_trade_reply.bookno, (*jtable)["data"][i]["orderID"].dump().c_str()+1, 36);
-					printf("Error: %s\n", m_trade_reply.reply_msg);
+					printf("[CVReply ErrMsg] %s\n", m_trade_reply.reply_msg);
 				}
 				else
 				{
@@ -540,20 +520,7 @@ struct CV_StructTSOrderReply
 					sprintf(m_trade_reply.reply_msg,    "trade reply - [%s, (%s/%s)]",
 					                                    (*jtable)["data"][i]["text"].dump().c_str(), m_trade_reply.cumQty, m_trade_reply.orderQty);
 					sprintf(m_trade_reply.exchange_name, "BITMEX");
-					printf("===============================\n");
-					printf("KEYID: %.13s\n", m_trade_reply.key_id);
-					printf("BOOKNO: %.36s\n", m_trade_reply.bookno);
-					printf("PRICE: %s\n", m_trade_reply.price);
-					printf("MATCHPRICE: %s\n", m_trade_reply.avgPx);
-					printf("ORDERQTY: %s\n", m_trade_reply.orderQty);
-					printf("MATCHQTY: %s\n", m_trade_reply.lastQty);
-					printf("CUMQTY: %s\n", m_trade_reply.cumQty);
-					printf("SYMBOL: %s\n", m_trade_reply.symbol);
-					printf("TIME: %s\n", m_trade_reply.transactTime);
-					printf("COMMISSION: %s\n", m_trade_reply.commission);
-					printf("===============================\n");
 					CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-					printf("keanu reply:%d/%s\n", sizeof(m_trade_reply), (char*)&m_trade_reply);
 					m_trade_reply.trail[0] = '\r';
 					m_trade_reply.trail[1] = '\n';
 					pQueueDAO->SendData((char*)&m_trade_reply, sizeof(m_trade_reply));
@@ -574,23 +541,19 @@ void CCVServer::OnData_Order_Reply(client* c, websocketpp::connection_hdl con, c
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 
-	//cout << setw(4) << str << endl;
-
 	if(str[0] == '{') {
 		json jtable = json::parse(str.c_str());
 
 		if(jtable["table"] != "margin" && jtable["table"] != "position") {
-			printf("===========================\n");
-			cout << setw(4) << jtable << endl;
-			printf("===========================\n");
 			if(jtable["exchange"] == "BINANCE") {
 				pServer->Binance_Update(&jtable);
 			}
 			else if(jtable["exchange"] == "BITMEX") {
+				cout << setw(4) << jtable << endl;
 				pServer->Bitmex_Update(&jtable);
 			}
 			else {
-				FprintfStderrLog("UNKNOWN EXCHANGE", -1, 0, jtable["exchange"].dump().c_str(), jtable["exchange"].dump().length(),  NULL, 0);
+				FprintfStderrLog("[Unknown]", -1, 0, jtable["exchange"].dump().c_str(), jtable["exchange"].dump().length(),  NULL, 0);
 			}
 		}
 			
@@ -661,7 +624,7 @@ void CCVServer::ReconnectSocket()
 	}
 	else
 	{
-		printf("m_pClientSocket fail\n");
+		printf("[ERROR] Socket fail.\n");
 		SetStatus(ssBreakdown);
 	}
 }

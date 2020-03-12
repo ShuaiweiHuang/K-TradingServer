@@ -12,4 +12,8 @@ cd CVFtxQ
 make
 cd ..
 
+cd CVQuoteFR
+make
+cd ..
+
 ../shell/restart_quote.sh

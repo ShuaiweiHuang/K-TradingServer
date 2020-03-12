@@ -61,7 +61,7 @@ int CCVQueueDAO::Webapi_Write(char* buffer, int)
 		return 0;
 	}
 	sprintf(query_str, "https://intra.cryptovix.com.tw/receive/tm?data=%s", buffer);
-	printf("\n%s\n", query_str);
+	//printf("\n%s\n", query_str);
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &monitor_reply);
@@ -74,22 +74,7 @@ int CCVQueueDAO::Webapi_Write(char* buffer, int)
 	}
 	else
 		printf("%s\n", monitor_reply.c_str());
-#if 0
-	sprintf(query_str, "http://intra.cryptovix.com.tw:3001/receive/tm?data=%s", buffer);
-	printf("\n%s\n", query_str);
-	curl_easy_setopt(curl, CURLOPT_URL, query_str);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &monitor_reply);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-	res = curl_easy_perform(curl);
 
-	if(res != CURLE_OK) {
-		fprintf(stderr, "Monitor curl_easy_perform() failed: %s\n",
-		curl_easy_strerror(res));
-	}
-	else
-		printf("%s\n", monitor_reply.c_str());
-#endif
 	curl_easy_cleanup(curl);
 }
 

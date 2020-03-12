@@ -11,7 +11,7 @@ INC = -I ./INCLUDE
 
 LIB = -lssl -lcrypto -pthread -lboost_system -L /usr/local/lib
 
-OUTPUT_PATH = ../bin
+OUTPUT_PATH = ../../bin
 
 all: CVQFR
 

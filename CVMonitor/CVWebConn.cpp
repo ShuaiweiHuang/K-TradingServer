@@ -656,7 +656,7 @@ void CCVServer::ReconnectSocket()
 	}
 	else
 	{
-		printf("m_pClientSocket fail\n");
+		printf("[ERROR] Socket fail\n");
 		SetStatus(ssBreakdown);
 	}
 }

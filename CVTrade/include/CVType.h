@@ -107,8 +107,8 @@ struct CV_StructTSOrder
 	char agent_id[2];
 	char broker_id[4];
 	char exchange_id[10];
-	char key_id[13];
 	char seq_id[13];
+	char key_id[13];
 	char symbol_name[10];
 	char symbol_type[1];
 	char symbol_mark[1];
@@ -129,6 +129,7 @@ struct CV_StructTSOrder
 	char order_kind[2];
 	char apiKey_order[65];
 	char apiSecret_order[65];
+	char account[20];
 };
 
 struct CV_StructTSOrderReply

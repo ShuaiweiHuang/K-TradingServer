@@ -98,6 +98,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		static void OnData_Order_Reply(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		void Binance_Update(json*);
 		void Bitmex_Update(json*);
+		void FTX_Update(json*);
 
 	protected:
 		void* Run();

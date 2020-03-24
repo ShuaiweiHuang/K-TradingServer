@@ -210,13 +210,15 @@ CCVClients* CCVClients::GetInstance()
 void CCVClients::GetSerialNumber(char* pSerialNumber)//to lock
 {
 	pthread_mutex_lock(&m_MutexLockOnSerialNumber);//lock
-
+	char caSerialNumber[14];
 	memset(pSerialNumber, 0, 13);
+	memset(caSerialNumber, 0, 13);
 
 	time_t t = time(NULL);
 	struct tm tm = *localtime(&t);
 
-	sprintf(pSerialNumber, "%13ld", *m_pSerialNumber);
+	sprintf(caSerialNumber, "%13ld", *m_pSerialNumber);
+	memcpy(pSerialNumber, caSerialNumber, 13);
 
 	(*m_pSerialNumber)++;
 

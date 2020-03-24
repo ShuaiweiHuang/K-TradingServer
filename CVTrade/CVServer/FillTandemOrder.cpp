@@ -44,14 +44,11 @@ long FillTandemBitcoinOrderFormat(string& strService,
 	memset(caKeyid, 0, sizeof(caKeyid));
 	CCVClients* pClients = CCVClients::GetInstance();
 	assert(pClients);
-
 	memcpy(ucvts.cv_ts_order.client_ip, pIP, IPLEN);
-	memcpy(ucvts.cv_ts_order.seq_id, ucv.cv_order.seq_id, 13); 
-//	memcpy(ucvts.cv_ts_order.username, pUsername, 20); 
+	memcpy(ucvts.cv_ts_order.username, pUsername, 20); 
 	memcpy(ucvts.cv_ts_order.exchange_id, ucv.cv_order.exchange_id, 10);
+	memcpy(ucvts.cv_ts_order.seq_id, ucv.cv_order.seq_id, 13); 
 
-
-//key id
 	if(ucv.cv_order.trade_type[0] == '0')// new order
 	{
 		pClients->GetSerialNumber(ucvts.cv_ts_order.key_id);
@@ -98,6 +95,7 @@ long FillTandemBitcoinOrderFormat(string& strService,
 			printf("api id (%d): %s\n", iter->second.api_id.length(), iter->second.api_id.c_str());
 			memcpy(ucvts.cv_ts_order.apiSecret_order, iter->second.api_key.c_str(), iter->second.api_key.length());
 			printf("api key (%d): %s\n", iter->second.api_key.length(), iter->second.api_key.c_str());
+			memcpy(ucvts.cv_ts_order.account, iter->second.account.c_str(), iter->second.account.length());
 			break;
 		}
 	}

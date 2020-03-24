@@ -16,4 +16,8 @@ cd CVQuoteFR
 make
 cd ..
 
+cd CVBybitQ
+make
+cd ..
+
 ../shell/restart_quote.sh

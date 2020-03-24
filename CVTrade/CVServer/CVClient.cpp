@@ -389,7 +389,7 @@ void* CCVClient::Run()
 					lOrderNumber = fpFillTandemOrder(m_strService, m_username, m_ClientAddrInfo.caIP,
 									m_mBranchAccount, cv_order, cv_ts_order);
 
-					int order_qty;
+					double order_qty;
 					if(lOrderNumber > 0) //valid order
 					{
 						//Risk Control
@@ -400,8 +400,25 @@ void* CCVClient::Run()
 						char Qty[10];
 						memset(Qty, 0, 10);
 						memcpy(Qty, cv_order.cv_order.order_qty, 9);
-						order_qty = atoi(Qty);
 
+
+						printf("QTYMARK: %c\n", cv_order.cv_order.qty_mark[0]);
+						switch(cv_order.cv_order.qty_mark[0])
+						{
+							case '0':
+								order_qty = atoi(Qty);
+								break;
+							case '1':
+								order_qty = atof(Qty) / SCALE_TPYE_2;
+								break;
+							case '2':
+								order_qty = (atof(Qty)) / SCALE_TPYE_1;
+								break;
+							case '3':
+							default:
+								break;
+						}
+						
 						if(cv_order.cv_order.trade_type[0] == '0') {
 
 							m_order_timestamp[m_order_index] = (unsigned)time(NULL);
@@ -426,7 +443,7 @@ void* CCVClient::Run()
 						}
 
 
-						printf("\n\n\nQty = %s, order_qty = %d, order_limit = %d, side_limit = %d\n",
+						printf("\n\n\nQty = %s, order_qty = %.9f, order_limit = %d, side_limit = %d\n",
 							Qty, order_qty, m_iter->second.riskctl_limit, m_iter->second.riskctl_side_limit);
 #ifdef RISKCTL
 						if(order_qty >= m_iter->second.riskctl_limit)
@@ -839,7 +856,6 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		return false;
 	}
 
-	//sprintf(query_str, "http://127.0.0.1:2011/mysql?query=select%%20acv_accounting.accounting_no,acv_accounting.broker_no,acv_accounting.exchange_no%%20from%%20acv_accounting%%20where%%20acv_accounting.trader_no=(select%%20acv_trader.trader_no%%20from%%20acv_employee,acv_trader%%20where%%20acv_employee.account%%20=%%27%s%%27%%20and%%20acv_employee.password%%20=%%20%%27%s%%27%%20and%%20acv_trader.emp_no=acv_employee.emp_no)", p_username, p_password);
 	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20accounting_no,broker_no,exchange_no,trader%%20from%%20(select%%20DISTINCT%%20accounting_no,broker_no,exchange_no,trader,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_accounting.trader)%%20as%%20sub_trader,(select%%201%%20from%%20acv_employee%%20where%%20acv_employee.account=%%27%s%%27%%20and%%20acv_employee.password=%%27%s%%27%%20)%%20as%%20login_check%%20from%%20view_accounting%%20)%%20as%%20t1%%20where%%20login_check=1%%20and%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username, p_password, p_username);
 
 	printf("account query str:%s\n", query_str);
@@ -891,7 +907,7 @@ printf("\ntrader: %s\n", trader.c_str());
 		exno.erase(remove(exno.begin(), exno.end(), '\"'), exno.end());
 		brno.erase(remove(brno.begin(), brno.end(), '\"'), brno.end());
 		trader.erase(remove(trader.begin(), trader.end(), '\"'), trader.end());
-		sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
+		sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20account,exchange_name_en,api_id,api_secret%%20from%%20acv_exchange%%20where%%20exchange_no%%20=%%20%%27%s%%27", exno.c_str());
 
 		printf("account apikey query_str:%s\n", query_str);
 		curl_easy_setopt(curl, CURLOPT_URL, query_str);
@@ -916,8 +932,10 @@ printf("\ntrader: %s\n", trader.c_str());
 
 	} catch(...) {
 		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)account_query_reply.c_str(), account_query_reply.length());
-	}
+	}	
 		memset(&acdata, sizeof(struct AccountData), 0);
+		acdata.account = jtable_query_exchange[0]["account"].dump();
+		acdata.account.erase(remove(acdata.account.begin(), acdata.account.end(), '\"'), acdata.account.end());
 		acdata.exchange_name = jtable_query_exchange[0]["exchange_name_en"].dump();
 		acdata.api_id = jtable_query_exchange[0]["api_id"].dump();
 		acdata.api_key = jtable_query_exchange[0]["api_secret"].dump();

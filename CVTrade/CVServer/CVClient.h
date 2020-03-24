@@ -59,6 +59,7 @@ struct AccountData
 	string api_key;
 	string broker_id;
 	string exchange_name;
+	string account;
 	string trader_name;
 };
 

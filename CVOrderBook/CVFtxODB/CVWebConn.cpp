@@ -16,18 +16,18 @@
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0, 
-				 unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
+			     unsigned char* pMessage1 = NULL, int nMessage1Length = 0, unsigned char* pMessage2 = NULL, int nMessage2Length = 0);
 
 CCVServer::CCVServer(string strWeb, string strQstr, string strName, TCVRequestMarket rmRequestMarket)
 {
 	m_shpClient = NULL;
 	m_pHeartbeat = NULL;
-
+	m_FTX_enable = false;
 	m_strWeb = strWeb;
 	m_strQstr = strQstr;
 	m_strName = strName;
 	m_ssServerStatus = ssNone;
-	m_FTX_enable = false;
+
 	m_rmRequestMarket = rmRequestMarket;
 	pthread_mutex_init(&m_pmtxServerStatusLock, NULL);
 
@@ -84,6 +84,7 @@ void* CCVServer::Run()
 		{
 			SetStatus(ssNone);
 			m_cfd.run();
+			FprintfStderrLog("CFD error", -1, 0, NULL, 0,  NULL, 0);
 #ifdef EXIT_VERSION
 			exit(-1);
 #endif
@@ -108,6 +109,7 @@ void CCVServer::OnConnect()
 			m_cfd.set_access_channels(websocketpp::log::alevel::all);
 			m_cfd.clear_access_channels(websocketpp::log::alevel::frame_payload|websocketpp::log::alevel::frame_header|websocketpp::log::alevel::control);
 			m_cfd.set_error_channels(websocketpp::log::elevel::all);
+
 			m_cfd.init_asio();
 
 			try
@@ -126,19 +128,14 @@ void CCVServer::OnConnect()
 				return;
 			}
 
-			if(m_strName == "BITMEX") {
-				CCVServers::GetInstance()->m_ServerBitmex = this;
+			if(m_strName == "FTX") {
 				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_SEC);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
-				m_cfd.set_message_handler(bind(&OnData_Bitmex,&m_cfd,::_1,::_2));
-			}
-			else if(m_strName == "FTX") {
-				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_SEC);
-				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_SEC);
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_FTX);
 				m_cfd.set_message_handler(bind(&OnData_FTX,&m_cfd,::_1,::_2));
+
 			}
+
 			else {
 				FprintfStderrLog("Exchange config error", -1, 0);	
 			}
@@ -167,10 +164,6 @@ void CCVServer::OnConnect()
 	}
 	else if(m_ssServerStatus == ssReconnecting)
 	{
-		if(m_strName == "BITMEX") {
-			m_cfd.set_message_handler(bind(&OnData_Bitmex,&m_cfd,::_1,::_2));
-
-		}
 		string uri = m_strWeb + m_strQstr;
 
 		m_cfd.set_tls_init_handler(std::bind(&CB_TLS_Init, m_strWeb.c_str(), ::_1));
@@ -212,65 +205,32 @@ void CCVServer::OnDisconnect()
 	m_pClientSocket->Connect( m_strWeb, m_strQstr, m_strName, CONNECT_WEBSOCK);//start & reset heartbeat
 }
 
-
 void CCVServer::OnData_FTX(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
 #ifdef DEBUG
-	printf("[on_message_ftx]\n");
+	printf("[on_message_FTX]\n");
 #endif
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	static char epochmsg[20];
-	
-	netmsg[0] = GTA_TAIL_BYTE_1;
-	netmsg[1] = GTA_TAIL_BYTE_2;
 
-	string data_str = msg->get_payload();
-	string time_str, symbol_str, epoch_str;
+	string str = msg->get_payload();
+	string time_str, symbol_str, size_str;
+	json jtable = json::parse(str.c_str());
+	static CCVClients* pClients = CCVClients::GetInstance();
+	tm tm_struct;
+
+	if(pClients == NULL)
+		throw "GET_CLIENTS_ERROR";
+
 	string name_str = "FTX";
-
-	int vol_count = 0;
-	json jtable = json::parse(data_str.c_str());
-	cout << setw(4) << jtable << endl;
-
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
-
-	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-	pQueueDAO->SendData((char*)jtable.dump().c_str(), jtable.dump().length());
-	pQueueDAO->SendData(netmsg, 2);
+	//cout << setw(4) << jtable << endl;
 }
 
 
-void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
-{
-#ifdef DEBUG
-	printf("[on_message_bitmex]\n");
-#endif
-	static char netmsg[BUFFERSIZE];
-	static char timemsg[9];
-	static char epochmsg[20];
-	
-	netmsg[0] = GTA_TAIL_BYTE_1;
-	netmsg[1] = GTA_TAIL_BYTE_2;
-
-	string data_str = msg->get_payload();
-	string time_str, symbol_str, epoch_str;
-	string name_str = "BITMEX";
-
-	int vol_count = 0;
-	json jtable = json::parse(data_str.c_str());
-
-	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
-	pServer->m_heartbeat_count = 0;
-	pServer->m_pHeartbeat->TriggerGetReplyEvent();
-	cout << setw(4) << jtable << endl;
-
-	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-	pQueueDAO->SendData((char*)jtable.dump().c_str(), jtable.dump().length());
-	pQueueDAO->SendData(netmsg, 2);
-}
 
 void CCVServer::OnHeartbeatLost()
 {
@@ -289,70 +249,49 @@ void CCVServer::OnHeartbeatRequest()
 
 	if(m_heartbeat_count <= HTBT_COUNT_LIMIT)
 	{
-		if(m_strName == "FTX")
-		{
-				if(!m_FTX_enable)
-				{
-						auto j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"BTC-PERP\" }");
-						auto msg = m_conn->send(j.dump());
-						j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"trades\", \"market\": \"ETH-PERP\" }");
-						msg = m_conn->send(j.dump());
-						m_FTX_enable = true;
-						sprintf(replymsg, "%s send subscribe message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
-						FprintfStderrLog("initial protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
-				}
-				else
-				{
-						auto j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"BTC-PERP\" }");
-						auto msg = m_conn->send(j.dump());
-						j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"ETH-PERP\" }");
-						msg = m_conn->send(j.dump());
-						sprintf(replymsg, "%s send subscribe message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
-						FprintfStderrLog("re-initial protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
-						//sprintf(replymsg, "%s send PING message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
-						//FprintfStderrLog("PING/PONG protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
-
-						if(msg.message() != "Success")
-						{
-								FprintfStderrLog("Server PING/PONG Fail", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
-#ifdef EXIT_VERSION
-								exit(-1);
-#endif
-								SetStatus(ssBreakdown);
-						}
-						else
-						{
-								printf("re-initial success\n");
-								m_pHeartbeat->TriggerGetReplyEvent();
-								m_heartbeat_count++;
-						}
-
-				}
-		}
-		else
-		{
-			auto msg = m_conn->send("ping");
-			sprintf(replymsg, "%s send PING message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
-			FprintfStderrLog("PING/PONG protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
-
-			if(msg.message() != "SUCCESS" && msg.message() != "Success")
+			if(!m_FTX_enable)
 			{
-				FprintfStderrLog("Server PING/PONG Fail", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
-	#ifdef EXIT_VERSION
-				exit(-1);
-	#endif
-				SetStatus(ssBreakdown);
+				auto j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"BTC-PERP\" }");
+				auto msg = m_conn->send(j.dump());
+				j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"ETH-PERP\" }");
+				msg = m_conn->send(j.dump());
+				m_FTX_enable = true;
+				sprintf(replymsg, "%s send subscribe message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
+				FprintfStderrLog("initial protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
 			}
 			else
 			{
-				m_pHeartbeat->TriggerGetReplyEvent();
-				m_heartbeat_count++;
+				auto j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"BTC-PERP\" }");
+				auto msg = m_conn->send(j.dump());
+				j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"ETH-PERP\" }");
+				msg = m_conn->send(j.dump());
+				//auto j = json::parse("{ \"op\": \"ping\"}");
+				//auto msg = m_conn->send(j.dump());
+				//j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"BTC-PERP\" }");
+				//msg = m_conn->send(j.dump());
+				sprintf(replymsg, "%s send PING message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
+				FprintfStderrLog("PING/PONG protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
+
+				if(msg.message() != "Success")
+				{
+					FprintfStderrLog("Server PING/PONG Fail", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
+#ifdef EXIT_VERSION
+					exit(-1);
+#endif
+					SetStatus(ssBreakdown);
+				}
+				else
+				{
+					printf("ping/pong success\n");
+					m_pHeartbeat->TriggerGetReplyEvent();
+					m_heartbeat_count++;
+				}
+
 			}
-		}
 	}
 	else
 	{
-
+		FprintfStderrLog("Heartbeat limit exceed", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
 #ifdef EXIT_VERSION
 		exit(-1);
 #endif
@@ -362,6 +301,7 @@ void CCVServer::OnHeartbeatRequest()
 
 void CCVServer::OnHeartbeatError(int nData, const char* pErrorMessage)
 {
+	FprintfStderrLog("HEARTBEAT ERROR", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
 #ifdef EXIT_VERSION
 	exit(-1);
 #endif

@@ -76,9 +76,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 
 		pthread_mutex_t m_pmtxServerStatusLock;
 		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
-		static void OnData_Bitmex(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 		static void OnData_FTX(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-
 	protected:
 		void* Run();
 

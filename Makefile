@@ -1,5 +1,6 @@
 all:
 	(cd CVQuote; make all)
+	(cd CVQuote; ./mk.sh)
 	(cd CVTrade; make all)
 	(cd CVMonitor; make all)
 	(cd CVOrderBook; make all)

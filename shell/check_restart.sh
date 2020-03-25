@@ -82,3 +82,12 @@ else
 sh $BASEDIR/restart_ftxq.sh; 
 fi
 
+service=CVBYBIT
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_bybitq.sh; 
+fi
+

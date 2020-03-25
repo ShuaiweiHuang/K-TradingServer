@@ -277,7 +277,7 @@ void CCVServer::OnData_BYBIT(client* c, websocketpp::connection_hdl con, client:
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
-#if 1
+
 	for(int i=0 ; i<jtable["data"].size() ; i++)
 	{ 
 		static int tick_count=0;
@@ -288,6 +288,7 @@ void CCVServer::OnData_BYBIT(client* c, websocketpp::connection_hdl con, client:
 		time_str = time_str.substr(1, time_str.length()-2);
 		size_str   = jtable["data"][i]["size"].dump();
 		symbol_str = jtable["data"][i]["symbol"].dump();
+		symbol_str = symbol_str.substr(1, symbol_str.length()-2);
 
 		if(jtable["data"][i]["price"].dump() == "null")
 			continue;
@@ -314,7 +315,6 @@ void CCVServer::OnData_BYBIT(client* c, websocketpp::connection_hdl con, client:
 		cout << netmsg << endl;
 #endif
 	}
-#endif
 
 }
 

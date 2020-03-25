@@ -308,7 +308,6 @@ void CCVServer::OnData_BYBIT(client* c, websocketpp::connection_hdl con, client:
 		netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_2;
 		CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 		assert(pClients);
-		cout << netmsg << endl;
 		pQueueDAO->SendData(netmsg, strlen(netmsg));
 #ifdef DEBUG
 		cout << setw(4) << jtable << endl;

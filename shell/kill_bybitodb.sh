@@ -12,7 +12,7 @@ SCRIPTPATH=$(dirname "$ABSPATH")
 cd $SCRIPTPATH
 
 
-ps_name=CVFXOB
+ps_name=CVBBOB
 
 #----------- Kill Proxy -----------#
 ps -ae|

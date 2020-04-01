@@ -482,11 +482,21 @@ void* CCVClient::Run()
 
 						if(errorcode == -RC_LIMIT_ERROR)
 							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", replymsg.reply_msg, order_qty, m_iter->second.riskctl_limit);
+
 						if(errorcode == -RC_SIDE_ERROR)
-							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", m_iter->second.riskctl_side_limit_current, m_iter->second.riskctl_side_limit);
+							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", m_iter->second.riskctl_side_limit_current,
+								m_iter->second.riskctl_side_limit);
+
 						if(errorcode == -RC_TIME_ERROR)
-							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", replymsg.reply_msg, m_riskctl_time_limit_current, m_iter->second.riskctl_time_limit);
-						printf("keanu debug = %s\n", replymsg.reply_msg);
+							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", replymsg.reply_msg, m_riskctl_time_limit_current,
+								m_iter->second.riskctl_time_limit);
+						if(errorcode == -PR_ERROR)
+							sprintf(replymsg.reply_msg, "%s string: %.9s", replymsg.reply_msg, cv_order.cv_order.order_price);
+						sprintf(replymsg.reply_msg, "%s -- [%.7s|%.20s|%.20s]",
+							replymsg.reply_msg,
+							cv_order.cv_order.sub_acno_id,
+							cv_order.cv_order.strategy_name,
+							m_username);
 
 						int nSendData = SendData((unsigned char*)&replymsg, sizeof(struct CV_StructOrderReply));
 
@@ -683,7 +693,6 @@ void CCVClient::LoadRiskControl(char* p_username)
 		FprintfStderrLog("CURL_INIT_FAIL", 0, (unsigned char*)p_username, strlen(p_username));
 		return;
 	}
-	//sprintf(query_str, "http://127.0.0.1:2011/mysql?db=cryptovix&query=select%%20acv_risk_control.exchange,acv_risk_control.accounting_no,acv_risk_control.strategy,acv_risk_control.order_limit,acv_risk_control.side_order_limit,acv_risk_control.cum_order_limit%%20from%%20acv_risk_control%%20where%%20acv_risk_control.trader==%%27%s%%27%%20", p_username);
 	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20*%%20from%%20(select%%20DISTINCT%%20accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,frequency_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
 	printf("risk control query str:%s\n", query_str);
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);

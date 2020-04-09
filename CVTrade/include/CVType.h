@@ -68,7 +68,7 @@ struct CV_StructOrderReply
 	char lastQty[10];
 	char cumQty[10];
 	char transactTime[24];	
-	char reply_msg[176];
+	char reply_msg[688];
 };
 
 struct CV_StructConfig
@@ -143,7 +143,7 @@ struct CV_StructTSOrderReply
 	char lastQty[10];
 	char cumQty[10];
 	char transactTime[24];	
-	char reply_msg[129];
+	char reply_msg[641];
 };
 
 union CV_ORDER
@@ -154,7 +154,7 @@ union CV_ORDER
 union CV_ORDER_REPLY
 {
 	struct CV_StructOrderReply cv_reply;
-	char data[512];
+	char data[1024];
 };
 
 union CV_TS_ORDER
@@ -166,5 +166,5 @@ union CV_TS_ORDER
 union CV_TS_ORDER_REPLY
 {
 	struct CV_StructTSOrderReply cv_ts_reply;
-	char data[512];
+	char data[1024];
 };

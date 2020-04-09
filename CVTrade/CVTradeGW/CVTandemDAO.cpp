@@ -1469,19 +1469,20 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 				if(i == response.length()) // none JSON
 				{
 					memcpy(m_tandem_reply.status_code, "1003", 4);
-					sprintf(m_tandem_reply.reply_msg, "delete order fail - [%s]", response.c_str());
+					sprintf(m_tandem_reply.reply_msg, "delete order fail - [%.640s]", response.c_str());
 				}
 				else
 				{
 					if(jtable["success"].dump() != "true")
 					{
 						memcpy(m_tandem_reply.status_code, "1001", 4);
-						sprintf(m_tandem_reply.reply_msg, "delete order fail - [%s]", response.c_str());
+						sprintf(m_tandem_reply.reply_msg, "delete order fail - [%.640s]", jtable["error"].dump().c_str());
 					}
 					else
 					{
 							memcpy(m_tandem_reply.status_code, "1000", 4);
-							sprintf(m_tandem_reply.reply_msg, "delete order success - [%s]", jtable["result"].dump().c_str());
+							sprintf(m_tandem_reply.reply_msg, "delete order success - [%.640s]", jtable["result"].dump().c_str());
+							//sprintf(m_tandem_reply.reply_msg, "delete order success.");
 							//LogOrderReplyDB_FTX(&jtable, &cv_ts_order, OPT_DELETE);
 					}
 				}

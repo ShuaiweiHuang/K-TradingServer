@@ -350,7 +350,9 @@ void* CCVClient::Run()
 					struct CV_StructOrderReply replymsg;
 					int errorcode = -LG_ERROR;
 					memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
+
 					replymsg.header_bit[0] = ESCAPE;
+
 					if(uncaMessageBuf[1] == ORDERREQ)
 						replymsg.header_bit[1] = ORDERREP;
 					
@@ -471,39 +473,39 @@ void* CCVClient::Run()
 					{
 						int errorcode = ((lOrderNumber >= ERROR_OTHER) && (lOrderNumber <= TT_ERROR)) ? (-lOrderNumber) : (-KI_ERROR);
 						struct CV_StructOrderReply replymsg;
-
+						char error_message[1024];
 						memset(&replymsg, 0, sizeof(struct CV_StructOrderReply));
 						replymsg.header_bit[0] = ESCAPE;
+
 						if(uncaMessageBuf[1] == ORDERREQ)
 							replymsg.header_bit[1] = ORDERREP;
 
 						memcpy(&replymsg.original, &cv_order, nSizeOfCVOrder);
 						sprintf((char*)&replymsg.error_code, "%.4d", errorcode);
-						memcpy(&replymsg.reply_msg, pErrorMessage->GetErrorMessage(-errorcode),strlen(pErrorMessage->GetErrorMessage(-errorcode)));
-
+						memset(error_message, 0, 1024);
+						memcpy(error_message, pErrorMessage->GetErrorMessage(-errorcode),strlen(pErrorMessage->GetErrorMessage(-errorcode)));
 
 						if(errorcode == -RC_LIMIT_ERROR) {
-							printf("%s - (current:%d/limit:%d)", replymsg.reply_msg, order_qty, m_iter->second.riskctl_limit);
-							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", replymsg.reply_msg, order_qty, m_iter->second.riskctl_limit);
+							sprintf(replymsg.reply_msg, "[Server:%s(current:%d/limit:%d)]",
+								error_message, order_qty, m_iter->second.riskctl_limit);
 						}
-
 						if(errorcode == -RC_SIDE_ERROR)
 						{
-							printf("%s - (current:%d/limit:%d)", m_iter->second.riskctl_side_limit_current,	m_iter->second.riskctl_side_limit);
-							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)",
+							sprintf(replymsg.reply_msg, "[Server:%s(current:%d/limit:%d)]",
+								error_message,
 								m_iter->second.riskctl_side_limit_current,
 								m_iter->second.riskctl_side_limit);
 						}
 						if(errorcode == -RC_TIME_ERROR) {
-							printf("%s - (current:%d/limit:%d)", replymsg.reply_msg, m_riskctl_time_limit_current, m_iter->second.riskctl_time_limit);
-
-							sprintf(replymsg.reply_msg, "%s - (current:%d/limit:%d)", replymsg.reply_msg, m_riskctl_time_limit_current,
+							sprintf(replymsg.reply_msg, "[Server:%s(current:%d/limit:%d)]", 
+								error_message,
+								m_riskctl_time_limit_current,
 								m_iter->second.riskctl_time_limit);
 						}
-						if(errorcode == -PR_ERROR)
-							sprintf(replymsg.reply_msg, "%s string: %.9s", replymsg.reply_msg, cv_order.cv_order.order_price);
-
-						sprintf(replymsg.reply_msg, "%s -- [%.7s|%.20s|%.20s]",
+						if(errorcode == -PR_ERROR) {
+							sprintf(replymsg.reply_msg, "[Server:%s(price:%.9s)]", replymsg.reply_msg, cv_order.cv_order.order_price);
+						}
+						sprintf(replymsg.reply_msg, "%s[%.7s|%.20s|%.20s]",
 							replymsg.reply_msg,
 							cv_order.cv_order.sub_acno_id,
 							cv_order.cv_order.strategy_name,

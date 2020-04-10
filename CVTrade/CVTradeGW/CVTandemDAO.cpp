@@ -797,7 +797,6 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 					{
 						memcpy(m_tandem_reply.status_code, "1000", 4);
 						memcpy(m_tandem_reply.bookno, jtable["orderID"].dump().c_str()+1, 36);
-
 						memcpy(m_tandem_reply.price, jtable["price"].dump().c_str(), jtable["price"].dump().length());
 						memcpy(m_tandem_reply.avgPx, jtable["avgPx"].dump().c_str(), jtable["avgPx"].dump().length());
 						memcpy(m_tandem_reply.orderQty, jtable["orderQty"].dump().c_str(), jtable["orderQty"].dump().length());
@@ -805,11 +804,14 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 						memcpy(m_tandem_reply.cumQty, jtable["cumQty"].dump().c_str(), jtable["cumQty"].dump().length());
 						memcpy(m_tandem_reply.transactTime, jtable["transactTime"].dump().c_str()+1, jtable["transactTime"].dump().length()-2);
 						if(cv_ts_order.trade_type[0] == '0')
-							sprintf(m_tandem_reply.reply_msg, "submit order success - [%s]", jtable["text"].dump().c_str());
+							sprintf(m_tandem_reply.reply_msg, "submit order success - [BITMEX:%.200s][%.7s|%.30s|%.20s]",
+								jtable["text"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 						if(cv_ts_order.trade_type[0] == '3')
-							sprintf(m_tandem_reply.reply_msg, "change qty success - [%s]", jtable["text"].dump().c_str());
+							sprintf(m_tandem_reply.reply_msg, "change qty success - [BITMEX:%.200s][%.7s|%.30s|%.20s]",
+								jtable["text"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 						if(cv_ts_order.trade_type[0] == '4')
-							sprintf(m_tandem_reply.reply_msg, "change price success - [%s]", jtable["text"].dump().c_str());
+							sprintf(m_tandem_reply.reply_msg, "change price success - [BITMEX:%.200s][%.7s|%.30s|%.20s]",
+								jtable["text"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 		#ifdef DEBUG
 						printf("\n\n\ntext = %s\n", text.c_str());
 						printf("==============================\nsubmit order success\n");
@@ -845,7 +847,8 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 				if(i == response.length())
 				{
 					memcpy(m_tandem_reply.status_code, "1003", 4);
-					sprintf(m_tandem_reply.reply_msg, "delete order fail - [%s]", response.c_str());
+					sprintf(m_tandem_reply.reply_msg, "delete order fail - [BITMEX:%.200s][%.7s|%.30s|%.20s]",
+						response.c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 				}
 				else
 				{
@@ -863,7 +866,8 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 						if(text != "null")
 						{
 							memcpy(m_tandem_reply.status_code, "1001", 4);
-							sprintf(m_tandem_reply.reply_msg, "delete order fail - [%s]", text.c_str());
+							sprintf(m_tandem_reply.reply_msg, "delete order fail - [BITMEX:%.200s][%.7s|%.30s|%.20s]",
+								text.c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 #ifdef DEBUG
 							printf("\n\n\ntext = %s\n", text.c_str());
 #endif
@@ -871,7 +875,8 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 						else
 						{
 							memcpy(m_tandem_reply.status_code, "1000", 4);
-							sprintf(m_tandem_reply.reply_msg, "delete order success - [%s]", jtable[i]["text"].dump().c_str());
+							sprintf(m_tandem_reply.reply_msg, "delete order success - [BITMEX:%.200s][%.7s|%.30s|%.20s]",
+								jtable[i]["text"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 							if(jarray)
 								LogOrderReplyDB_Bitmex(&jtable[i], &cv_ts_order, OPT_DELETE);
 						}
@@ -1432,13 +1437,16 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 						switch(cv_ts_order.trade_type[0])
 						{
 							case '0':
-								sprintf(m_tandem_reply.reply_msg, "submit order success - [%s]", jtable["result"]["clientId"].dump().c_str());
+								sprintf(m_tandem_reply.reply_msg, "submit order success - [FTX:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"]["clientId"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 								break;
 							case '3':
-								sprintf(m_tandem_reply.reply_msg, "change qty success - [%s]", jtable["result"]["clientId"].dump().c_str());
+								sprintf(m_tandem_reply.reply_msg, "change qty success - [FTX:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"]["clientId"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 								break;
 							case '4':
-								sprintf(m_tandem_reply.reply_msg, "change price success - [%s]", jtable["result"]["clientId"].dump().c_str());
+								sprintf(m_tandem_reply.reply_msg, "change price success - [FTX:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"]["clientId"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 								break;
 							default:
 								FprintfStderrLog("ERROR_TRADE_TYPE", -1, 0, 0);
@@ -1469,19 +1477,22 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 				if(i == response.length()) // none JSON
 				{
 					memcpy(m_tandem_reply.status_code, "1003", 4);
-					sprintf(m_tandem_reply.reply_msg, "delete order fail - [%.640s]", response.c_str());
+					sprintf(m_tandem_reply.reply_msg, "delete order fail - [FTX:%.200s][%.7s|%.30s|%.20s]",
+						response.c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 				}
 				else
 				{
 					if(jtable["success"].dump() != "true")
 					{
 						memcpy(m_tandem_reply.status_code, "1001", 4);
-						sprintf(m_tandem_reply.reply_msg, "delete order fail - [%.640s]", jtable["error"].dump().c_str());
+						sprintf(m_tandem_reply.reply_msg, "delete order fail - [FTX:%.200s][%.7s|%.30s|%.20s]",
+							jtable["error"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 					}
 					else
 					{
 							memcpy(m_tandem_reply.status_code, "1000", 4);
-							sprintf(m_tandem_reply.reply_msg, "delete order success - [%.640s]", jtable["result"].dump().c_str());
+							sprintf(m_tandem_reply.reply_msg, "delete order success - [FTX:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 							//sprintf(m_tandem_reply.reply_msg, "delete order success.");
 							//LogOrderReplyDB_FTX(&jtable, &cv_ts_order, OPT_DELETE);
 					}

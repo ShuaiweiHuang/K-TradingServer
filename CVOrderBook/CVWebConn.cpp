@@ -231,7 +231,6 @@ void CCVServer::OnData_FTX(client* c, websocketpp::connection_hdl con, client::m
 
 	int vol_count = 0;
 	json jtable = json::parse(data_str.c_str());
-	cout << setw(4) << jtable << endl;
 
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
@@ -265,7 +264,6 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 	static CCVServer* pServer = CCVServers::GetInstance()->GetServerByName(name_str);
 	pServer->m_heartbeat_count = 0;
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
-	cout << setw(4) << jtable << endl;
 
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	pQueueDAO->SendData((char*)jtable.dump().c_str(), jtable.dump().length());

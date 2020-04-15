@@ -401,23 +401,6 @@ void* CCVClient::Run()
 						memset(Qty, 0, 10);
 						memcpy(Qty, cv_order.cv_order.order_qty, 9);
 						order_qty = atoi(Qty);
-#if 0
-						switch(cv_order.cv_order.qty_mark[0])
-						{
-							case '0':
-								order_qty = atoi(Qty);
-								break;
-							case '1':
-								order_qty = atof(Qty) / SCALE_TPYE_2;
-								break;
-							case '2':
-								order_qty = (atof(Qty)) / SCALE_TPYE_1;
-								break;
-							case '3':
-							default:
-								break;
-						}
-#endif
 						if(cv_order.cv_order.trade_type[0] == '0') {
 
 							m_order_timestamp[m_order_index] = (unsigned)time(NULL);
@@ -782,7 +765,7 @@ void CCVClient::LoadRiskControl(char* p_username)
 
 	for(iter = m_mRiskControl.begin(); iter != m_mRiskControl.end() ; iter++)
 	{
-		printf("%s - %d,%d,%d,%d\n",
+		printf("[RiskCtl] %s - %d,%d,%d,%d\n",
 			iter->first.c_str(),
 			iter->second.riskctl_limit,
 			iter->second.riskctl_side_limit,

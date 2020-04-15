@@ -44,11 +44,11 @@ int main()
 	DECLARE_CONFIG_DATA(TSConfig);
 
 	string strListenPort, strHeartBeatTime, strEPIDNum;
-	ReadClientConfigFile("../ini/CVBYBIT.ini", strListenPort, strHeartBeatTime, strEPIDNum);
+	ReadClientConfigFile("../ini/CVBybit.ini", strListenPort, strHeartBeatTime, strEPIDNum);
 
 	int nService = 0;
 	printf("Quote program start\n");
-	ReadConfigFile("../ini/CVBYBIT.ini", "EXCHANGE", struTSConfig);
+	ReadConfigFile("../ini/CVBybit.ini", "EXCHANGE", struTSConfig);
 
 	//Web connection service.
 	CCVServers* pServers = NULL;
@@ -67,7 +67,7 @@ int main()
 	}
 	
 	//Queue init.
-	ReadQueueDAOConfigFile("../ini/CVBYBIT.ini", strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey, kQueueDAOMonitorKey);
+	ReadQueueDAOConfigFile("../ini/CVBybit.ini", strService, nNumberOfQueueDAO, kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey, kQueueDAOMonitorKey);
 	//printf("%d, %d, %d, %d\n", kQueueDAOWriteStartKey, kQueueDAOWriteEndKey, kQueueDAOReadStartKey, kQueueDAOReadEndKey);
 	CCVQueueDAOs* pQueueDAOs = CCVQueueDAOs::GetInstance();
 	assert(pQueueDAOs);

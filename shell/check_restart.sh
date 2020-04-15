@@ -55,6 +55,24 @@ else
 sh $BASEDIR/restart_orderbook.sh; 
 fi
 
+service=CVFXOB
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_ftxodb.sh; 
+fi
+
+service=CVBBOB
+echo $service
+if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))
+then
+echo "$service is running!!!"
+else
+sh $BASEDIR/restart_bybitodb.sh; 
+fi
+
 service=CVBitmex
 echo $service
 if (( $(ps -ef | grep -v grep | grep $service | wc -l) > 0 ))

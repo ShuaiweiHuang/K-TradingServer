@@ -1493,7 +1493,6 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 							memcpy(m_tandem_reply.status_code, "1000", 4);
 							sprintf(m_tandem_reply.reply_msg, "delete order success - [FTX:%.200s][%.7s|%.30s|%.20s]",
 								jtable["result"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
-							//sprintf(m_tandem_reply.reply_msg, "delete order success.");
 							//LogOrderReplyDB_FTX(&jtable, &cv_ts_order, OPT_DELETE);
 					}
 				}

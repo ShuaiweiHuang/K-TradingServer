@@ -1,7 +1,7 @@
 cd CVBybitOB
-make
+make clean
 cd ..
 
 cd CVFtxODB
-make
+make clean
 cd ..

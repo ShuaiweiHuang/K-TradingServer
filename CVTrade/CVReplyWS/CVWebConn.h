@@ -99,6 +99,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		void Binance_Update(json*);
 		void Bitmex_Update(json*);
 		void FTX_Update(json*);
+		void Bybit_Update(json*);
 
 	protected:
 		void* Run();

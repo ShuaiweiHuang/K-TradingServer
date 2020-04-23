@@ -697,371 +697,200 @@ void CCVServer::FTX_Update(json* jtable)
 	}//execution
 }
 
-
-#if 0
-void CCVServer::FTX_Update(json* jtable)
+void CCVServer::Bybit_Update(json* jtable)
 {
 	char update_match_str[BUFFERSIZE], insert_str[BUFFERSIZE], update_order_str[BUFFERSIZE];
 	string response, exchange_data[30];
 	CURLcode res;
 
-	if((*jtable)["channel"] == "fills")
+	if((*jtable)["table"] == "execution")
 	{
-		exchange_data[0] = ((*jtable)["accountId"].dump());
-		exchange_data[0] = exchange_data[0].substr(1, exchange_data[0].length()-2);
-
-		if((*jtable)["data"]["type"] != "order")
-			return;
-
-		exchange_data[1] = ((*jtable)["data"]["id"].dump());
-		exchange_data[1] = exchange_data[1].substr(0, exchange_data[1].length());
-
-		exchange_data[2] = ((*jtable)["data"]["market"].dump());
-		exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
-
-		exchange_data[3] = ((*jtable)["data"]["side"].dump());
-		exchange_data[3] = exchange_data[3].substr(1, exchange_data[3].length()-2);
-
-		exchange_data[4] = ((*jtable)["data"]["price"].dump());
-		exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
-
-		exchange_data[5] = ((*jtable)["data"]["size"].dump());
-		exchange_data[5] = exchange_data[5].substr(0, exchange_data[5].length());
-
-		exchange_data[6] = ((*jtable)["data"]["type"].dump());
-		exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
-
-		exchange_data[7] = ((*jtable)["data"]["time"].dump());
-		exchange_data[7] = exchange_data[7].substr(1, 19);
-
-		exchange_data[8] = ((*jtable)["data"]["feeRate"].dump());
-		exchange_data[8] = exchange_data[8].substr(0, exchange_data[8].length());
-
-		exchange_data[9] = ((*jtable)["data"]["fee"].dump());
-		exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
-
-		exchange_data[10] = ((*jtable)["data"]["orderId"].dump());
-		exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
-
-		exchange_data[11] = ((*jtable)["data"]["quoteCurrency"].dump());
-		exchange_data[11] = exchange_data[11].substr(0, exchange_data[11].length());
-
-		exchange_data[12] = ((*jtable)["data"]["baseCurrency"].dump());
-		exchange_data[12] = exchange_data[12].substr(0, exchange_data[12].length());
-
-		exchange_data[13] = ((*jtable)["data"]["remainingSize"].dump());
-		exchange_data[13] = exchange_data[13].substr(0, exchange_data[13].length());
-
-		exchange_data[14] = ((*jtable)["data"]["status"].dump());
-		exchange_data[14] = exchange_data[14].substr(1, exchange_data[14].length()-2);
-
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20ftx_match_history%%20set%%20exchange=%%27FTX%%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_price=%%27%s%%27,match_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,commission_rate=%%27%s%%27,commission=%%27%s%%27,order_no=%%27%s%%27",
-		exchange_data[0].c_str(),
-		exchange_data[1].c_str(),
-		exchange_data[2].c_str(),
-		exchange_data[3].c_str(),
-		exchange_data[4].c_str(),
-		exchange_data[5].c_str(),
-		exchange_data[6].c_str(),
-		exchange_data[7].c_str(),
-		exchange_data[8].c_str(),
-		exchange_data[9].c_str(),
-		exchange_data[10].c_str());
-
-		printf("=============insert=============\n%s\n", insert_str);
-
-		if(exchange_data[11] != "null")
-			sprintf(insert_str, "%s,quote_currency=%%27%s%%27", insert_str, exchange_data[11].c_str());
-		if(exchange_data[12] != "null")
-			sprintf(insert_str, "%s,settlement_currency=%%27%s%%27", insert_str, exchange_data[12].c_str());
-
-		sprintf(insert_str, "%s,update_user=USER()", insert_str);
-
-		printf("=============insert=============\n%s\n", insert_str);
-
-		sprintf(update_order_str, "https://127.0.0.1:2012/mysql/?query=update%%20bitmex_order_history%%20set%%20remaining_qty=%%27%s%%27,order_status=%%27%s%%27", exchange_data[13].c_str(), exchange_data[14].c_str());
-
-		if(exchange_data[4] != "null")
-			sprintf(update_order_str, "%s,match_price=%%27%s%%27", update_order_str, exchange_data[4].c_str());
-
-		if(exchange_data[5] != "null")
-			sprintf(update_order_str, "%s,match_qty=%%27%s%%27", update_order_str, exchange_data[5].c_str());
-
-		sprintf(update_order_str, "%s,update_user=USER()", update_order_str);
-		sprintf(update_order_str, "%s%%20where%%20order_no=%%27%s%%27", update_order_str, exchange_data[10].c_str());
-
-		printf("=============update order==========\n%s\n=============\n", update_order_str);
-
-		CURL *curl = curl_easy_init();
-		curl_easy_setopt(curl, CURLOPT_URL, update_order_str);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-		res = curl_easy_perform(curl);
-
-		if(res != CURLE_OK)
-			fprintf(stderr, "CVReplyWS:FTX_Update:curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-
-		for(int i=0 ; i<strlen(insert_str) ; i++)
+		for(int i=0 ; i<(*jtable)["data"].size() ; i++)
 		{
-			if(insert_str[i] == ' ')
-				insert_str[i] = '+';
-		}
-#if 0
-		for(int i=0 ; i<strlen(update_match_str) ; i++)
-		{
-			if(update_match_str[i] == ' ')
-				update_match_str[i] = '+';
-		}
-#endif
-		for(int i=0 ; i<strlen(update_order_str) ; i++)
-		{
-			if(update_order_str[i] == ' ')
-				update_order_str[i] = '+';
-		}
-		printf("=============insert:\n%s\n=============\n", insert_str);
-		curl_easy_setopt(curl, CURLOPT_URL, insert_str);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-		res = curl_easy_perform(curl);
-		curl_easy_setopt(curl, CURLOPT_URL, insert_str);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-		res = curl_easy_perform(curl);
+			if(((*jtable)["data"][i]["execType"].dump()) != "\"Trade\"")
+				continue;
 
-		if(res != CURLE_OK)
-			fprintf(stderr, "CVReplyWS:FTX_Update:curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			exchange_data[0] = ((*jtable)["data"][i]["account"].dump());
+			exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
 
-		curl_easy_cleanup(curl);
+			exchange_data[1] = ((*jtable)["data"][i]["execID"].dump());
+			exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
 
-		//if(exchange_data[8] == "Trade")
-		{
-			memset(&m_trade_reply, 0, sizeof(m_trade_reply));
+			exchange_data[2] = ((*jtable)["data"][i]["symbol"].dump());
+			exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
 
-			string text = (*jtable)["data"]["error"].dump();
-			if(text != "null")
-			{
-				memcpy(m_trade_reply.status_code, "1001", 4);
-				sprintf(m_trade_reply.reply_msg, "reply fail, error message - [%s]", text.c_str());
-				memcpy(m_trade_reply.bookno, (*jtable)["data"]["orderID"].dump().c_str()+1, 36);
-				printf("[CVReply ErrMsg] %s\n", m_trade_reply.reply_msg);
-			}
-			else
-			{
-				memcpy(m_trade_reply.status_code, "1000", 4);
-				memcpy(m_trade_reply.price,         (*jtable)["data"]["price"].dump().c_str(),      (*jtable)["data"]["price"].dump().length());
+			exchange_data[3] = ((*jtable)["data"][i]["side"].dump());
+			exchange_data[3] = exchange_data[3].substr(1, exchange_data[3].length()-2);
 
-				if((*jtable)["data"]["avgPx"].dump() == "null")
-					memcpy(m_trade_reply.avgPx, (*jtable)["data"]["stopPx"].dump().c_str(),         (*jtable)["data"]["stopPx"].dump().length());
-				else
-					memcpy(m_trade_reply.avgPx, (*jtable)["data"]["avgPx"].dump().c_str(),          (*jtable)["data"]["avgPx"].dump().length());
-				memcpy(m_trade_reply.orderQty,      (*jtable)["data"]["orderQty"].dump().c_str(),       (*jtable)["data"]["orderQty"].dump().length());
-				memcpy(m_trade_reply.lastQty,       (*jtable)["data"]["lastQty"].dump().c_str(),        (*jtable)["data"]["lastQty"].dump().length());
-				memcpy(m_trade_reply.cumQty,        (*jtable)["data"]["cumQty"].dump().c_str(),         (*jtable)["data"]["cumQty"].dump().length());
-				memcpy(m_trade_reply.key_id,        (*jtable)["data"]["clOrdID"].dump().c_str()+1,      (*jtable)["data"]["clOrdID"].dump().length()-2);
-				memcpy(m_trade_reply.bookno,        (*jtable)["data"]["orderID"].dump().c_str()+1, 36);
-				memcpy(m_trade_reply.transactTime,  (*jtable)["data"]["transactTime"].dump().c_str()+1, (*jtable)["data"]["transactTime"].dump().length()-2);
-				memcpy(m_trade_reply.symbol,		(*jtable)["data"]["symbol"].dump().c_str()+1,	(*jtable)["data"]["symbol"].dump().length()-2);
-				memcpy(m_trade_reply.buysell,		(*jtable)["data"]["side"].dump().c_str()+1, 1);
+			exchange_data[4] = ((*jtable)["data"][i]["lastPx"].dump());
+			exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
 
-				if((*jtable)["data"]["execComm"].dump() != "null")
-					memcpy(m_trade_reply.commission,	(*jtable)["data"]["execComm"].dump().c_str(), (*jtable)["data"]["execComm"].dump().length());
+			exchange_data[5] = ((*jtable)["data"][i]["lastQty"].dump());
+			exchange_data[5] = exchange_data[5].substr(0, exchange_data[5].length());
 
-				sprintf(m_trade_reply.reply_msg,    "trade reply - [%s, (%s/%s)]",
-								    (*jtable)["data"]["text"].dump().c_str(), m_trade_reply.cumQty, m_trade_reply.orderQty);
-				sprintf(m_trade_reply.exchange_name, "BITMEX");
-				CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-				m_trade_reply.trail[0] = '\r';
-				m_trade_reply.trail[1] = '\n';
-				pQueueDAO->SendData((char*)&m_trade_reply, sizeof(m_trade_reply));
-			}
-		}//trade
-	}//fills
+			exchange_data[6] = ((*jtable)["data"][i]["cumQty"].dump());
+			exchange_data[6] = exchange_data[6].substr(0, exchange_data[6].length());
 
-	if((*jtable)["channel"] == "orders")
-	{
-		exchange_data[0] = ((*jtable)["accountId"].dump());
-		exchange_data[0] = exchange_data[0].substr(1, exchange_data[0].length()-2);
+			exchange_data[7] = ((*jtable)["data"][i]["leavesQty"].dump());
+			exchange_data[7] = exchange_data[7].substr(0, exchange_data[7].length());
 
-		if((*jtable)["data"]["type"] != "order")
-			return;
+			exchange_data[8] = ((*jtable)["data"][i]["execType"].dump());
+			exchange_data[8] = exchange_data[8].substr(1, exchange_data[8].length()-2);
 
-		exchange_data[1] = ((*jtable)["data"]["id"].dump());
-		exchange_data[1] = exchange_data[1].substr(0, exchange_data[1].length());
+			exchange_data[9] = ((*jtable)["data"][i]["transactTime"].dump());
+			exchange_data[9] = exchange_data[9].substr(1, 19);
 
-		exchange_data[2] = ((*jtable)["data"]["market"].dump());
-		exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
+			exchange_data[10] = ((*jtable)["data"][i]["commission"].dump());
+			exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
 
-		exchange_data[3] = ((*jtable)["data"]["side"].dump());
-		exchange_data[3] = exchange_data[3].substr(1, exchange_data[3].length()-2);
+			exchange_data[11] = ((*jtable)["data"][i]["execComm"].dump());
+			exchange_data[11] = exchange_data[11].substr(0, exchange_data[11].length());
 
-		exchange_data[4] = ((*jtable)["data"]["price"].dump());
-		exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
-
-		exchange_data[5] = ((*jtable)["data"]["size"].dump());
-		exchange_data[5] = exchange_data[5].substr(0, exchange_data[5].length());
-
-		exchange_data[6] = ((*jtable)["data"]["type"].dump());
-		exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
-
-		exchange_data[7] = ((*jtable)["data"]["time"].dump());
-		exchange_data[7] = exchange_data[7].substr(1, 19);
-
-		exchange_data[8] = ((*jtable)["data"]["feeRate"].dump());
-		exchange_data[8] = exchange_data[8].substr(0, exchange_data[8].length());
-
-		exchange_data[9] = ((*jtable)["data"]["fee"].dump());
-		exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
-
-		exchange_data[10] = ((*jtable)["data"]["orderId"].dump());
-		exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
-
-		exchange_data[11] = ((*jtable)["data"]["quoteCurrency"].dump());
-		exchange_data[11] = exchange_data[11].substr(0, exchange_data[11].length());
-
-		exchange_data[12] = ((*jtable)["data"]["baseCurrency"].dump());
-		exchange_data[12] = exchange_data[12].substr(0, exchange_data[12].length());
-
-		exchange_data[13] = ((*jtable)["data"]["remainingSize"].dump());
-		exchange_data[13] = exchange_data[13].substr(0, exchange_data[13].length());
-
-		exchange_data[14] = ((*jtable)["data"]["status"].dump());
-		exchange_data[14] = exchange_data[14].substr(1, exchange_data[14].length()-2);
-
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20ftx_match_history%%20set%%20exchange=%%27FTX%%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_price=%%27%s%%27,match_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,commission_rate=%%27%s%%27,commission=%%27%s%%27,order_no=%%27%s%%27",
-		exchange_data[0].c_str(),
-		exchange_data[1].c_str(),
-		exchange_data[2].c_str(),
-		exchange_data[3].c_str(),
-		exchange_data[4].c_str(),
-		exchange_data[5].c_str(),
-		exchange_data[6].c_str(),
-		exchange_data[7].c_str(),
-		exchange_data[8].c_str(),
-		exchange_data[9].c_str(),
-		exchange_data[10].c_str());
-
-		printf("=============insert=============\n%s\n", insert_str);
-
-		if(exchange_data[11] != "null")
-		{
-			exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
-			sprintf(insert_str, "%s,quote_currency=%%27%s%%27", insert_str, exchange_data[11].c_str());
-		}
-		if(exchange_data[12] != "null")
-		{
+			exchange_data[12] = ((*jtable)["data"][i]["orderID"].dump());
 			exchange_data[12] = exchange_data[12].substr(1, exchange_data[12].length()-2);
-			sprintf(insert_str, "%s,settlement_currency=%%27%s%%27", insert_str, exchange_data[12].c_str());
-		}
-		sprintf(insert_str, "%s,update_user=USER()", insert_str);
 
-		printf("=============insert=============\n%s\n", insert_str);
+			exchange_data[13] = ((*jtable)["data"][i]["price"].dump());
+			exchange_data[13] = exchange_data[13].substr(0, exchange_data[13].length());
 
-		sprintf(update_order_str, "https://127.0.0.1:2012/mysql/?query=update%%20bitmex_order_history%%20set%%20remaining_qty=%%27%s%%27,order_status=%%27%s%%27", exchange_data[13].c_str(), exchange_data[14].c_str());
+			exchange_data[14] = ((*jtable)["data"][i]["orderQty"].dump());
+			exchange_data[14] = exchange_data[14].substr(0, exchange_data[14].length());
 
-		if(exchange_data[4] != "null")
-			sprintf(update_order_str, "%s,match_price=%%27%s%%27", update_order_str, exchange_data[4].c_str());
+			exchange_data[15] = ((*jtable)["data"][i]["ordType"].dump());
+			exchange_data[15] = exchange_data[15].substr(1, exchange_data[15].length()-2);
 
-		if(exchange_data[5] != "null")
-			sprintf(update_order_str, "%s,match_qty=%%27%s%%27", update_order_str, exchange_data[5].c_str());
+			exchange_data[16] = ((*jtable)["data"][i]["ordStatus"].dump());
+			exchange_data[16] = exchange_data[16].substr(1, exchange_data[16].length()-2);
 
-		sprintf(update_order_str, "%s,update_user=USER()", update_order_str);
-		sprintf(update_order_str, "%s%%20where%%20order_no=%%27%s%%27", update_order_str, exchange_data[10].c_str());
+			exchange_data[17] = ((*jtable)["data"][i]["currency"].dump());
+			exchange_data[17] = exchange_data[17].substr(1, exchange_data[17].length()-2);
 
-		printf("=============update order==========\n%s\n=============\n", update_order_str);
+			exchange_data[18] = ((*jtable)["data"][i]["settlCurrency"].dump());
+			exchange_data[18] = exchange_data[18].substr(1, exchange_data[18].length()-2);
 
-		CURL *curl = curl_easy_init();
-		curl_easy_setopt(curl, CURLOPT_URL, update_order_str);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-		res = curl_easy_perform(curl);
+			exchange_data[19] = ((*jtable)["data"][i]["clOrdID"].dump());
+			exchange_data[19] = exchange_data[19].substr(1, exchange_data[19].length()-2);
 
-		if(res != CURLE_OK)
-			fprintf(stderr, "CVReplyWS:FTX_Update:curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			exchange_data[20] = ((*jtable)["data"][i]["text"].dump());
+			exchange_data[20] = exchange_data[20].substr(1, exchange_data[20].length()-2);
+			sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20bybit_match_history%%20set%%20exchange=%%27BYBIT%%27,account=%%27%s%%27,match_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_no=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,quote_currency=%%27%s%%27,settlement_currency=%%27%s%%27,serial_no=%%27%s%%27,remark=%%27%s%%27", exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[2].c_str(), exchange_data[3].c_str(), exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[12].c_str(), exchange_data[14].c_str(), exchange_data[15].c_str(), exchange_data[16].c_str(), exchange_data[17].c_str(), exchange_data[18].c_str(), exchange_data[19].c_str(), exchange_data[20].c_str());
 
-		for(int i=0 ; i<strlen(insert_str) ; i++)
-		{
-			if(insert_str[i] == ' ')
-				insert_str[i] = '+';
-		}
-#if 0
-		for(int i=0 ; i<strlen(update_match_str) ; i++)
-		{
-			if(update_match_str[i] == ' ')
-				update_match_str[i] = '+';
-		}
-#endif
-		for(int i=0 ; i<strlen(update_order_str) ; i++)
-		{
-			if(update_order_str[i] == ' ')
-				update_order_str[i] = '+';
-		}
-		printf("=============insert:\n%s\n=============\n", insert_str);
-		curl_easy_setopt(curl, CURLOPT_URL, insert_str);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-		res = curl_easy_perform(curl);
-		curl_easy_setopt(curl, CURLOPT_URL, insert_str);
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-		curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-		res = curl_easy_perform(curl);
+			if(exchange_data[4] != "null")
+				sprintf(insert_str, "%s,match_price=%%27%s%%27", insert_str, exchange_data[4].c_str());
+			if(exchange_data[5] != "null")
+				sprintf(insert_str, "%s,match_qty=%%27%s%%27", insert_str, exchange_data[5].c_str());
+			if(exchange_data[10] != "null")
+				sprintf(insert_str, "%s,commission_rate=%%27%s%%27", insert_str, exchange_data[10].c_str());
+			if(exchange_data[11] != "null")
+				sprintf(insert_str, "%s,commission=%%27%s%%27", insert_str, exchange_data[11].c_str());
+			if(exchange_data[13] != "null")
+				sprintf(insert_str, "%s,order_price=%%27%s%%27", insert_str, exchange_data[13].c_str());
 
-		if(res != CURLE_OK)
-			fprintf(stderr, "CVReplyWS:FTX_Update:curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			sprintf(insert_str, "%s,update_user=USER()", insert_str);
+			sprintf(update_match_str, "https://127.0.0.1:2012/mysql/?query=update%%20bybit_match_history%%20set%%20match_cum_qty=%%27%s%%27,remaining_qty=%%27%s%%27,match_type=%%27%s%%27,match_time=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[6].c_str(), exchange_data[7].c_str(), exchange_data[8].c_str(), exchange_data[9].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
+			if(exchange_data[4] != "null")
+				sprintf(update_match_str, "%s,match_price=%%27%s%%27", update_match_str, exchange_data[4].c_str());
+			if(exchange_data[5] != "null")
+				sprintf(update_match_str, "%s,match_qty=%%27%s%%27", update_match_str, exchange_data[5].c_str());
+			if(exchange_data[10] != "null")
+				sprintf(update_match_str, "%s,commission_rate=%%27%s%%27", update_match_str, exchange_data[10].c_str());
+			if(exchange_data[11] != "null")
+				sprintf(update_match_str, "%s,commission=%%27%s%%27", update_match_str, exchange_data[11].c_str());
+			sprintf(update_match_str, "%s,update_user=USER()", update_match_str);
+			sprintf(update_match_str, "%s%%20where%%20match_no=%%27%s%%27", update_match_str, exchange_data[1].c_str());
 
-		curl_easy_cleanup(curl);
+			sprintf(update_order_str, "https://127.0.0.1:2012/mysql/?query=update%%20bybit_order_history%%20set%%20remaining_qty=%%27%s%%27,order_status=%%27%s%%27,remark=%%27%s%%27", exchange_data[7].c_str(), exchange_data[16].c_str(), exchange_data[20].c_str());
+			if(exchange_data[4] != "null")
+				sprintf(update_order_str, "%s,match_price=%%27%s%%27", update_order_str, exchange_data[4].c_str());
+			if(exchange_data[5] != "null")
+				sprintf(update_order_str, "%s,match_qty=%%27%s%%27", update_order_str, exchange_data[5].c_str());
+			sprintf(update_order_str, "%s,update_user=USER()", update_order_str);
+			sprintf(update_order_str, "%s%%20where%%20order_no=%%27%s%%27", update_order_str, exchange_data[12].c_str());
 
-		//if(exchange_data[8] == "Trade")
-		{
-			memset(&m_trade_reply, 0, sizeof(m_trade_reply));
+			CURL *curl = curl_easy_init();
 
-			string text = (*jtable)["data"]["error"].dump();
-			if(text != "null")
+			for(int i=0 ; i<strlen(insert_str) ; i++)
 			{
-				memcpy(m_trade_reply.status_code, "1001", 4);
-				sprintf(m_trade_reply.reply_msg, "reply fail, error message - [%s]", text.c_str());
-				memcpy(m_trade_reply.bookno, (*jtable)["data"]["orderID"].dump().c_str()+1, 36);
-				printf("[CVReply ErrMsg] %s\n", m_trade_reply.reply_msg);
+				if(insert_str[i] == ' ')
+					insert_str[i] = '+';
 			}
-			else
+			for(int i=0 ; i<strlen(update_match_str) ; i++)
 			{
-				memcpy(m_trade_reply.status_code, "1000", 4);
-				memcpy(m_trade_reply.price,         (*jtable)["data"]["price"].dump().c_str(),      (*jtable)["data"]["price"].dump().length());
+				if(update_match_str[i] == ' ')
+					update_match_str[i] = '+';
+			}
+			for(int i=0 ; i<strlen(update_order_str) ; i++)
+			{
+				if(update_order_str[i] == ' ')
+					update_order_str[i] = '+';
+			}
 
-				if((*jtable)["data"]["avgPx"].dump() == "null")
-					memcpy(m_trade_reply.avgPx, (*jtable)["data"]["stopPx"].dump().c_str(),         (*jtable)["data"]["stopPx"].dump().length());
+			printf("=============insert order BYBIT:\n%s\n=============\n", insert_str);
+			curl_easy_setopt(curl, CURLOPT_URL, insert_str);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+			res = curl_easy_perform(curl);
+			if(res != CURLE_OK) {
+				fprintf(stderr, "CVReplyWS:Bybit_Update:curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			}
+
+			printf("=============update order BYBIT:\n%s\n=============\n", update_order_str);
+			curl_easy_setopt(curl, CURLOPT_URL, update_order_str);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+			res = curl_easy_perform(curl);
+			if(res != CURLE_OK) {
+				fprintf(stderr, "CVReplyWS:Bybit_Update:curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			}
+
+			curl_easy_cleanup(curl);
+
+			//if(exchange_data[8] == "Trade")
+			{
+				memset(&m_trade_reply, 0, sizeof(m_trade_reply));
+
+				string text = (*jtable)["data"][i]["error"].dump();
+				if(text != "null")
+				{
+					memcpy(m_trade_reply.status_code, "1001", 4);
+					sprintf(m_trade_reply.reply_msg, "reply fail, error message - [%s]", text.c_str());
+					memcpy(m_trade_reply.bookno, (*jtable)["data"][i]["orderID"].dump().c_str()+1, 36);
+					printf("[CVReply ErrMsg] %s\n", m_trade_reply.reply_msg);
+				}
 				else
-					memcpy(m_trade_reply.avgPx, (*jtable)["data"]["avgPx"].dump().c_str(),          (*jtable)["data"]["avgPx"].dump().length());
-				memcpy(m_trade_reply.orderQty,      (*jtable)["data"]["orderQty"].dump().c_str(),       (*jtable)["data"]["orderQty"].dump().length());
-				memcpy(m_trade_reply.lastQty,       (*jtable)["data"]["lastQty"].dump().c_str(),        (*jtable)["data"]["lastQty"].dump().length());
-				memcpy(m_trade_reply.cumQty,        (*jtable)["data"]["cumQty"].dump().c_str(),         (*jtable)["data"]["cumQty"].dump().length());
-				memcpy(m_trade_reply.key_id,        (*jtable)["data"]["clOrdID"].dump().c_str()+1,      (*jtable)["data"]["clOrdID"].dump().length()-2);
-				memcpy(m_trade_reply.bookno,        (*jtable)["data"]["orderID"].dump().c_str()+1, 36);
-				memcpy(m_trade_reply.transactTime,  (*jtable)["data"]["transactTime"].dump().c_str()+1, (*jtable)["data"]["transactTime"].dump().length()-2);
-				memcpy(m_trade_reply.symbol,		(*jtable)["data"]["symbol"].dump().c_str()+1,	(*jtable)["data"]["symbol"].dump().length()-2);
-				memcpy(m_trade_reply.buysell,		(*jtable)["data"]["side"].dump().c_str()+1, 1);
+				{
+					memcpy(m_trade_reply.status_code, "1000", 4);
+					memcpy(m_trade_reply.price,         (*jtable)["data"][i]["price"].dump().c_str(),      (*jtable)["data"][i]["price"].dump().length());
 
-				if((*jtable)["data"]["execComm"].dump() != "null")
-					memcpy(m_trade_reply.commission,	(*jtable)["data"]["execComm"].dump().c_str(), (*jtable)["data"]["execComm"].dump().length());
-
-				sprintf(m_trade_reply.reply_msg,    "trade reply - [%s, (%s/%s)]",
-								    (*jtable)["data"]["text"].dump().c_str(), m_trade_reply.cumQty, m_trade_reply.orderQty);
-				sprintf(m_trade_reply.exchange_name, "BITMEX");
-				CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-				m_trade_reply.trail[0] = '\r';
-				m_trade_reply.trail[1] = '\n';
-				pQueueDAO->SendData((char*)&m_trade_reply, sizeof(m_trade_reply));
-			}
-		}//trade
-	}//fills
-
+					if((*jtable)["data"][i]["avgPx"].dump() == "null")
+						memcpy(m_trade_reply.avgPx, (*jtable)["data"][i]["stopPx"].dump().c_str(),         (*jtable)["data"][i]["stopPx"].dump().length());
+					else
+						memcpy(m_trade_reply.avgPx, (*jtable)["data"][i]["avgPx"].dump().c_str(),          (*jtable)["data"][i]["avgPx"].dump().length());
+					memcpy(m_trade_reply.orderQty,      (*jtable)["data"][i]["orderQty"].dump().c_str(),       (*jtable)["data"][i]["orderQty"].dump().length());
+					memcpy(m_trade_reply.lastQty,       (*jtable)["data"][i]["lastQty"].dump().c_str(),        (*jtable)["data"][i]["lastQty"].dump().length());
+					memcpy(m_trade_reply.cumQty,        (*jtable)["data"][i]["cumQty"].dump().c_str(),         (*jtable)["data"][i]["cumQty"].dump().length());
+					memcpy(m_trade_reply.key_id,        (*jtable)["data"][i]["clOrdID"].dump().c_str()+1,      (*jtable)["data"][i]["clOrdID"].dump().length()-2);
+					memcpy(m_trade_reply.bookno,        (*jtable)["data"][i]["orderID"].dump().c_str()+1, 36);
+					memcpy(m_trade_reply.transactTime,  (*jtable)["data"][i]["transactTime"].dump().c_str()+1, (*jtable)["data"][i]["transactTime"].dump().length()-2);
+					memcpy(m_trade_reply.symbol,		(*jtable)["data"][i]["symbol"].dump().c_str()+1,	(*jtable)["data"][i]["symbol"].dump().length()-2);
+					memcpy(m_trade_reply.buysell,		(*jtable)["data"][i]["side"].dump().c_str()+1, 1);
+	
+					if((*jtable)["data"][i]["execComm"].dump() != "null")
+						memcpy(m_trade_reply.commission,	(*jtable)["data"][i]["execComm"].dump().c_str(), (*jtable)["data"][i]["execComm"].dump().length());
+	
+					sprintf(m_trade_reply.reply_msg,    "trade reply - [%s, (%s/%s)]",
+					                                    (*jtable)["data"][i]["text"].dump().c_str(), m_trade_reply.cumQty, m_trade_reply.orderQty);
+					sprintf(m_trade_reply.exchange_name, "BYBIT");
+					CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
+					m_trade_reply.trail[0] = '\r';
+					m_trade_reply.trail[1] = '\n';
+					pQueueDAO->SendData((char*)&m_trade_reply, sizeof(m_trade_reply));
+				}
+			}//trade
+		}//for
+	}//execution
 }
-#endif
+
 
 void CCVServer::OnData_Order_Reply(client* c, websocketpp::connection_hdl con, client::message_ptr msg)
 {
@@ -1076,19 +905,21 @@ void CCVServer::OnData_Order_Reply(client* c, websocketpp::connection_hdl con, c
 
 	if(str[0] == '{') {
 		json jtable = json::parse(str.c_str());
-
 		if(jtable["table"] != "margin" && jtable["table"] != "position") {
 			if(jtable["exchange"] == "BINANCE") {
 				pServer->Binance_Update(&jtable);
 			}
 			else if(jtable["exchange"] == "BITMEX") {
-				cout << setw(4) << jtable << endl;
 				pServer->Bitmex_Update(&jtable);
 			}
 			else if(jtable["exchange"] == "FTX") {
-				cout << setw(4) << jtable << endl;
 				pServer->FTX_Update(&jtable);
 			}
+			else if(jtable["exchange"] == "BYBIT") {
+				cout << setw(4) << jtable << endl;
+				pServer->Bybit_Update(&jtable);
+			}
+
 			else {
 				FprintfStderrLog("[Unknown]", -1, 0, jtable["exchange"].dump().c_str(), jtable["exchange"].dump().length(),  NULL, 0);
 			}

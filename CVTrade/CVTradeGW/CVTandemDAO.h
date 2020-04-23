@@ -86,6 +86,11 @@ public:
 	bool OrderModify_FTX(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option);
 
+	bool OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nSize, int nSilent);
+	bool OrderModify_Bybit(struct CV_StructTSOrder cv_ts_order, int nSize);
+	bool LogOrderReplyDB_Bybit(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option);
+
+
 	bool OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nSize);
 	bool LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option);
 

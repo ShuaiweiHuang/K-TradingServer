@@ -235,6 +235,27 @@ bool CCVTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	
 		}
 	}
+	if(!strcmp(exname, "BYBIT"))
+	{
+		switch(cv_ts_order.trade_type[0])
+		{
+			case '0':
+			case '1':
+			case '2':
+				return OrderSubmit_Bybit(cv_ts_order, nToSend, 0);
+				break;
+			case '3':
+			case '4':
+				return OrderModify_Bybit(cv_ts_order, nToSend);
+				break;
+				break;
+			default:
+				FprintfStderrLog("ERROR_TRADE_TYPE", -1, 0, 0);
+				break;
+	
+		}
+	}
+
 	SetInuse(false);
 	return true;
 }
@@ -1533,6 +1554,519 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 }
 
 bool CCVTandemDAO::LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option)
+{
+	char insert_str[MAXDATA], delete_str[MAXDATA];
+
+	string response, exchange_data[30];
+
+	exchange_data[0] = (*jtable)["result"]["id"].dump();
+	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
+
+	exchange_data[1] = (*jtable)["result"]["market"].dump();
+	exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
+
+	exchange_data[2] = (*jtable)["result"]["side"].dump();
+	exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
+
+	exchange_data[3] = (*jtable)["result"]["price"].dump();
+	exchange_data[3] = exchange_data[3].substr(0, exchange_data[3].length());
+
+	if(exchange_data[3] == "null")
+		exchange_data[3] = "0";
+
+	exchange_data[4] = (*jtable)["result"]["size"].dump();
+	exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
+
+	exchange_data[5] = (*jtable)["result"]["type"].dump();
+	exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
+
+	exchange_data[6] = (*jtable)["result"]["status"].dump();
+	exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
+
+	exchange_data[7] = (*jtable)["result"]["createdAt"].dump();
+	exchange_data[7] = exchange_data[7].substr(1, 19);
+
+	exchange_data[8] = (*jtable)["result"]["avgFillPrice"].dump();
+	exchange_data[8] = exchange_data[8].substr(0, exchange_data[8].length());
+
+	if(exchange_data[8] == "null")
+		exchange_data[8] = "0";
+
+	exchange_data[9] = (*jtable)["result"]["filledSize"].dump();
+	exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
+
+	exchange_data[10] = (*jtable)["result"]["remainingSize"].dump();
+	exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
+
+	exchange_data[11] = (*jtable)["result"]["clientId"].dump();
+	exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
+
+	if(option == OPT_ADD)
+	{
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20ftx_order_history%%20set%%20exchange=%%27FTX%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_price=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_price=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27,update_user=USER(),source_ip=%%27%.15s%%27,agent_id=%%27%.2s%%27,seq_id=%%27%.13s%%27,account=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.20s%%27,trader=%%27%.20s%%27",
+		exchange_data[0].c_str(),
+		exchange_data[1].c_str(),
+		exchange_data[2].c_str(),
+		exchange_data[3].c_str(),
+		exchange_data[4].c_str(),
+		exchange_data[5].c_str(),
+		exchange_data[6].c_str(),
+		exchange_data[7].c_str(),
+		exchange_data[8].c_str(),
+		exchange_data[9].c_str(),
+		exchange_data[10].c_str(),
+		exchange_data[11].c_str(),
+		cv_ts_order->client_ip,
+		cv_ts_order->agent_id,
+		cv_ts_order->seq_id,
+		cv_ts_order->account,
+		cv_ts_order->sub_acno_id,
+		cv_ts_order->strategy_name,
+		cv_ts_order->username);
+	}
+
+	if(option == OPT_DELETE)
+	{
+		return false;
+	}
+
+	for(int i=0 ; i<strlen(insert_str) ; i++)
+	{
+		if(insert_str[i] == ' ')
+			insert_str[i] = '+';
+	}
+	printf("\n\n%s\n\n", insert_str);
+	CURL *curl = curl_easy_init();
+	curl_easy_setopt(curl, CURLOPT_URL, insert_str);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+	curl_easy_perform(curl);
+	curl_easy_cleanup(curl);
+	printf("================response\n%s\n===============\n", response.c_str());
+	return true;
+}
+
+
+bool CCVTandemDAO::OrderModify_Bybit(struct CV_StructTSOrder cv_ts_order, int nToSend)
+{
+	char chOpt = cv_ts_order.trade_type[0];
+
+	cv_ts_order.trade_type[0] = '1';//modify to delete
+
+	if( OrderSubmit_Bybit(cv_ts_order, nToSend, MODE_SILENT) ) { //delete order
+		cv_ts_order.trade_type[0] = chOpt;
+		OrderSubmit_Bybit(cv_ts_order, nToSend, MODE_NORMAL); //new order
+		return true;
+	}
+	return false;
+}
+//https://api.bybit.com
+bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nToSend, int nMode)
+{
+	CURLcode res;
+	string buysell_str;
+	unsigned char * mac = NULL;
+	unsigned int mac_length = 0;
+	int ret;
+	struct timeval  tv;
+	gettimeofday(&tv, NULL);
+	long int expires = (tv.tv_sec);
+	printf("expires = %ld\n", expires);
+	char encrystr[256], commandstr[256], macoutput[256], execution_str[256], apikey_str[256];
+	char qty[10], oprice[10], tprice[10];
+	double doprice = 0, dtprice = 0, dqty = 0;
+	struct HEADRESP headresponse;
+	string response;
+	json jtable, commandJson;
+
+	memset(commandstr, 0, sizeof(commandstr));
+	memset(qty, 0, sizeof(qty));
+	memset(oprice, 0, sizeof(oprice));
+	memset(tprice, 0, sizeof(tprice));
+	memset((void*) &m_tandem_reply, 0 , sizeof(m_tandem_reply));
+	memcpy(qty, cv_ts_order.order_qty, 9);
+	memcpy(oprice, cv_ts_order.order_price, 9);
+	memcpy(tprice, cv_ts_order.touch_price, 9);
+
+	if(cv_ts_order.order_buysell[0] == 'B')
+		buysell_str = "Buy";
+
+	if(cv_ts_order.order_buysell[0] == 'S')
+		buysell_str = "Sell";
+
+	switch(cv_ts_order.price_mark[0])
+	{
+		case '0':
+			doprice = atof(oprice) / SCALE_TPYE_1;
+			dtprice = atof(tprice) / SCALE_TPYE_1;
+			break;
+		case '1':
+			doprice = atoi(oprice);
+			dtprice = atoi(tprice);
+			break;
+		case '2':
+			doprice = atof(oprice) / SCALE_TPYE_2;
+			dtprice = atof(tprice) / SCALE_TPYE_2;
+			break;
+		case '3':
+		default:
+			break;
+	}
+
+	switch(cv_ts_order.qty_mark[0])
+	{
+		case '0':
+			dqty = atoi(qty);
+			break;
+		case '1':
+			dqty = atof(qty) / SCALE_TPYE_2;
+			break;
+		case '2':
+			dqty = atof(qty) / SCALE_TPYE_1;
+			break;
+		case '3':
+		default:
+			break;
+	}
+
+	CURL *m_curl = curl_easy_init();
+	curl_global_init(CURL_GLOBAL_ALL);
+	string order_url, order_all_url;
+
+	order_all_url = "https://api.bybit.com";
+
+	switch(cv_ts_order.trade_type[0])
+	{
+		case '0'://new order
+		case '3':
+		case '4':
+		{
+			switch(cv_ts_order.order_mark[0])
+			{
+				case '0'://Market
+				{
+					order_url = "https://api.bybit.com/v2/private/order";
+					sprintf(commandstr, "{\"symbol\": \"%s\", \"side\": \"%s\", \"order_type\": \"Market\", \"qty\": %d, \"time_in_force\": \"GoodTillCancel\",\"order_link_id\": \"%.7s|%.30s|%.20s|%.13s\"}",
+								cv_ts_order.symbol_name,
+								buysell_str.c_str(),
+								dqty,
+								cv_ts_order.sub_acno_id,
+								cv_ts_order.strategy_name,
+								cv_ts_order.username,
+								cv_ts_order.key_id);
+					printf("commandstr = %s\n", commandstr);
+					commandJson = json::parse(commandstr);
+					sprintf(encrystr, "%ldPOST/v2/private/order/create%s", expires, commandJson.dump().c_str());
+					break;
+				}
+				case '1'://Limit
+				{
+					order_url = "https://api.bybit.com/v2/private/order";
+					sprintf(commandstr, "{	\"market\": \"%s\", \"side\": \"%s\", \"price\": %.9f, \"type\": \"limit\", \"size\": %.9f, \"ioc\": false, \"postOnly\": false, \"reduceOnly\": false, \"clientId\": \"%.7s|%.30s|%.20s|%.13s\"}",
+								cv_ts_order.symbol_name,
+								buysell_str.c_str(),
+								doprice,
+								dqty,
+								cv_ts_order.sub_acno_id,
+								cv_ts_order.strategy_name,
+								cv_ts_order.username,
+								cv_ts_order.key_id);
+					printf("commandstr = %s\n", commandstr);
+					commandJson = json::parse(commandstr);
+					sprintf(encrystr, "%ld%s", expires, commandJson.dump().c_str());
+					break;
+				}
+				case '3'://stop market
+				case '4'://stop limit
+				{
+					order_url = "https://api.bybit.com/v2/private/order";
+					sprintf(commandstr, "{\"market\": \"%s\", \"side\": \"%s\", \"triggerPrice\": %.9f, \"type\": \"stop\", \"size\": %.9f, \"postOnly\": false, \"reduceOnly\": false, \"clientId\": \"%.7s|%.30s|%.20s|%.13s\"}",
+								cv_ts_order.symbol_name,
+								buysell_str.c_str(),
+								doprice,
+								dqty,
+								cv_ts_order.sub_acno_id,
+								cv_ts_order.strategy_name,
+								cv_ts_order.username,
+								cv_ts_order.key_id);
+					printf("commandstr = %s\n", commandstr);
+					commandJson = json::parse(commandstr);
+					sprintf(encrystr, "%ldPOST/api/conditional_orders%s", expires, commandJson.dump().c_str());
+					break;
+				}
+				default:
+					printf("Error order type.\n");
+					break;
+			}
+			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_order, strlen(cv_ts_order.apiSecret_order), encrystr, strlen(encrystr), mac, mac_length);
+			curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
+			break;
+		}
+		case '1'://Delete
+		{
+			if(cv_ts_order.order_mark[0] == '3' || cv_ts_order.order_mark[0] == '4')
+			{
+				sprintf(encrystr, "https://ftx.com/api/conditional_orders/%s", cv_ts_order.order_bookno);
+				order_url = encrystr;
+				sprintf(encrystr, "%ldDELETE/api/conditional_orders/%s", expires, cv_ts_order.order_bookno);
+			}
+			else
+			{
+				sprintf(encrystr, "https://ftx.com/api/orders/%s", cv_ts_order.order_bookno);
+				order_url = encrystr;
+				sprintf(encrystr, "%ldDELETE/api/orders/%s", expires, cv_ts_order.order_bookno);
+			}
+			memcpy(m_tandem_reply.bookno, cv_ts_order.order_bookno, 36);
+			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_order, strlen(cv_ts_order.apiSecret_order), encrystr, strlen(encrystr), mac, mac_length);
+			curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
+			break;
+		}
+
+		case '2'://delete all order
+		{
+			order_url = "https://ftx.com/api/orders";
+			sprintf(encrystr, "%ldDELETE/api/orders", expires);
+			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_order, strlen(cv_ts_order.apiSecret_order), encrystr, strlen(encrystr), mac, mac_length);
+			curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
+			break;
+		}
+		default :
+			FprintfStderrLog("ERROR_TRADE_TYPE", -1, 0, 0);
+			break;
+	}
+
+	printf("Dump encrystr: %s\n", encrystr);
+#if 0	//test
+	sprintf(encrystr, "message=%s:%.6s:%1f", buysell_str.c_str(), cv_ts_order.symbol_name, doprice);
+	SendNotify(encrystr);
+#endif
+	for(int i = 0; i < mac_length; i++) {
+		sprintf(macoutput+i*2, "%02x", (unsigned int)mac[i]);
+		printf("%02x", mac);
+	}
+	printf("\n");
+	if(mac) {
+		free(mac);
+	}
+
+	if(m_curl) {
+		struct curl_slist *http_header;
+		http_header = curl_slist_append(http_header, "Content-Type: application/json");
+		http_header = curl_slist_append(http_header, "Accept: application/json");
+		sprintf(apikey_str, "api_key: %s", cv_ts_order.apiKey_order);
+		http_header = curl_slist_append(http_header, apikey_str);
+		sprintf(execution_str, "sign: %.64s", macoutput);
+		http_header = curl_slist_append(http_header, execution_str);
+		sprintf(execution_str, "timestamp: %ld", expires);
+		http_header = curl_slist_append(http_header, execution_str);
+		curl_easy_setopt(m_curl, CURLOPT_HTTPHEADER, http_header);
+		curl_easy_setopt(m_curl, CURLOPT_HEADER, true);
+
+		if(cv_ts_order.trade_type[0] != '1' && cv_ts_order.trade_type[0] != '2')
+		{
+			sprintf(execution_str, "%s", commandJson.dump().c_str());
+			curl_easy_setopt(m_curl, CURLOPT_POSTFIELDSIZE, strlen(execution_str));
+			curl_easy_setopt(m_curl, CURLOPT_POSTFIELDS, execution_str);
+		}
+		curl_easy_setopt(m_curl, CURLOPT_HEADERFUNCTION, parseHeader);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
+		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
+
+		if(cv_ts_order.sub_acno_id[6] % INTERFACE_NUM)
+		{
+			printf("Account %.7s submit with Eth:%s\n", cv_ts_order.sub_acno_id, g_TandemEth0.c_str());
+			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth0.c_str());
+		}
+		else
+		{
+			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth1.c_str());
+			printf("Account %.7s submit with Eth:%s\n", cv_ts_order.sub_acno_id, g_TandemEth1.c_str());
+		}
+
+		if(atoi(m_request_remain.c_str()) < 20 && atoi(m_request_remain.c_str()) > 10)
+		{
+			printf("sleep 1 second for delay submit (%s)\n", m_request_remain.c_str());
+			sleep(1);
+		}
+		if(atoi(m_request_remain.c_str()) <= 10)
+		{
+			printf("sleep 2 second for delay submit (%s)\n", m_request_remain.c_str());
+			sleep(2);
+		}
+
+		res = curl_easy_perform(m_curl);
+
+#ifdef DEBUG
+		printf("apikey_str = %s\n", apikey_str);
+		printf("execution_str = %s\n", execution_str);
+#endif
+		printf("\n=========order response==========\n%s\n=================================\n", response.c_str());
+
+		if(res != CURLE_OK)
+		{
+			fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			memcpy(m_tandem_reply.status_code, "1002", 4);
+			sprintf(m_tandem_reply.reply_msg, "submit order fail - [%s]", curl_easy_strerror(res));
+			memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
+			SetStatus(tsMsgReady);
+		}
+
+		curl_slist_free_all(http_header);
+		curl_easy_cleanup(m_curl);
+	}
+	curl_global_cleanup();
+
+	string text;
+	bool jarray;
+
+	if(res == CURLE_OK)
+	{
+		switch(cv_ts_order.trade_type[0])
+		{
+			int i;
+			case '0'://new
+			case '3':
+			case '4':
+			{
+				for(i=0 ; i<response.length() ; i++)
+				{
+					if(response[i] == '{')
+					{
+						response = response.substr(i, response.length()-i);
+						FprintfStderrLog("NEW ORDER_REPLY", -1, (unsigned char*)response.c_str() ,response.length());
+						jtable = json::parse(response.c_str());
+						break;
+					}
+				}
+				memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
+
+				if(i == response.length())
+				{
+					memcpy(m_tandem_reply.status_code, "1003", 4);
+					sprintf(m_tandem_reply.reply_msg, "submit order fail - [%s]", response.c_str());
+				}
+				else
+				{
+					if(jtable["success"].dump() != "true")
+					{
+						memcpy(m_tandem_reply.status_code, "1001", 4);
+						sprintf(m_tandem_reply.reply_msg, "submit order fail - [%s]", jtable["error"].dump().c_str());
+					}
+					else
+					{
+						memcpy(m_tandem_reply.status_code, "1000", 4);
+						memcpy(m_tandem_reply.bookno, jtable["result"]["id"].dump().c_str(),  jtable["result"]["id"].dump().length());
+						memcpy(m_tandem_reply.price, jtable["result"]["price"].dump().c_str(), jtable["result"]["price"].dump().length());
+						memcpy(m_tandem_reply.avgPx, jtable["result"]["avgFillPrice"].dump().c_str(), jtable["result"]["avgFillPrice"].dump().length());
+						memcpy(m_tandem_reply.orderQty, jtable["result"]["size"].dump().c_str(), jtable["result"]["size"].dump().length());
+						memcpy(m_tandem_reply.lastQty, jtable["result"]["lastQty"].dump().c_str(), jtable["result"]["lastQty"].dump().length());
+						memcpy(m_tandem_reply.cumQty, jtable["result"]["filledSize"].dump().c_str(), jtable["result"]["filledSize"].dump().length());
+						memcpy(m_tandem_reply.transactTime, jtable["result"]["createdAt"].dump().c_str()+1, 19);
+
+						switch(cv_ts_order.trade_type[0])
+						{
+							case '0':
+								sprintf(m_tandem_reply.reply_msg, "submit order success - [BYBIT:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"]["clientId"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+								break;
+							case '3':
+								sprintf(m_tandem_reply.reply_msg, "change qty success - [BYBIT:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"]["clientId"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+								break;
+							case '4':
+								sprintf(m_tandem_reply.reply_msg, "change price success - [BYBIT:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"]["clientId"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+								break;
+							default:
+								FprintfStderrLog("ERROR_TRADE_TYPE", -1, 0, 0);
+								break;
+						}
+						LogOrderReplyDB_Bybit(&jtable, &cv_ts_order, OPT_ADD);
+					}
+				}
+				SetStatus(tsMsgReady);
+				break;
+			}
+			case '1'://delete or change
+			case '2':
+			{
+				for(i=0 ; i<response.length() ; i++)
+				{
+					if(response[i] == '{')
+					{
+						response = response.substr(i, response.length()-i-1);
+						FprintfStderrLog("NEW ORDER_REPLY", -1, (unsigned char*)response.c_str() ,response.length());
+						jtable = json::parse(response.c_str());
+						break;
+					}
+				}
+
+				memcpy(m_tandem_reply.key_id, cv_ts_order.key_id, 13);
+
+				if(i == response.length()) // none JSON
+				{
+					memcpy(m_tandem_reply.status_code, "1003", 4);
+					sprintf(m_tandem_reply.reply_msg, "delete order fail - [Bybit:%.200s][%.7s|%.30s|%.20s]",
+						response.c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+				}
+				else
+				{
+					if(jtable["success"].dump() != "true")
+					{
+						memcpy(m_tandem_reply.status_code, "1001", 4);
+						sprintf(m_tandem_reply.reply_msg, "delete order fail - [Bybit:%.200s][%.7s|%.30s|%.20s]",
+							jtable["error"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+					}
+					else
+					{
+							memcpy(m_tandem_reply.status_code, "1000", 4);
+							sprintf(m_tandem_reply.reply_msg, "delete order success - [Bybit:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+							//LogOrderReplyDB_FTX(&jtable, &cv_ts_order, OPT_DELETE);
+					}
+				}
+				SetStatus(tsMsgReady);
+				break;
+			}
+			default:
+				break;
+
+		}//switch
+	}//if(res != CURLE_OK)
+
+	if( nMode != MODE_SILENT) {
+
+		CCVWriteQueueDAO* pWriteQueueDAO = NULL;
+
+		while(pWriteQueueDAO == NULL)
+		{
+			if(m_pWriteQueueDAOs)
+				pWriteQueueDAO = m_pWriteQueueDAOs->GetAvailableDAO();
+
+			if(pWriteQueueDAO)
+			{
+				FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
+				pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
+				pWriteQueueDAO->TriggerWakeUpEvent();
+				SetStatus(tsServiceOn);
+				SetInuse(false);
+			}
+			else
+			{
+				FprintfStderrLog("GET_WRITEQUEUEDAO_NULL_ERROR", -1, 0, 0);
+				usleep(1000);
+			}
+		}
+	}
+	return true;
+}
+
+
+bool CCVTandemDAO::LogOrderReplyDB_Bybit(json* jtable, struct CV_StructTSOrder* cv_ts_order, int option)
 {
 	char insert_str[MAXDATA], delete_str[MAXDATA];
 

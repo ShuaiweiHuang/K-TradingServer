@@ -237,8 +237,9 @@ void CCVServer::OnData_FTX(client* c, websocketpp::connection_hdl con, client::m
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-	pQueueDAO->SendData((char*)jtable.dump().c_str(), jtable.dump().length());
-	pQueueDAO->SendData(netmsg, 2);
+	//pQueueDAO->SendData((char*)jtable.dump().c_str(), jtable.dump().length());
+	sprintf(netmsg, "%s%c%c", (char*)jtable.dump().c_str(), GTA_TAIL_BYTE_1, GTA_TAIL_BYTE_2);
+	pQueueDAO->SendData(netmsg, strlen(netmsg));
 }
 
 
@@ -266,8 +267,9 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-	pQueueDAO->SendData((char*)jtable.dump().c_str(), jtable.dump().length());
-	pQueueDAO->SendData(netmsg, 2);
+	//pQueueDAO->SendData((char*)jtable.dump().c_str(), jtable.dump().length());
+	sprintf(netmsg, "%s%c%c", (char*)jtable.dump().c_str(), GTA_TAIL_BYTE_1, GTA_TAIL_BYTE_2);
+	pQueueDAO->SendData(netmsg, strlen(netmsg));
 }
 
 void CCVServer::OnHeartbeatLost()

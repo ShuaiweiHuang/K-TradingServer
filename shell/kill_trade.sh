@@ -68,3 +68,5 @@ for i in {111..120};
 do
 ipcrm -Q $i >/dev/null 2>&1
 done
+
+sleep 2;

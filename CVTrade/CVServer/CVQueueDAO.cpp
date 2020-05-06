@@ -218,9 +218,9 @@ void* CCVQueueDAO::Run()
 		}
 		else
 		{
-			FprintfStderrLog("RECV_Q_ERROR", -1, ReplyQueueMsg, 0);
-			perror("RECV_Q_ERROR");
-			//todo
+			FprintfStderrLog("SVR_RECV_Q_ERROR", -1, ReplyQueueMsg, 0);
+			perror("SRV_RECV_Q_ERROR");
+			exit(-1);
 		}
 	}
 	return NULL;

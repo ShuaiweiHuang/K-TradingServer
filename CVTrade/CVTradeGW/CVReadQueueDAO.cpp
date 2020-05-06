@@ -160,8 +160,9 @@ void* CCVReadQueueDAO::Run()
 		}
 		else
 		{
-			FprintfStderrLog("RECV_Q_ERROR", -1, uncaRecvBuf, 0);
-			perror("RECV_Q_ERROR");
+			FprintfStderrLog("TG_RECV_Q_ERROR", -1, uncaRecvBuf, 0);
+			perror("TG_RECV_Q_ERROR");
+			exit(-1);
 		}
 	}
 	return NULL;

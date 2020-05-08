@@ -38,7 +38,7 @@ do
   fi
 done
 
-for i in {102..102};
+for i in {130..130};
 do
 ipcrm -Q $i >/dev/null 2>&1
 done

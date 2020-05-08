@@ -38,8 +38,8 @@ do
   fi
 done
 
-#for i in {101..101};
-#do
-#ipcrm -Q $i >/dev/null 2>&1
-#done
+for i in {103..103};
+do
+ipcrm -Q $i >/dev/null 2>&1
+done
 

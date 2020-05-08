@@ -56,15 +56,15 @@ void CCVServers::AddFreeServer(enum TCVRequestMarket rmRequestMarket, int nServe
 {
 	try
 	{
-		CCVServer* pServer = new CCVServer(m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strWeb,
-						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strQstr,
+		CCVServer* pServer = new CCVServer(m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strHost,
+						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strPara,
 						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName,
 						   rmRequestMarket);
 
-		printf("[%s] WebSocket URL: %s%s\n",
+		printf("[%s] Service: %s:%s\n",
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName.c_str(),
-		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strWeb.c_str(),
-		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strQstr.c_str());
+		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strHost.c_str(),
+		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strPara.c_str());
 		printf("address = %x\n", pServer);
 		m_vServerPool.push_back(pServer);
 
@@ -155,15 +155,15 @@ void CCVServers::CheckClientVector()
 				if(m_vServerConfig.at(0)->vServerInfo.at(j)->strName == (m_vServerPool[i])->m_strName)
 				{
 					CCVServer* pServer = new CCVServer(
-							m_vServerConfig.at(0)->vServerInfo.at(j)->strWeb,
-							m_vServerConfig.at(0)->vServerInfo.at(j)->strQstr,
+							m_vServerConfig.at(0)->vServerInfo.at(j)->strHost,
+							m_vServerConfig.at(0)->vServerInfo.at(j)->strPara,
 							m_vServerConfig.at(0)->vServerInfo.at(j)->strName,
 							rmBitmex);
 
-					printf("[Reconnect] %s: WebSocket URL: %s%s\n",
+					printf("[Reconnect] %s: Service: %s:%s\n",
 					m_vServerConfig.at(0)->vServerInfo.at(j)->strName.c_str(),
-					m_vServerConfig.at(0)->vServerInfo.at(j)->strWeb.c_str(),
-					m_vServerConfig.at(0)->vServerInfo.at(j)->strQstr.c_str());
+					m_vServerConfig.at(0)->vServerInfo.at(j)->strHost.c_str(),
+					m_vServerConfig.at(0)->vServerInfo.at(j)->strPara.c_str());
 					delete(m_vServerPool[i]);
 					m_vServerPool[i] = pServer;
 				}

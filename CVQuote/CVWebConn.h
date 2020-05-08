@@ -76,15 +76,6 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 
 		pthread_mutex_t m_pmtxServerStatusLock;
 		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
-		static void OnData_Bitmex(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_Bitmex_Test(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_Bitmex_Index(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_Bitmex_Funding(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_Binance(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_Binance_F(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_Binance_FT(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_FTX(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		static void OnData_Bitstamp(client* c, websocketpp::connection_hdl, client::message_ptr msg);
 	protected:
 		void* Run();
 
@@ -114,8 +105,8 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 
 		void SetStatus(TCVServerStatus ssServerStatus);
 		TCVServerStatus GetStatus();
-		string m_strWeb;
-		string m_strQstr;
+		string m_strHost;
+		string m_strPara;
 		string m_strName;
 		string m_strEPID;
 };

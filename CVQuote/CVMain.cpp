@@ -113,32 +113,32 @@ void ReadConfigFile(string strConfigFileName, string strSection, struct TCVConfi
 	assert(g_key_file_load_from_file(keyfile, strConfigFileName.c_str(), flags, &error));
 	struConfig.nServerCount = g_key_file_get_integer(keyfile, strSection.c_str(), "ServerCount", NULL);//todo->check?
 
-	char caWeb[5];
-	char caQstr[7];
+	char caIP[5];
+	char caPort[7];
 	char caName[7];
 	for(int i=0;i<struConfig.nServerCount;i++)
 	{
-		memset(caWeb, 0, sizeof(caWeb));
-		memset(caQstr, 0, sizeof(caQstr));
+		memset(caIP, 0, sizeof(caIP));
+		memset(caPort, 0, sizeof(caPort));
 		memset(caName, 0, sizeof(caName));
 
-		sprintf(caWeb, "WEB%02d", i+1);
-		sprintf(caQstr, "QSTR%02d", i+1);
+		sprintf(caIP, "IP%02d", i+1);
+		sprintf(caPort, "PORT%02d", i+1);
 		sprintf(caName, "NAME%02d", i+1);
 
 		struct TCVServerInfo* pstruServerInfo = new struct TCVServerInfo;//destructor
 	try {
-		pstruServerInfo->strWeb  = g_key_file_get_string(keyfile, strSection.c_str(), caWeb, NULL);
+		pstruServerInfo->strHost  = g_key_file_get_string(keyfile, strSection.c_str(), caIP, NULL);
 	}
 	catch (const char* pErrorMessage)
 	{
 		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
 	}
-		pstruServerInfo->strQstr = g_key_file_get_string(keyfile, strSection.c_str(), caQstr, NULL);
+		pstruServerInfo->strPara = g_key_file_get_string(keyfile, strSection.c_str(), caPort, NULL);
 		pstruServerInfo->strName = g_key_file_get_string(keyfile, strSection.c_str(), caName, NULL);
-		printf("Connect web: %s\n", pstruServerInfo->strWeb.c_str());
-		printf("Query strnig: %s\n", pstruServerInfo->strQstr.c_str());
-		printf("Exchange: %s\n", pstruServerInfo->strName.c_str());
+		printf("Server: %s\n", pstruServerInfo->strName.c_str());
+		printf("Connect to: %s", pstruServerInfo->strHost.c_str());
+		printf(":%s\n", pstruServerInfo->strPara.c_str());
 		struConfig.vServerInfo.push_back(pstruServerInfo);
 	}
 }

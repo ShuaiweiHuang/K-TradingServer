@@ -25,12 +25,8 @@ int CCVQueue::GetMessage(char* pBuf, long lType, int nFlag)
 	if(nGetMessage> 0)	
 	{
 		memcpy(pBuf,m_QueueMessage.uncaMessageBuf,nGetMessage);
-		return nGetMessage;
 	}
-	else
-	{
-		return nGetMessage;
-	}
+	return nGetMessage;
 }
 
 int CCVQueue::SendMessage(char* pBuf, int nSize, long lType, int nFlag)

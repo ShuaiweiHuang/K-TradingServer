@@ -48,10 +48,11 @@ void* CCVQueueDAO::Run()
 	assert(pClients);
 
 	char uncaRecvBuf[BUFSIZE];
+
 	while(m_pRecvQueue)
 	{
 		memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
-		usleep(2000);
+		usleep(100);
 		int nGetMessage = m_pRecvQueue->GetMessage(uncaRecvBuf);
 #ifdef DEBUG
 		printf("SERVER: queue data read at key %d\n", m_kRecvKey);
@@ -72,6 +73,8 @@ void* CCVQueueDAO::Run()
 				iter++;
 			}
 		}
+		if(nGetMessage < 0)
+			exit(-1);
 	}
 	return NULL;
 }

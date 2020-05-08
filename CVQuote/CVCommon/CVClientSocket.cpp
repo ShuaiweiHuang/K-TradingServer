@@ -54,7 +54,7 @@ void CCVClientSocket::Connect(string strHost, string strPara, string strName, in
 	{
 		m_cssClientSocketStatus = cssConnecting;
 
-		m_AddrInfo.ai_family = AF_INET;
+		m_AddrInfo.ai_family   = AF_INET;
 		m_AddrInfo.ai_socktype = SOCK_STREAM;
 
 
@@ -67,7 +67,6 @@ void CCVClientSocket::Connect(string strHost, string strPara, string strName, in
 		if ( nRs == 0)
 		{
 			m_cssClientSocketStatus = cssConnected;
-
 			if ( m_pClientSocketCallback)
 			{
 				m_pClientSocketCallback->OnConnect();

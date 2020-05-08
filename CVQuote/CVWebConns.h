@@ -16,8 +16,8 @@ using namespace std;
 
 struct TCVServerInfo
 {
-	string strWeb;
-	string strQstr;
+	string strHost;
+	string strPara;
 	string strName;
 };
 

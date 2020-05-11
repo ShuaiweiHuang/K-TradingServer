@@ -24,6 +24,7 @@ struct TCVServerInfo
 struct TCVConfig
 {
 	int nServerCount;
+	int nServerSet;
 	vector<struct TCVServerInfo*> vServerInfo;
 };
 

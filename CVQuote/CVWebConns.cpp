@@ -61,11 +61,10 @@ void CCVServers::AddFreeServer(enum TCVRequestMarket rmRequestMarket, int nServe
 						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName,
 						   rmRequestMarket);
 
-		printf("[%s] Service: %s:%s\n",
+		printf("[%s] Service: (%s:%s)\n",
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName.c_str(),
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strHost.c_str(),
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strPara.c_str());
-		printf("address = %x\n", pServer);
 		m_vServerPool.push_back(pServer);
 
 	}
@@ -106,11 +105,11 @@ void CCVServers::StartUpServers()
 
 		for(int i=0 ; i<rmNum ; i++)
 		{
-			printf("Number of Server : %d\n", m_vServerConfig.at(i)->nServerCount);
+			printf("Server count/subset: %d/%d\n", m_vServerConfig.at(i)->nServerCount,  m_vServerConfig.at(i)->nServerSet);
 
 			for(int j=0 ; j<m_vServerConfig.at(i)->nServerCount ; j++)
 			{
-				printf("AddFreeServer\n");
+				printf("AddFreeServer %d-%d\n", i, j);
 				AddFreeServer((TCVRequestMarket)i, j);
 			}
 		}

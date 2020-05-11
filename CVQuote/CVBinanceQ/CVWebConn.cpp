@@ -654,8 +654,9 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
 	size_str = to_string(size_int);
 
-	sprintf(netmsg, "01_ID=%s.BINANCE,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
-		symbol_str.c_str(), tick_count_binance, time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance, pClients->m_strEPIDNum.c_str(), tick_count_binance);
+	sprintf(netmsg, "01_ID=%s.BINANCE,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s,",
+		symbol_str.c_str(), tick_count_binance, time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance, pClients->m_strEPIDNum.c_str(), tick_count_binance, jtable["T"].dump().c_str() );
+
 	tick_count_binance++;
 	int msglen = strlen(netmsg);
 	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;

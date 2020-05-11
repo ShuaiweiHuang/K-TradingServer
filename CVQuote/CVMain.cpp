@@ -112,10 +112,12 @@ void ReadConfigFile(string strConfigFileName, string strSection, struct TCVConfi
 
 	assert(g_key_file_load_from_file(keyfile, strConfigFileName.c_str(), flags, &error));
 	struConfig.nServerCount = g_key_file_get_integer(keyfile, strSection.c_str(), "ServerCount", NULL);//todo->check?
+	struConfig.nServerSet = g_key_file_get_integer(keyfile, strSection.c_str(), "ServerSet", NULL);//todo->check?
 
 	char caIP[5];
 	char caPort[7];
 	char caName[7];
+
 	for(int i=0;i<struConfig.nServerCount;i++)
 	{
 		memset(caIP, 0, sizeof(caIP));
@@ -127,13 +129,14 @@ void ReadConfigFile(string strConfigFileName, string strSection, struct TCVConfi
 		sprintf(caName, "NAME%02d", i+1);
 
 		struct TCVServerInfo* pstruServerInfo = new struct TCVServerInfo;//destructor
-	try {
-		pstruServerInfo->strHost  = g_key_file_get_string(keyfile, strSection.c_str(), caIP, NULL);
-	}
-	catch (const char* pErrorMessage)
-	{
-		FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
-	}
+
+		try {
+			pstruServerInfo->strHost  = g_key_file_get_string(keyfile, strSection.c_str(), caIP, NULL);
+		}
+		catch (const char* pErrorMessage)
+		{
+			FprintfStderrLog(pErrorMessage, -1, 0, __FILE__, __LINE__);
+		}
 		pstruServerInfo->strPara = g_key_file_get_string(keyfile, strSection.c_str(), caPort, NULL);
 		pstruServerInfo->strName = g_key_file_get_string(keyfile, strSection.c_str(), caName, NULL);
 		printf("Server: %s\n", pstruServerInfo->strName.c_str());

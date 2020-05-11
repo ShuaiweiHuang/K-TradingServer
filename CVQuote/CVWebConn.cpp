@@ -70,6 +70,7 @@ void* CCVServer::Run()
 	{
 		m_pHeartbeat = new CCVHeartbeat(this);
 		m_pHeartbeat->SetTimeInterval(HEARTBEAT_TIME_INTERVAL);
+		printf("Set heartbeat timer: %d\n", HEARTBEAT_TIME_INTERVAL);
 		m_pHeartbeat->Start();
 		m_pRequest = new CCVRequest(this);
 	}
@@ -115,13 +116,13 @@ void* CCVServer::Run()
 				}
 				i++;
 			}
-			//printf("%s", uncaRecvBuf);
+			//printf("[%s] %s\n", m_strName.c_str(), uncaRecvBuf);
 			CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 			assert(pQueueDAO);
 			pQueueDAO->SendData(uncaRecvBuf, strlen(uncaRecvBuf));
 
 			if(m_pHeartbeat)
-			{	//printf("%s\n", m_strName.c_str());
+			{
 				m_pHeartbeat->TriggerGetReplyEvent();//reset heartbeat
 			}
 			else
@@ -163,6 +164,7 @@ void CCVServer::OnConnect()
 void CCVServer::OnDisconnect()
 {
 	sleep(1);
+	FprintfStderrLog("RECONNECT_HOST", -1, 0, m_strName.c_str(), __LINE__, 0, 0);
 	m_pClientSocket->Connect( m_strHost, m_strPara, m_strName, CONNECT_TCP);//start & reset heartbeat
 	SetStatus(ssFree);
 }
@@ -170,7 +172,7 @@ void CCVServer::OnDisconnect()
 
 void CCVServer::OnHeartbeatLost()
 {
-	FprintfStderrLog("HEARTBEAT LOST", -1, 0, m_strName.c_str(), m_strName.length(),  NULL, 0);
+	FprintfStderrLog("HEARTBEAT LOST", -1, 0, m_strName.c_str(), 0,  NULL, 0);
 #ifdef EXIT_VERSION
 	exit(-1);
 #endif

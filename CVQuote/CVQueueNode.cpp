@@ -7,12 +7,16 @@
 #include <fstream>
 #include <sys/time.h>
 #include <assert.h>
+#include <algorithm>
 
 #include "CVQueueNode.h"
 #include "CVServer.h"
 
+#define QUEUELOCALSIZE 100
+
 using namespace std;
 
+vector<string> QueueLocal;
 CCVQueueDAO::CCVQueueDAO(string strService, key_t kSendKey, key_t kRecvKey)
 {
 	m_strService = strService;
@@ -59,19 +63,33 @@ void* CCVQueueDAO::Run()
 #endif
 		if(nGetMessage > 0)
 		{
-			vector<shared_ptr<CCVClient> >::iterator iter = pClients->m_vClient.begin();
-			while(iter != pClients->m_vClient.end())
+			if(find(QueueLocal.begin(), QueueLocal.end(), uncaRecvBuf) == QueueLocal.end())
 			{
-				CCVClient* pClient = (*iter).get();
-				if(pClient->GetStatus() == csOffline && (*iter).unique()) {
+				QueueLocal.push_back(uncaRecvBuf);
+				printf("%s\n", uncaRecvBuf);
+				vector<shared_ptr<CCVClient> >::iterator iter = pClients->m_vClient.begin();
+				while(iter != pClients->m_vClient.end())
+				{
+					CCVClient* pClient = (*iter).get();
+					if(pClient->GetStatus() == csOffline && (*iter).unique()) {
+						iter++;
+						continue;
+					}
+					if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
+						pClient->m_pHeartbeat->TriggerGetReplyEvent();
+					}
 					iter++;
-					continue;
 				}
-				if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
-					pClient->m_pHeartbeat->TriggerGetReplyEvent();
-				}
-				iter++;
 			}
+#if 0
+			else
+			{
+				while(QueueLocal.size() > QUEUELOCALSIZE)
+				{
+					QueueLocal.erase(QueueLocal.begin());
+				}
+			}
+#endif
 		}
 		if(nGetMessage < 0)
 			exit(-1);

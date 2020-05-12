@@ -158,7 +158,6 @@ void CCVServer::OnConnect()
 	{
 		FprintfStderrLog("SERVER_STATUS_ERROR", -1, m_ssServerStatus, __FILE__, __LINE__, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID));
 	}
-	Start();
 }
 
 void CCVServer::OnDisconnect()
@@ -172,7 +171,7 @@ void CCVServer::OnDisconnect()
 
 void CCVServer::OnHeartbeatLost()
 {
-	FprintfStderrLog("HEARTBEAT LOST", -1, 0, m_strName.c_str(), 0,  NULL, 0);
+	FprintfStderrLog("QUOTE HEARTBEAT LOST", -1, 0, m_strName.c_str(), 0,  NULL, 0);
 #ifdef EXIT_VERSION
 	exit(-1);
 #endif

@@ -56,17 +56,17 @@ void* CCVQueueDAO::Run()
 	while(m_pRecvQueue)
 	{
 		memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
-		usleep(100);
+		usleep(500);
 		int nGetMessage = m_pRecvQueue->GetMessage(uncaRecvBuf);
 #ifdef DEBUG
 		printf("SERVER: queue data read at key %d\n", m_kRecvKey);
 #endif
 		if(nGetMessage > 0)
 		{
-			if(find(QueueLocal.begin(), QueueLocal.end(), uncaRecvBuf) == QueueLocal.end())
+			//if(find(QueueLocal.begin(), QueueLocal.end(), uncaRecvBuf) == QueueLocal.end())
 			{
-				QueueLocal.push_back(uncaRecvBuf);
-				printf("%s\n", uncaRecvBuf);
+				//QueueLocal.push_back(uncaRecvBuf);
+				//printf("%s\n", uncaRecvBuf);
 				vector<shared_ptr<CCVClient> >::iterator iter = pClients->m_vClient.begin();
 				while(iter != pClients->m_vClient.end())
 				{
@@ -81,15 +81,13 @@ void* CCVQueueDAO::Run()
 					iter++;
 				}
 			}
-#if 0
 			else
 			{
-				while(QueueLocal.size() > QUEUELOCALSIZE)
+				//while(QueueLocal.size() > QUEUELOCALSIZE)
 				{
-					QueueLocal.erase(QueueLocal.begin());
+					//QueueLocal.erase(QueueLocal.begin());
 				}
 			}
-#endif
 		}
 		if(nGetMessage < 0)
 			exit(-1);

@@ -85,11 +85,10 @@ int main()
 
 		pClients->SetConfiguration(strListenPort, strHeartBeatTime, strEPIDNum, nService);
 
-		//Disconnection check.
 		while(1)
 		{
 			pClients->CheckClientVector();
-			//pServers->CheckClientVector();
+			pServers->CheckClientVector();
 			sleep(1);
 		}
 	}

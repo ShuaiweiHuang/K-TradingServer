@@ -60,14 +60,13 @@ void CCVServers::AddFreeServer(enum TCVRequestMarket rmRequestMarket, int nServe
 						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strPara,
 						   m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName,
 						   rmRequestMarket);
-
 		printf("[%s] Service: (%s:%s)\n",
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strName.c_str(),
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strHost.c_str(),
 		m_vServerConfig.at(rmRequestMarket)->vServerInfo.at(nServerIndex)->strPara.c_str());
 		m_vServerPool.push_back(pServer);
 
-	}
+	}	
 	catch(const out_of_range& e)
 	{
 		FprintfStderrLog("OUT_OF_RANGE_ERROR", -1, 0, __FILE__, __LINE__, (unsigned char*)e.what(), strlen(e.what()));
@@ -142,10 +141,11 @@ void CCVServers::CheckClientVector()
 {
 	for(int i=0 ; i<m_vServerPool.size() ; i++)
 	{
+		//printf("[%s] break down polling:%d\n", (m_vServerPool[i])->m_strName.c_str(), (m_vServerPool[i])->m_ssServerStatus);
 		if((m_vServerPool[i])->m_ssServerStatus == ssBreakdown)
 		{
-			printf("[%s]: break down\n", (m_vServerPool[i])->m_strName.c_str());
-
+			sleep(5);
+			//printf("[%s]: break down\n", (m_vServerPool[i])->m_strName.c_str());
 
 			for(int j=0 ; j<m_vServerConfig.at(0)->nServerCount ; j++)
 			{
@@ -158,12 +158,10 @@ void CCVServers::CheckClientVector()
 							m_vServerConfig.at(0)->vServerInfo.at(j)->strPara,
 							m_vServerConfig.at(0)->vServerInfo.at(j)->strName,
 							rmBitmex);
-
 					printf("[Reconnect] %s: Service: %s:%s\n",
 					m_vServerConfig.at(0)->vServerInfo.at(j)->strName.c_str(),
 					m_vServerConfig.at(0)->vServerInfo.at(j)->strHost.c_str(),
 					m_vServerConfig.at(0)->vServerInfo.at(j)->strPara.c_str());
-					delete(m_vServerPool[i]);
 					m_vServerPool[i] = pServer;
 				}
 			}

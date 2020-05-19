@@ -70,7 +70,7 @@ void* CCVServer::Run()
 	{
 		m_pHeartbeat = new CCVHeartbeat(this);
 		m_pHeartbeat->SetTimeInterval(HEARTBEAT_TIME_INTERVAL);
-		printf("Set heartbeat timer: %d\n", HEARTBEAT_TIME_INTERVAL);
+		//printf("Set heartbeat timer: %d\n", HEARTBEAT_TIME_INTERVAL);
 		m_pHeartbeat->Start();
 		m_pRequest = new CCVRequest(this);
 	}

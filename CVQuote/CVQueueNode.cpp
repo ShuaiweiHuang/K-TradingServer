@@ -11,8 +11,12 @@
 
 #include "CVQueueNode.h"
 #include "CVServer.h"
+#define PRICE_POS	3
+#define TC_POS		5
+#define EPOCH_POS	8
+#define END_POS		9
 
-#define QUEUELOCALSIZE 100
+#define QUEUELOCALSIZE	1000
 
 using namespace std;
 
@@ -51,22 +55,54 @@ void* CCVQueueDAO::Run()
 	CCVClients* pClients = CCVClients::GetInstance();
 	assert(pClients);
 
+	char uncaRecvBufToken[BUFSIZE];
 	char uncaRecvBuf[BUFSIZE];
 
 	while(m_pRecvQueue)
 	{
+		memset(uncaRecvBufToken, 0, sizeof(uncaRecvBufToken));
 		memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
 		usleep(500);
-		int nGetMessage = m_pRecvQueue->GetMessage(uncaRecvBuf);
+		int nGetMessage = m_pRecvQueue->GetMessage(uncaRecvBufToken);
 #ifdef DEBUG
 		printf("SERVER: queue data read at key %d\n", m_kRecvKey);
 #endif
+		string hash_string;
+		string out_string;
 		if(nGetMessage > 0)
 		{
-			//if(find(QueueLocal.begin(), QueueLocal.end(), uncaRecvBuf) == QueueLocal.end())
+			strcpy(uncaRecvBuf, uncaRecvBufToken);
+
+			char *token = strtok(uncaRecvBufToken, ",");
+			out_string += token;
+			out_string += ",";
+			int GTA_index = 0;
+			static int tick_count = 0;
+			while(token = strtok(NULL, ","))
 			{
-				//QueueLocal.push_back(uncaRecvBuf);
+				GTA_index++;
+				if(GTA_index == PRICE_POS || GTA_index == EPOCH_POS)
+				{
+					hash_string += token;
+				}
+				if(GTA_index == TC_POS)
+				{
+					out_string += "TC=";
+					out_string += to_string(tick_count);
+					tick_count++;
+				}
+				else
+					out_string += token;
+				if(GTA_index != END_POS)
+					out_string += ",";
+			}
+			//printf("%s\n", out_string.c_str());
+			
+			if(find(QueueLocal.begin(), QueueLocal.end(), hash_string.c_str()) == QueueLocal.end())
+			{
+				//printf("1. %s\n", hash_string.c_str());
 				//printf("%s\n", uncaRecvBuf);
+				QueueLocal.push_back(hash_string.c_str());
 				vector<shared_ptr<CCVClient> >::iterator iter = pClients->m_vClient.begin();
 				while(iter != pClients->m_vClient.end())
 				{
@@ -75,18 +111,20 @@ void* CCVQueueDAO::Run()
 						iter++;
 						continue;
 					}
-					if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
+					if(pClient->SendAll(NULL, (char*)out_string.c_str(), out_string.length()) != false) {
 						pClient->m_pHeartbeat->TriggerGetReplyEvent();
 					}
 					iter++;
 				}
 			}
-			//else
+			else
 			{
-				//while(QueueLocal.size() > QUEUELOCALSIZE)
+				//printf("2. %s\n", hash_string.c_str());
+				while(QueueLocal.size() > (QUEUELOCALSIZE / 4 * 3))
 				{
-					//QueueLocal.erase(QueueLocal.begin());
+					QueueLocal.erase(QueueLocal.begin(), QueueLocal.begin()+250);
 				}
+				//printf("%d\n", QueueLocal.size());
 			}
 		}
 		if(nGetMessage < 0)

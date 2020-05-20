@@ -12,6 +12,7 @@
 #include "CVQueueNode.h"
 #include "CVServer.h"
 #define PRICE_POS	3
+#define VOLUME_POS	4
 #define TC_POS		5
 #define EPOCH_POS	8
 #define END_POS		9
@@ -81,7 +82,7 @@ void* CCVQueueDAO::Run()
 			while(token = strtok(NULL, ","))
 			{
 				GTA_index++;
-				if(GTA_index == PRICE_POS || GTA_index == EPOCH_POS)
+				if(GTA_index == PRICE_POS || GTA_index == EPOCH_POS || GTA_index == VOLUME_POS)
 				{
 					hash_string += token;
 				}
@@ -96,12 +97,12 @@ void* CCVQueueDAO::Run()
 				if(GTA_index != END_POS)
 					out_string += ",";
 			}
-			//printf("%s\n", out_string.c_str());
 			
 			if(find(QueueLocal.begin(), QueueLocal.end(), hash_string.c_str()) == QueueLocal.end())
 			{
-				//printf("1. %s\n", hash_string.c_str());
 				//printf("%s\n", uncaRecvBuf);
+				//printf("%s\n", hash_string.c_str());
+				//printf("%s\n", out_string.c_str());
 				QueueLocal.push_back(hash_string.c_str());
 				vector<shared_ptr<CCVClient> >::iterator iter = pClients->m_vClient.begin();
 				while(iter != pClients->m_vClient.end())
@@ -112,6 +113,7 @@ void* CCVQueueDAO::Run()
 						continue;
 					}
 					if(pClient->SendAll(NULL, (char*)out_string.c_str(), out_string.length()) != false) {
+					//if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
 						pClient->m_pHeartbeat->TriggerGetReplyEvent();
 					}
 					iter++;

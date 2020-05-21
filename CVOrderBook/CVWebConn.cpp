@@ -13,6 +13,8 @@
 #include "Include/CVTSFormat.h"
 #include "CVQueueNodes.h"
 
+#define MERGE_THRESHOLD 20
+
 using namespace std;
 
 extern void FprintfStderrLog(const char* pCause, int nError, int nData, const char* pFile = NULL, int nLine = 0, 
@@ -251,10 +253,14 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 	static char netmsg[BUFFERSIZE];
 	static char timemsg[9];
 	static char epochmsg[20];
+	static int count = 0;
+	static int count_dup = 0;
+	static int count_all = 0;
 	
 	netmsg[0] = GTA_TAIL_BYTE_1;
 	netmsg[1] = GTA_TAIL_BYTE_2;
 
+	static string lastprice;
 	string data_str = msg->get_payload();
 	string time_str, symbol_str, epoch_str;
 	string name_str = "BITMEX";
@@ -267,9 +273,34 @@ void CCVServer::OnData_Bitmex(client* c, websocketpp::connection_hdl con, client
 	pServer->m_pHeartbeat->TriggerGetReplyEvent();
 
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
-	//pQueueDAO->SendData((char*)jtable.dump().c_str(), jtable.dump().length());
+
 	sprintf(netmsg, "%s%c%c", (char*)jtable.dump().c_str(), GTA_TAIL_BYTE_1, GTA_TAIL_BYTE_2);
-	pQueueDAO->SendData(netmsg, strlen(netmsg));
+
+	if(jtable["data"].dump() != "null")
+	{
+		if(jtable["data"][0]["asks"].dump() != "null")
+		{
+			count_all++;
+			if(lastprice == (strtok((char*)jtable["data"][0]["asks"][0].dump().c_str()+1, ",")))
+			{
+				count_dup++;
+				count++;
+				if(count >= MERGE_THRESHOLD) {
+				count_dup--;
+				count++;
+					pQueueDAO->SendData(netmsg, strlen(netmsg));
+					count = 0;
+				}
+			}
+			else
+			{
+				lastprice.assign(strtok((char*)jtable["data"][0]["asks"][0].dump().c_str()+1, ","));
+				//printf("1st : %s\n", lastprice.c_str());
+				pQueueDAO->SendData(netmsg, strlen(netmsg));
+			}
+		}
+		//printf("%d/%d = %lf\n", count_dup, count_all, float(count_dup)/float(count_all));
+	}
 }
 
 void CCVServer::OnHeartbeatLost()
@@ -295,7 +326,7 @@ void CCVServer::OnHeartbeatRequest()
 				{
 						auto j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"BTC-PERP\" }");
 						auto msg = m_conn->send(j.dump());
-						j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"trades\", \"market\": \"ETH-PERP\" }");
+						j = json::parse("{ \"op\": \"subscribe\", \"channel\": \"orderbook\", \"market\": \"ETH-PERP\" }");
 						msg = m_conn->send(j.dump());
 						m_FTX_enable = true;
 						sprintf(replymsg, "%s send subscribe message and response (%s)\n", m_strName.c_str(), msg.message().c_str());

@@ -59,6 +59,10 @@ void* CCVQueueDAO::Run()
 	char uncaRecvBufToken[BUFSIZE];
 	char uncaRecvBuf[BUFSIZE];
 
+	static string hash_string;
+	static string out_string;
+	static int tick_count = 0;
+
 	while(m_pRecvQueue)
 	{
 		memset(uncaRecvBufToken, 0, sizeof(uncaRecvBufToken));
@@ -68,17 +72,14 @@ void* CCVQueueDAO::Run()
 #ifdef DEBUG
 		printf("SERVER: queue data read at key %d\n", m_kRecvKey);
 #endif
-		string hash_string;
-		string out_string;
 		if(nGetMessage > 0)
 		{
 			strcpy(uncaRecvBuf, uncaRecvBufToken);
 
 			char *token = strtok(uncaRecvBufToken, ",");
-			out_string += token;
-			out_string += ",";
 			int GTA_index = 0;
-			static int tick_count = 0;
+			//out_string += token;
+			//out_string += ",";
 			while(token = strtok(NULL, ","))
 			{
 				GTA_index++;
@@ -86,6 +87,7 @@ void* CCVQueueDAO::Run()
 				{
 					hash_string += token;
 				}
+#if 0
 				if(GTA_index == TC_POS)
 				{
 					out_string += "TC=";
@@ -96,6 +98,7 @@ void* CCVQueueDAO::Run()
 					out_string += token;
 				if(GTA_index != END_POS)
 					out_string += ",";
+#endif
 			}
 			
 			if(find(QueueLocal.begin(), QueueLocal.end(), hash_string.c_str()) == QueueLocal.end())
@@ -112,8 +115,8 @@ void* CCVQueueDAO::Run()
 						iter++;
 						continue;
 					}
-					if(pClient->SendAll(NULL, (char*)out_string.c_str(), out_string.length()) != false) {
-					//if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
+					//if(pClient->SendAll(NULL, (char*)out_string.c_str(), out_string.length()) != false) {
+					if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
 						pClient->m_pHeartbeat->TriggerGetReplyEvent();
 					}
 					iter++;
@@ -128,6 +131,8 @@ void* CCVQueueDAO::Run()
 				}
 				//printf("%d\n", QueueLocal.size());
 			}
+			hash_string.clear();
+			out_string.clear();
 		}
 		if(nGetMessage < 0)
 			exit(-1);

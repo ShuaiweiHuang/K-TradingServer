@@ -265,7 +265,6 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
-	cout << netmsg << endl;
 #ifdef DEBUG
 	cout << setw(4) << jtable << endl;
 	cout << netmsg << endl;

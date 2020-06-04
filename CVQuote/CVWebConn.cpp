@@ -103,13 +103,14 @@ void* CCVServer::Run()
 		{
 			memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
 			bool bRecvAll;
-			int i = 0;
-			pthread_mutex_lock(&m_pmtxServerStatusLock);
-			while(i<sizeof(uncaRecvBuf))
-			{
-				bRecvAll = RecvAll("RECV_DATA", (unsigned char*)(uncaRecvBuf+i), 1);
+			int char_index = 0;
 
-				if(bRecvAll == false || uncaRecvBuf[i] == '\n')
+			pthread_mutex_lock(&m_pmtxServerStatusLock);
+			while( char_index < sizeof(uncaRecvBuf))
+			{
+				bRecvAll = RecvAll("RECV_DATA", (unsigned char*)(uncaRecvBuf + char_index), 1);
+
+				if(bRecvAll == false || uncaRecvBuf[char_index] == '\n')
 				{
 					break;
 				}
@@ -124,13 +125,15 @@ void* CCVServer::Run()
 						FprintfStderrLog("HEARTBEAT_NULL_ERROR", -1, 0, __FILE__, __LINE__, (unsigned char*)m_caPthread_ID, sizeof(m_caPthread_ID));
 					}
 				}
-				i++;
+				char_index++;
 			}
 			pthread_mutex_unlock(&m_pmtxServerStatusLock);
+
 			if(bRecvAll == false)
 			{
 				SetStatus(ssBreakdown);
-				break;
+				//break;
+				ReconnectSocket();
 			}
 			//printf("[%s] %s\n", m_strName.c_str(), uncaRecvBuf);
 			CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();

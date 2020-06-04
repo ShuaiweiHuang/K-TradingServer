@@ -22,6 +22,7 @@ CCVErrorMessage::CCVErrorMessage()
 	string str2000 = "risk control error(order quantity limit exceeded)";
 	string str2001 = "risk control error(order quantity side limit exceeded)";
 	string str2002 = "risk control error(order frequency limit exceeded)";
+	string str2003 = "risk control error(query fail)";
 
 	m_mErrorMessage.insert(std::pair<int, string>(1100, str1100));
 	m_mErrorMessage.insert(std::pair<int, string>(1101, str1101));
@@ -43,6 +44,7 @@ CCVErrorMessage::CCVErrorMessage()
 	m_mErrorMessage.insert(std::pair<int, string>(2000, str2000));
 	m_mErrorMessage.insert(std::pair<int, string>(2001, str2001));
 	m_mErrorMessage.insert(std::pair<int, string>(2002, str2002));
+	m_mErrorMessage.insert(std::pair<int, string>(2003, str2003));
 }
 
 CCVErrorMessage::~CCVErrorMessage()

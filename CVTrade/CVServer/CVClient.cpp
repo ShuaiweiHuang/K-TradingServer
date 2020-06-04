@@ -394,6 +394,10 @@ void* CCVClient::Run()
 					int order_qty;
 					string strRiskKey(cv_order.cv_order.sub_acno_id);
 					m_iter = m_mRiskControl.find(strRiskKey);
+
+					if(m_iter == m_mRiskControl.end())
+						lOrderNumber = -2003;
+
 					printf("[DEBUG] %s : m_iter->second.riskctl_time_limit = %d\n", cv_order.cv_order.sub_acno_id, m_iter->second.riskctl_time_limit);
 					if(lOrderNumber > 0) //valid order
 					{
@@ -672,9 +676,69 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 
 void CCVClient::LoadRiskControl(char* p_username)
 {
+	json jtable_query_user;
+	CURLcode res;
+	string riskctl_user_query_reply, order_user_str;
+	struct AccountData acdata;
+	CURL *curl = curl_easy_init();
+	unsigned char * mac = NULL;
+	unsigned int mac_length = 0;
+	char query_str[1024];
+
+ 	LoadRiskControlSubuser(p_username);
+
+	if(!curl)
+	{
+		FprintfStderrLog("CURL_INIT_FAIL", 0, (unsigned char*)p_username, strlen(p_username));
+		return;
+	}
+
+	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20*%%20from%%20cryptovix.acv_privilege%%20where%%20name=%%27sub_trader%%27%%20and%%20status=%%271%%27%%20and%%20account=%%27%s%%27", p_username);
+
+	FprintfStderrLog("PRIVILEGE_QUERY", 0, (unsigned char*)query_str, strlen(query_str));
+
+	curl_easy_setopt(curl, CURLOPT_URL, query_str);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &riskctl_user_query_reply);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+	res = curl_easy_perform(curl);
+
+	if(res != CURLE_OK)
+	{
+		fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+		curl_easy_cleanup(curl);
+		return;
+	}
+
+	try {
+		jtable_query_user = json::parse(riskctl_user_query_reply.c_str());
+
+	} catch(...) {
+		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)riskctl_user_query_reply.c_str(), riskctl_user_query_reply.length());
+	}
+
+
+
+	if(jtable_query_user.size() != 0)
+	{
+		struct RiskctlData rcdata;
+		memset(&rcdata, sizeof(struct RiskctlData), 0);
+
+		for(int i=0 ; i<jtable_query_user.size() ; i++)
+		{
+			order_user_str = jtable_query_user[i]["data1"].dump();
+			order_user_str.erase(remove(order_user_str.begin(), order_user_str.end(), '\"'), order_user_str.end());
+ 			LoadRiskControlSubuser((char*)order_user_str.c_str());
+		}
+	}
+	curl_easy_cleanup(curl);
+}
+void CCVClient::LoadRiskControlSubuser(char* p_username)
+{
 	json jtable_query_limit;
 	CURLcode res;
-	string riskctl_query_reply, order_limit_str, side_order_limit_str, cum_order_limit_str, frequency_order_limit_str, strategy_str, accno_str, exchange_str;
+	string riskctl_query_reply, order_limit_str, side_order_limit_str, cum_order_limit_str, frequency_order_limit_str, strategy_str, accno_str, exchange_str, unit_str;
 	struct AccountData acdata;
 	CURL *curl = curl_easy_init();
 	unsigned char * mac = NULL;
@@ -689,14 +753,15 @@ void CCVClient::LoadRiskControl(char* p_username)
 		FprintfStderrLog("CURL_INIT_FAIL", 0, (unsigned char*)p_username, strlen(p_username));
 		return;
 	}
-	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20*%%20from%%20(select%%20DISTINCT%%20exchange,accounting_no,strategy,trader,order_limit,side_order_limit,cum_order_limit,frequency_order_limit,(select%%20DISTINCT%%201%%20from%%20acv_privilege%%20where%%20acv_privilege.status=1%%20and%%20name=%%27sub_trader%%27%%20and%%20account=%%27%s%%27%%20and%%20acv_privilege.data1=view_risk_control.trader)%%20as%%20sub_trader%%20from%%20view_risk_control%%20left%%20join%%20acv_exchange%%20on%%20acv_exchange.exchange_name_cn=view_risk_control.exchange_cn)%%20as%%20t1%%20where%%20(trader=%%27%s%%27%%20or%%20sub_trader=1)", p_username, p_username);
-	printf("risk control query str:%s\n", query_str);
+	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_risk_control_search(\"%s\")", p_username);
+	FprintfStderrLog("RISK_QUERY", 0, (unsigned char*)query_str, strlen(query_str));
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &riskctl_query_reply);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
 
 	res = curl_easy_perform(curl);
+
 	if(res != CURLE_OK) {
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",
 		curl_easy_strerror(res));
@@ -710,6 +775,8 @@ void CCVClient::LoadRiskControl(char* p_username)
 		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)riskctl_query_reply.c_str(), riskctl_query_reply.length());
 	}
  
+	curl_easy_cleanup(curl);
+
 	if(jtable_query_limit.size() == 0)
 	{
 		return;
@@ -718,23 +785,24 @@ void CCVClient::LoadRiskControl(char* p_username)
 	struct RiskctlData rcdata;
 	memset(&rcdata, sizeof(struct RiskctlData), 0);
 
-	for(int i=0 ; i<jtable_query_limit.size() ; i++)
+	for(int i=0 ; i<jtable_query_limit[0].size() ; i++)
 	{
-		order_limit_str = jtable_query_limit[i]["order_limit"].dump();
-		side_order_limit_str = jtable_query_limit[i]["side_order_limit"].dump();
-		cum_order_limit_str = jtable_query_limit[i]["cum_order_limit"].dump();
-		frequency_order_limit_str = jtable_query_limit[i]["frequency_order_limit"].dump();
-		strategy_str = jtable_query_limit[i]["strategy"].dump();
-		accno_str = jtable_query_limit[i]["accounting_no"].dump();
-		exchange_str = jtable_query_limit[i]["exchange"].dump();
-
+		order_limit_str = jtable_query_limit[0][i]["order_limit"].dump();
+		side_order_limit_str = jtable_query_limit[0][i]["side_order_limit"].dump();
+		cum_order_limit_str = jtable_query_limit[0][i]["cum_order_limit"].dump();
+		frequency_order_limit_str = jtable_query_limit[0][i]["frequency_order_limit"].dump();
+		strategy_str = jtable_query_limit[0][i]["strategy"].dump();
+		accno_str = jtable_query_limit[0][i]["accounting_no"].dump();
+		exchange_str = jtable_query_limit[0][i]["exchange"].dump();
+		unit_str = jtable_query_limit[0][i]["unit"].dump();
 		strategy_str.erase(remove(strategy_str.begin(), strategy_str.end(), '\"'), strategy_str.end());
 		accno_str.erase(remove(accno_str.begin(), accno_str.end(), '\"'), accno_str.end());
 		exchange_str.erase(remove(exchange_str.begin(), exchange_str.end(), '\"'), exchange_str.end());
+		unit_str.erase(remove(unit_str.begin(), unit_str.end(), '\"'), unit_str.end());
 
 		rcdata.riskctl_side_limit_current = 0;
 
-		if(exchange_str == "FTX")
+		if(unit_str == "COIN")
 		{
 			rcdata.riskctl_limit = atof(order_limit_str.c_str()) * SCALE_TPYE_1;
 			rcdata.riskctl_side_limit = atof(side_order_limit_str.c_str()) * SCALE_TPYE_1;
@@ -765,14 +833,13 @@ void CCVClient::LoadRiskControl(char* p_username)
 
 	for(iter = m_mRiskControl.begin(); iter != m_mRiskControl.end() ; iter++)
 	{
-		printf("[RiskCtl] %s - %d,%d,%d,%d\n",
+		printf("[RiskCtl List] %s\t\t\t%d\t%d\t%d\t%d\n",
 			iter->first.c_str(),
 			iter->second.riskctl_limit,
 			iter->second.riskctl_side_limit,
 			iter->second.riskctl_cum_limit,
 			iter->second.riskctl_time_limit);
 	}
-	curl_easy_cleanup(curl);
 }
 
 void CCVClient::ReplyAccountContents()
@@ -919,7 +986,6 @@ bool CCVClient::LogonAuth(char* p_username, char* p_password, struct CV_StructLo
 		exno = jtable_query_account[i]["exchange_no"].dump();
 		brno = jtable_query_account[i]["broker_no"].dump();
 		trader = jtable_query_account[i]["trader"].dump();
-printf("\ntrader: %s\n", trader.c_str());
 		acno.erase(remove(acno.begin(), acno.end(), '\"'), acno.end());
 		exno.erase(remove(exno.begin(), exno.end(), '\"'), exno.end());
 		brno.erase(remove(brno.begin(), brno.end(), '\"'), brno.end());

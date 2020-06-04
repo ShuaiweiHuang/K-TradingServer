@@ -105,6 +105,7 @@ class CCVClient: public CCVThread
 
 	public:
 		void LoadRiskControl(char* p_username);
+		void LoadRiskControlSubuser(char* p_username);
 		CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService);
 		TCVClientStauts GetStatus();
 		virtual ~CCVClient();

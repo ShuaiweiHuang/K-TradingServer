@@ -693,7 +693,9 @@ void CCVClient::LoadRiskControl(char* p_username)
 		return;
 	}
 
-	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20*%%20from%%20cryptovix.acv_privilege%%20where%%20name=%%27sub_trader%%27%%20and%%20status=%%271%%27%%20and%%20account=%%27%s%%27", p_username);
+	sprintf(query_str,
+	"https://127.0.0.1:2012/mysql/?query=select%%20*%%20from%%20cryptovix.acv_privilege%%20where%%20name=%%27sub_trader%%27%%20and%%20status=%%271%%27%%20and%%20account=%%27%s%%27",
+		p_username);
 
 	FprintfStderrLog("PRIVILEGE_QUERY", 0, (unsigned char*)query_str, strlen(query_str));
 
@@ -753,8 +755,10 @@ void CCVClient::LoadRiskControlSubuser(char* p_username)
 		FprintfStderrLog("CURL_INIT_FAIL", 0, (unsigned char*)p_username, strlen(p_username));
 		return;
 	}
+
 	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_risk_control_search(\"%s\")", p_username);
-	FprintfStderrLog("RISK_QUERY", 0, (unsigned char*)query_str, strlen(query_str));
+
+	printf("[RISK_QUERY] %s\n", query_str);
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &riskctl_query_reply);
@@ -762,84 +766,80 @@ void CCVClient::LoadRiskControlSubuser(char* p_username)
 
 	res = curl_easy_perform(curl);
 
-	if(res != CURLE_OK) {
+	if(res != CURLE_OK)
+	{
 		fprintf(stderr, "curl_easy_perform() failed: %s\n",
 		curl_easy_strerror(res));
 		curl_easy_cleanup(curl);
 		return;
 	}
-	try {
+
+	try
+	{
 		jtable_query_limit = json::parse(riskctl_query_reply.c_str());
 
-	} catch(...) {
+	}
+	catch(...)
+	{
 		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)riskctl_query_reply.c_str(), riskctl_query_reply.length());
 	}
  
+
+	if(jtable_query_limit[0].size() != 0)
+	{
+		struct RiskctlData rcdata;
+		map<string, struct RiskctlData>::iterator iter;
+		memset(&rcdata, sizeof(struct RiskctlData), 0);
+
+		for(int i=0 ; i<jtable_query_limit[0].size() ; i++)
+		{
+			rcdata.riskctl_side_limit_current = 0;
+
+			unit_str			= jtable_query_limit[0][i]["unit"].dump();
+			strategy_str			= jtable_query_limit[0][i]["strategy"].dump();
+			exchange_str			= jtable_query_limit[0][i]["exchange"].dump();
+			order_limit_str			= jtable_query_limit[0][i]["order_limit"].dump();
+			accno_str			= jtable_query_limit[0][i]["accounting_no"].dump();
+			cum_order_limit_str		= jtable_query_limit[0][i]["cum_order_limit"].dump();
+			side_order_limit_str		= jtable_query_limit[0][i]["side_order_limit"].dump();
+			frequency_order_limit_str 	= jtable_query_limit[0][i]["frequency_order_limit"].dump();
+
+			strategy_str.erase(remove(strategy_str.begin(), strategy_str.end(), '\"'), strategy_str.end());
+			accno_str.erase(remove(accno_str.begin(), accno_str.end(), '\"'), accno_str.end());
+			exchange_str.erase(remove(exchange_str.begin(), exchange_str.end(), '\"'), exchange_str.end());
+			unit_str.erase(remove(unit_str.begin(), unit_str.end(), '\"'), unit_str.end());
+
+
+			if(unit_str == "COIN")
+			{
+				rcdata.riskctl_limit = atof(order_limit_str.c_str()) * SCALE_TPYE_1;
+				rcdata.riskctl_side_limit = atof(side_order_limit_str.c_str()) * SCALE_TPYE_1;
+				rcdata.riskctl_cum_limit = atof(cum_order_limit_str.c_str()) * SCALE_TPYE_1;
+			}
+			else
+			{
+				rcdata.riskctl_limit = atoi(order_limit_str.c_str());
+				rcdata.riskctl_side_limit = atoi(side_order_limit_str.c_str());
+				rcdata.riskctl_cum_limit = atoi(cum_order_limit_str.c_str());
+			}
+
+			rcdata.riskctl_time_limit = atoi(frequency_order_limit_str.c_str());
+
+			m_mRiskControl.insert(pair<string, struct RiskctlData>((accno_str+strategy_str), rcdata));
+		}
+
+		for(iter = m_mRiskControl.begin(); iter != m_mRiskControl.end() ; iter++)
+		{
+			printf("[RiskCtl List] %s\t\t\t%d\t%d\t%d\t%d\n",
+				iter->first.c_str(),
+				iter->second.riskctl_limit,
+				iter->second.riskctl_side_limit,
+				iter->second.riskctl_cum_limit,
+				iter->second.riskctl_time_limit
+			);
+		}
+	}
 	curl_easy_cleanup(curl);
-
-	if(jtable_query_limit.size() == 0)
-	{
-		return;
-	}
-
-	struct RiskctlData rcdata;
-	memset(&rcdata, sizeof(struct RiskctlData), 0);
-
-	for(int i=0 ; i<jtable_query_limit[0].size() ; i++)
-	{
-		order_limit_str = jtable_query_limit[0][i]["order_limit"].dump();
-		side_order_limit_str = jtable_query_limit[0][i]["side_order_limit"].dump();
-		cum_order_limit_str = jtable_query_limit[0][i]["cum_order_limit"].dump();
-		frequency_order_limit_str = jtable_query_limit[0][i]["frequency_order_limit"].dump();
-		strategy_str = jtable_query_limit[0][i]["strategy"].dump();
-		accno_str = jtable_query_limit[0][i]["accounting_no"].dump();
-		exchange_str = jtable_query_limit[0][i]["exchange"].dump();
-		unit_str = jtable_query_limit[0][i]["unit"].dump();
-		strategy_str.erase(remove(strategy_str.begin(), strategy_str.end(), '\"'), strategy_str.end());
-		accno_str.erase(remove(accno_str.begin(), accno_str.end(), '\"'), accno_str.end());
-		exchange_str.erase(remove(exchange_str.begin(), exchange_str.end(), '\"'), exchange_str.end());
-		unit_str.erase(remove(unit_str.begin(), unit_str.end(), '\"'), unit_str.end());
-
-		rcdata.riskctl_side_limit_current = 0;
-
-		if(unit_str == "COIN")
-		{
-			rcdata.riskctl_limit = atof(order_limit_str.c_str()) * SCALE_TPYE_1;
-			rcdata.riskctl_side_limit = atof(side_order_limit_str.c_str()) * SCALE_TPYE_1;
-			rcdata.riskctl_cum_limit = atof(cum_order_limit_str.c_str()) * SCALE_TPYE_1;
-			rcdata.riskctl_time_limit = atoi(frequency_order_limit_str.c_str());
-		}
-		else
-		{
-			rcdata.riskctl_limit = atoi(order_limit_str.c_str());
-			rcdata.riskctl_side_limit = atoi(side_order_limit_str.c_str());
-			rcdata.riskctl_cum_limit = atoi(cum_order_limit_str.c_str());
-			rcdata.riskctl_time_limit = atoi(frequency_order_limit_str.c_str());
-		}
-
-		m_mRiskControl.insert(pair<string, struct RiskctlData>((accno_str+strategy_str), rcdata));
-#ifdef DEBUG
-		printf("%s%s - %s,%s,%s,%s\n",
-			accno_str.c_str(),
-			strategy_str.c_str(),
-			order_limit_str.c_str(),
-			side_order_limit_str.c_str(),
-			cum_order_limit_str.c_str(),
-			frequency_order_limit_str.c_str());
-#endif
-	}
-
-	map<string, struct RiskctlData>::iterator iter;
-
-	for(iter = m_mRiskControl.begin(); iter != m_mRiskControl.end() ; iter++)
-	{
-		printf("[RiskCtl List] %s\t\t\t%d\t%d\t%d\t%d\n",
-			iter->first.c_str(),
-			iter->second.riskctl_limit,
-			iter->second.riskctl_side_limit,
-			iter->second.riskctl_cum_limit,
-			iter->second.riskctl_time_limit);
-	}
 }
 
 void CCVClient::ReplyAccountContents()

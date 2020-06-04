@@ -18,6 +18,77 @@ using json = nlohmann::json;
 class CCVHeartbeat;
 class CCVTandem;
 
+#if 1
+typedef map<string, string> Params;
+
+struct MemoryStruct
+{
+	char *memory;
+	size_t size;
+	MemoryStruct()
+	{
+		memory = (char *)malloc(1);
+		size = 0;
+	}
+	~MemoryStruct()
+	{
+		free(memory);
+		memory = NULL;
+		size = 0;
+	}
+};
+
+struct Order{
+	string side;
+	string symbol;
+	string order_type;
+	string time_in_force;
+	string link_id;
+	string order_id;
+	string qty;
+	double price;
+	Params param; 
+};
+
+
+size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data);
+
+string getToken(Params param, string key);
+
+int64_t getCurrentTime(); 
+
+string HmacEncode( const char * key, const char * input);
+
+string params_string(Params const &params);
+
+string post(const string &url, const string &postParams);
+
+class BybitGateway{
+
+public:
+
+	BybitGateway(string, string);
+   
+	string OnOrder(Order);
+	string CancelOrder(Order);
+	string OnStopOrder(Order);
+
+
+private:
+	
+	BybitGateway(const BybitGateway&);
+	BybitGateway& operator=(const BybitGateway&);
+
+	string m_secret;
+	string m_key;
+	string m_host;
+
+	static BybitGateway* instance;
+	string get(string);
+};
+
+#endif
+
 struct HEADRESP
 {
 	string remain;

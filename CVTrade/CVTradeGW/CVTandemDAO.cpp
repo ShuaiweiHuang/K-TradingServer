@@ -208,12 +208,10 @@ bool CCVTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	
 		}
 	}
-#if 0
 	if(!strcmp(exname, "BINANCE_FT") || !strcmp(exname, "BINANCE") || !strcmp(exname, "BINANCE_F"))
 	{
 		return OrderSubmit_Binance(cv_ts_order, nToSend);
 	}
-#endif
 
 	if(!strcmp(exname, "FTX"))
 	{
@@ -260,7 +258,6 @@ bool CCVTandemDAO::OrderSubmit(const unsigned char* pBuf, int nToSend)
 	return true;
 }
 
-#if 0
 bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int nToSend)
 {
 	CURLcode res;
@@ -532,7 +529,6 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 
 	return true;
 }
-#endif
 
 bool CCVTandemDAO::OrderModify_Bitmex(struct CV_StructTSOrder cv_ts_order, int nToSend)
 {
@@ -1503,7 +1499,7 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 							memcpy(m_tandem_reply.status_code, "1000", 4);
 							sprintf(m_tandem_reply.reply_msg, "delete order success - [FTX:%.200s][%.7s|%.30s|%.20s]",
 								jtable["result"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
-							//LogOrderReplyDB_FTX(&jtable, &cv_ts_order, OPT_DELETE);
+							LogOrderReplyDB_FTX(&jtable, &cv_ts_order, OPT_DELETE);
 					}
 				}
 				SetStatus(tsMsgReady);
@@ -1548,50 +1544,51 @@ bool CCVTandemDAO::LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv
 
 	string response, exchange_data[30];
 
-	exchange_data[0] = (*jtable)["result"]["id"].dump();
-	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
-
-	exchange_data[1] = (*jtable)["result"]["market"].dump();
-	exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
-
-	exchange_data[2] = (*jtable)["result"]["side"].dump();
-	exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
-
-	exchange_data[3] = (*jtable)["result"]["price"].dump();
-	exchange_data[3] = exchange_data[3].substr(0, exchange_data[3].length());
-
-	if(exchange_data[3] == "null")
-		exchange_data[3] = "0";
-
-	exchange_data[4] = (*jtable)["result"]["size"].dump();
-	exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
-
-	exchange_data[5] = (*jtable)["result"]["type"].dump();
-	exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
-
-	exchange_data[6] = (*jtable)["result"]["status"].dump();
-	exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
-
-	exchange_data[7] = (*jtable)["result"]["createdAt"].dump();
-	exchange_data[7] = exchange_data[7].substr(1, 19);
-
-	exchange_data[8] = (*jtable)["result"]["avgFillPrice"].dump();
-	exchange_data[8] = exchange_data[8].substr(0, exchange_data[8].length());
-
-	if(exchange_data[8] == "null")
-		exchange_data[8] = "0";
-
-	exchange_data[9] = (*jtable)["result"]["filledSize"].dump();
-	exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
-
-	exchange_data[10] = (*jtable)["result"]["remainingSize"].dump();
-	exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
-
-	exchange_data[11] = (*jtable)["result"]["clientId"].dump();
-	exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
-
 	if(option == OPT_ADD)
 	{
+		exchange_data[0] = (*jtable)["result"]["id"].dump();
+		exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
+
+		exchange_data[1] = (*jtable)["result"]["market"].dump();
+		exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
+
+		exchange_data[2] = (*jtable)["result"]["side"].dump();
+		exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
+
+		exchange_data[3] = (*jtable)["result"]["price"].dump();
+		exchange_data[3] = exchange_data[3].substr(0, exchange_data[3].length());
+
+		if(exchange_data[3] == "null")
+			exchange_data[3] = "0";
+
+		exchange_data[4] = (*jtable)["result"]["size"].dump();
+		exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
+
+		exchange_data[5] = (*jtable)["result"]["type"].dump();
+		exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
+
+		exchange_data[6] = (*jtable)["result"]["status"].dump();
+		exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
+
+		exchange_data[7] = (*jtable)["result"]["createdAt"].dump();
+		exchange_data[7] = exchange_data[7].substr(1, 19);
+
+		exchange_data[8] = (*jtable)["result"]["avgFillPrice"].dump();
+		exchange_data[8] = exchange_data[8].substr(0, exchange_data[8].length());
+
+		if(exchange_data[8] == "null")
+			exchange_data[8] = "0";
+
+		exchange_data[9] = (*jtable)["result"]["filledSize"].dump();
+		exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
+
+		exchange_data[10] = (*jtable)["result"]["remainingSize"].dump();
+		exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
+
+		exchange_data[11] = (*jtable)["result"]["clientId"].dump();
+		exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
+
+#if 0
 		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20ftx_order_history%%20set%%20exchange=%%27FTX%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_price=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_price=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27,update_user=USER(),source_ip=%%27%.15s%%27,agent_id=%%27%.2s%%27,seq_id=%%27%.13s%%27,account=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.20s%%27,trader=%%27%.20s%%27",
 		exchange_data[0].c_str(),
 		exchange_data[1].c_str(),
@@ -1612,11 +1609,35 @@ bool CCVTandemDAO::LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv
 		cv_ts_order->sub_acno_id,
 		cv_ts_order->strategy_name,
 		cv_ts_order->username);
+#endif
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_ftx_order_history_create(\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%.15s\",\"%.2s\",\"%.13s\")",
+		cv_ts_order->account,
+		exchange_data[0].c_str(),
+		exchange_data[1].c_str(),
+		exchange_data[2].c_str(),
+		exchange_data[3].c_str(),
+		exchange_data[4].c_str(),
+		exchange_data[5].c_str(),
+		exchange_data[6].c_str(),
+		exchange_data[7].c_str(),
+		exchange_data[8].c_str(),
+		exchange_data[9].c_str(),
+		exchange_data[10].c_str(),
+		exchange_data[11].c_str(),
+		cv_ts_order->client_ip,
+		cv_ts_order->agent_id,
+		cv_ts_order->seq_id,
+		cv_ts_order->sub_acno_id,
+		cv_ts_order->strategy_name,
+		cv_ts_order->username);
+
 	}
 
 	if(option == OPT_DELETE)
 	{
-		return false;
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_ftx_order_history_modify_20200609(\"%s\",\"%s\",NULL,NULL,NULL,NULL,NULL,\"closed\",NULL,NULL,NULL,NULL,NULL)",
+		cv_ts_order->account,
+		cv_ts_order->order_bookno);
 	}
 
 	for(int i=0 ; i<strlen(insert_str) ; i++)
@@ -1624,7 +1645,7 @@ bool CCVTandemDAO::LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv
 		if(insert_str[i] == ' ')
 			insert_str[i] = '+';
 	}
-	printf("\n\n%s\n\n", insert_str);
+	printf("FTX Order History: %s\n\n", insert_str);
 	CURL *curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_URL, insert_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
@@ -1728,17 +1749,19 @@ string BybitGateway::OnStopOrder(Order order){
 
 	Params param {
 		{"price",to_string(order.price)},
+		{"base_price",to_string(order.base_price)},
 		{"api_key", m_key},
 		{"timestamp",tm},
 		{"side", order.side},
 		{"symbol", order.symbol},
 		{"order_type", order.order_type},
 		{"qty", order.qty},
+		{"stop_px",to_string(order.stop_px)},
 		{"time_in_force", order.time_in_force},
 		{"order_link_id", order.link_id}
 	};
 
-	string url = m_host + "/v2/private/stop-order/create?";
+	string url = m_host + "/open-api/stop-order/create?";
 
 	for(Params::const_iterator it = order.param.begin();it!=order.param.end();++it)
 	{
@@ -1749,6 +1772,32 @@ string BybitGateway::OnStopOrder(Order order){
 
 	return post(url, params_string(param));
 }
+
+string BybitGateway::CancelStopOrder(Order order){
+
+	struct timeval tv;	
+	gettimeofday(&tv,NULL);   
+	string tm = to_string(tv.tv_sec*1000);
+
+	Params param {
+		{"api_key", m_key},
+		{"symbol", order.symbol},
+		{"timestamp",tm},
+		{"stop_order_id", order.order_id}
+	};
+
+	string url = m_host + "/open-api/stop-order/cancel?";
+
+	for(Params::const_iterator it = order.param.begin();it!=order.param.end();++it)
+	{
+		param[it->first] = it->second;
+	}
+
+	param["sign"] = getToken(param, m_secret);
+
+	return post(url, params_string(param));
+}
+
 
 string post(const string &url, const string &postParams)  
 {  
@@ -1918,7 +1967,6 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 		default:
 			break;
 	}
-
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
 	string order_url, order_all_url;
@@ -1943,6 +1991,7 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 					order.symbol = cv_ts_order.symbol_name;
 					sprintf(commandstr, "%.7s|%.30s|%.20s|%.13s", cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, cv_ts_order.key_id);
 					order.link_id = commandstr;
+					response = client.OnOrder(order);
 					break;
 				}
 				case '1'://Limit
@@ -1954,27 +2003,53 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 					order.price = doprice;
 					sprintf(commandstr, "%.7s|%.30s|%.20s|%.13s", cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, cv_ts_order.key_id);
 					order.link_id = commandstr;
+					response = client.OnOrder(order);
 					break;
 				}
 				case '3'://stop market
+				{
+					order.order_type = "Market";
+					order.qty = to_string((int)dqty);
+					order.side = buysell_str;
+					order.symbol = cv_ts_order.symbol_name;
+					//order.price = doprice;
+					order.base_price = doprice;
+					order.stop_px = dtprice;
+					sprintf(commandstr, "%.7s|%.30s|%.20s|%.13s", cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, cv_ts_order.key_id);
+					order.link_id = commandstr;
+					response = client.OnStopOrder(order);
+					break;
+				}
 				case '4'://stop limit
 				{
+					order.order_type = "Limit";
+					order.qty = to_string((int)dqty);
+					order.side = buysell_str;
+					order.symbol = cv_ts_order.symbol_name;
+					order.price = doprice;
+					order.base_price = doprice;
+					order.stop_px = dtprice;
+					sprintf(commandstr, "%.7s|%.30s|%.20s|%.13s", cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, cv_ts_order.key_id);
+					order.link_id = commandstr;
+					response = client.OnStopOrder(order);
 					break;
 				}
 				default:
 					printf("Error order type.\n");
 					break;
 			}
-			response = client.OnOrder(order);
 			break;
 		}
 		case '1'://Delete
 		{
+			memcpy(m_tandem_reply.bookno, cv_ts_order.order_bookno, 36);
 			if(cv_ts_order.order_mark[0] == '3' || cv_ts_order.order_mark[0] == '4')
 			{
-				sprintf(encrystr, "https://ftx.com/api/conditional_orders/%s", cv_ts_order.order_bookno);
-				order_url = encrystr;
-				sprintf(encrystr, "%ldDELETE/api/conditional_orders/%s", expires, cv_ts_order.order_bookno);
+				order.symbol = cv_ts_order.symbol_name;
+				sprintf(commandstr, "%.36s", cv_ts_order.order_bookno);
+				order.order_id = commandstr;
+				printf("order.order_id = %s\n", order.order_id.c_str());
+				response = client.CancelStopOrder(order);
 			}
 			else
 			{
@@ -1982,23 +2057,14 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 				sprintf(commandstr, "%.36s", cv_ts_order.order_bookno);
 				order.order_id = commandstr;
 				printf("order.order_id = %s\n", order.order_id.c_str());
+				response = client.CancelOrder(order);
 			}
-			memcpy(m_tandem_reply.bookno, cv_ts_order.order_bookno, 36);
-			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_order, strlen(cv_ts_order.apiSecret_order), encrystr, strlen(encrystr), mac, mac_length);
-			curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
-			response = client.CancelOrder(order);
 			break;
 		}
 
 		case '2'://delete all order
 		{
-			order_url = "https://ftx.com/api/orders";
-			sprintf(encrystr, "%ldDELETE/api/orders", expires);
-			curl_easy_setopt(m_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
-			ret = HmacEncodeSHA256(cv_ts_order.apiSecret_order, strlen(cv_ts_order.apiSecret_order), encrystr, strlen(encrystr), mac, mac_length);
-			curl_easy_setopt(m_curl, CURLOPT_URL, order_url.c_str());
-			response = client.CancelOrder(order);
+			//TODO
 			break;
 		}
 		default :
@@ -2045,7 +2111,12 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 					else
 					{
 						memcpy(m_tandem_reply.status_code, "1000", 4);
-						memcpy(m_tandem_reply.bookno, jtable["result"]["order_id"].dump().c_str()+1,  jtable["result"]["order_id"].dump().length()-2);
+
+						if(cv_ts_order.order_mark[0] == '3' || cv_ts_order.order_mark[0] == '4')
+							memcpy(m_tandem_reply.bookno, jtable["result"]["stop_order_id"].dump().c_str()+1,  jtable["result"]["stop_order_id"].dump().length()-2);
+						else
+							memcpy(m_tandem_reply.bookno, jtable["result"]["order_id"].dump().c_str()+1,  jtable["result"]["order_id"].dump().length()-2);
+
 						memcpy(m_tandem_reply.price, jtable["result"]["price"].dump().c_str(), jtable["result"]["price"].dump().length());
 						memcpy(m_tandem_reply.avgPx, jtable["result"]["avgFillPrice"].dump().c_str(), jtable["result"]["price"].dump().length());
 						memcpy(m_tandem_reply.orderQty, jtable["result"]["qty"].dump().c_str(), jtable["result"]["qty"].dump().length());
@@ -2111,8 +2182,14 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 					else
 					{
 							memcpy(m_tandem_reply.status_code, "1000", 4);
-							sprintf(m_tandem_reply.reply_msg, "delete order success - [Bybit:%.200s][%.7s|%.30s|%.20s]",
-								jtable["result"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+							if(cv_ts_order.order_mark[0] == '3' || cv_ts_order.order_mark[0] == '4')
+								sprintf(m_tandem_reply.reply_msg, "delete order success - [Bybit:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"]["stop_order_id"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+							else
+								sprintf(m_tandem_reply.reply_msg, "delete order success - [Bybit:%.200s][%.7s|%.30s|%.20s]",
+								jtable["result"]["order_id"].dump().c_str(), cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+
+							LogOrderReplyDB_Bybit(&jtable, &cv_ts_order, OPT_DELETE);
 					}
 				}
 				SetStatus(tsMsgReady);
@@ -2158,51 +2235,56 @@ bool CCVTandemDAO::LogOrderReplyDB_Bybit(json* jtable, struct CV_StructTSOrder* 
 
 	string response, exchange_data[30];
 
-	exchange_data[0] = (*jtable)["result"]["id"].dump();
-	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
-
-	exchange_data[1] = (*jtable)["result"]["market"].dump();
-	exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
-
-	exchange_data[2] = (*jtable)["result"]["side"].dump();
-	exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
-
-	exchange_data[3] = (*jtable)["result"]["price"].dump();
-	exchange_data[3] = exchange_data[3].substr(0, exchange_data[3].length());
-
-	if(exchange_data[3] == "null")
-		exchange_data[3] = "0";
-
-	exchange_data[4] = (*jtable)["result"]["size"].dump();
-	exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
-
-	exchange_data[5] = (*jtable)["result"]["type"].dump();
-	exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
-
-	exchange_data[6] = (*jtable)["result"]["status"].dump();
-	exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
-
-	exchange_data[7] = (*jtable)["result"]["createdAt"].dump();
-	exchange_data[7] = exchange_data[7].substr(1, 19);
-
-	exchange_data[8] = (*jtable)["result"]["avgFillPrice"].dump();
-	exchange_data[8] = exchange_data[8].substr(0, exchange_data[8].length());
-
-	if(exchange_data[8] == "null")
-		exchange_data[8] = "0";
-
-	exchange_data[9] = (*jtable)["result"]["filledSize"].dump();
-	exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
-
-	exchange_data[10] = (*jtable)["result"]["remainingSize"].dump();
-	exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
-
-	exchange_data[11] = (*jtable)["result"]["clientId"].dump();
-	exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
-
 	if(option == OPT_ADD)
 	{
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20ftx_order_history%%20set%%20exchange=%%27FTX%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_price=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_price=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27,update_user=USER(),source_ip=%%27%.15s%%27,agent_id=%%27%.2s%%27,seq_id=%%27%.13s%%27,account=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.20s%%27,trader=%%27%.20s%%27",
+		exchange_data[0] = (*jtable)["result"]["order_id"].dump();
+		exchange_data[0] = exchange_data[0].substr(1, exchange_data[0].length()-2);
+
+		exchange_data[1] = (*jtable)["result"]["symbol"].dump();
+		exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
+
+		exchange_data[2] = (*jtable)["result"]["side"].dump();
+		exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
+
+		exchange_data[3] = (*jtable)["result"]["price"].dump();
+		exchange_data[3] = exchange_data[3].substr(0, exchange_data[3].length());
+		if(exchange_data[3] == "null")
+			exchange_data[3] = "0";
+
+		exchange_data[9] = (*jtable)["result"]["price"].dump();
+		exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
+		if(exchange_data[9] == "null")
+			exchange_data[9] = "0";
+
+		exchange_data[4] = (*jtable)["result"]["qty"].dump();
+		exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
+
+		exchange_data[5] = (*jtable)["result"]["order_type"].dump();
+		exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
+
+		exchange_data[6] = (*jtable)["result"]["order_status"].dump();
+		exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
+
+		exchange_data[7] = (*jtable)["result"]["created_at"].dump();
+		exchange_data[7] = exchange_data[7].substr(1, 19);
+		exchange_data[7][10] = ' ';
+
+		exchange_data[8] = (*jtable)["result"]["price"].dump();
+		exchange_data[8] = exchange_data[8].substr(0, exchange_data[8].length());
+		if(exchange_data[8] == "null")
+			exchange_data[8] = "0";
+
+		exchange_data[10] = (*jtable)["result"]["cum_exec_qty"].dump();
+		exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
+
+		exchange_data[11] = (*jtable)["result"]["leaves_qty"].dump();
+		exchange_data[11] = exchange_data[11].substr(0, exchange_data[11].length());
+
+		exchange_data[12] = (*jtable)["result"]["order_link_id"].dump();
+		exchange_data[12] = exchange_data[12].substr(1, exchange_data[12].length()-2);
+
+#if 0
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20bybit_order_history%%20set%%20exchange=%%27BYBIT%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_price=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_price=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27,update_user=USER(),source_ip=%%27%.15s%%27,agent_id=%%27%.2s%%27,seq_id=%%27%.13s%%27,account=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.20s%%27,trader=%%27%.20s%%27",
 		exchange_data[0].c_str(),
 		exchange_data[1].c_str(),
 		exchange_data[2].c_str(),
@@ -2222,11 +2304,36 @@ bool CCVTandemDAO::LogOrderReplyDB_Bybit(json* jtable, struct CV_StructTSOrder* 
 		cv_ts_order->sub_acno_id,
 		cv_ts_order->strategy_name,
 		cv_ts_order->username);
+#endif
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_bybit_order_history_create(\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%.15s\",\"%.2s\",\"%.13s\")",
+		cv_ts_order->account,
+		exchange_data[0].c_str(),
+		exchange_data[1].c_str(),
+		exchange_data[2].c_str(),
+		exchange_data[3].c_str(),
+		exchange_data[9].c_str(),
+		exchange_data[4].c_str(),
+		exchange_data[5].c_str(),
+		exchange_data[6].c_str(),
+		exchange_data[7].c_str(),
+		exchange_data[8].c_str(),
+		exchange_data[10].c_str(),
+		exchange_data[11].c_str(),
+		exchange_data[12].c_str(),
+		cv_ts_order->client_ip,
+		cv_ts_order->agent_id,
+		cv_ts_order->seq_id,
+		cv_ts_order->sub_acno_id,
+		cv_ts_order->strategy_name,
+		cv_ts_order->username);
+
 	}
 
 	if(option == OPT_DELETE)
 	{
-		return false;
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_bybit_order_history_modify(\"%s\",\"%.36s\",NULL,NULL,NULL,NULL,NULL,\"Cancelled\",NULL,NULL,NULL,NULL,NULL,NULL)",
+		cv_ts_order->account,
+		cv_ts_order->order_bookno);
 	}
 
 	for(int i=0 ; i<strlen(insert_str) ; i++)

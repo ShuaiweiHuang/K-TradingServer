@@ -46,6 +46,8 @@ struct Order{
 	string link_id;
 	string order_id;
 	string qty;
+	double stop_px;
+	double base_price;
 	double price;
 	Params param; 
 };
@@ -72,6 +74,7 @@ public:
 	string OnOrder(Order);
 	string CancelOrder(Order);
 	string OnStopOrder(Order);
+	string CancelStopOrder(Order);
 
 
 private:

@@ -145,7 +145,6 @@ void* CCVQueueDAO::Run()
 #if 1
 					//Risk control check
 					string strRiskKey(cv_order_reply.cv_reply.original.sub_acno_id);
-					printf("\n\nReply strRiskKey = %s\n\n", strRiskKey.c_str());
 
 					//map<string, struct RiskctlData>::iterator iter;
 					pClient->m_iter = pClient->m_mRiskControl.find(strRiskKey);
@@ -155,14 +154,12 @@ void* CCVQueueDAO::Run()
 					memcpy(Qty, cv_order_reply.cv_reply.original.order_qty, 9);
 					memcpy(Status, cv_order_reply.cv_reply.error_code, 4);
 					int order_qty = atoi(Qty);
-					printf("\n\n\n%s\n\n\n", Status);
 
 					if(strcmp(Status, "1000") == 0) {
 
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '1')//delete order success
 							pClient->m_iter->second.riskctl_side_limit_current -= 
 								((cv_order_reply.cv_reply.original.order_buysell[0] == 'B') ? order_qty : -(order_qty));
-						printf("\n\n\ndelete order = %d\n\n\n", order_qty);
 					}
 					else{
 						if(cv_order_reply.cv_reply.original.trade_type[0] == '0')//submit order fail
@@ -179,7 +176,7 @@ void* CCVQueueDAO::Run()
 							pClient->m_order_timestamp[pClient->m_order_index] = 0;
 						}
 					}
-					printf("order_qty = %d, order_limit = %d\nside_limit = %d, side_limit_current = %d\ntime_limit = %d, time_limit_current = %d\n",
+					printf("[Riskctl Update] order_qty = %d, order_limit = %d\nside_limit = %d, side_limit_current = %d\ntime_limit = %d, time_limit_current = %d\n",
 						order_qty, pClient->m_iter->second.riskctl_limit, pClient->m_iter->second.riskctl_side_limit, pClient->m_iter->second.riskctl_side_limit_current,
 						pClient->m_iter->second.riskctl_time_limit, pClient->m_riskctl_time_limit_current);
 

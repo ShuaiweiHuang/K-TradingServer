@@ -72,8 +72,8 @@ int CCVQueueDAO::Webapi_Write(char* buffer, int)
 		fprintf(stderr, "Monitor ssl curl_easy_perform() failed: %s\n",
 		curl_easy_strerror(res));
 	}
-	else
-		printf("%s\n", monitor_reply.c_str());
+	//else
+	//	printf("%s\n", monitor_reply.c_str());
 
 	curl_easy_cleanup(curl);
 }

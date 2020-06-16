@@ -319,8 +319,10 @@ void CCVServer::Bitmex_Update(json* jtable)
 	{
 		for(int i=0 ; i<(*jtable)["data"].size() ; i++)
 		{
-			if(((*jtable)["data"][i]["execType"].dump()) != "\"Trade\"")
+			if(((*jtable)["data"][i]["cv_data_type"].dump()) != "\"match\"")
 				continue;
+			//if(((*jtable)["data"][i]["execType"].dump()) != "\"Trade\"")
+			//	continue;
 
 			exchange_data[0] = ((*jtable)["data"][i]["account"].dump());
 			exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
@@ -349,8 +351,8 @@ void CCVServer::Bitmex_Update(json* jtable)
 			exchange_data[8] = ((*jtable)["data"][i]["execType"].dump());
 			exchange_data[8] = exchange_data[8].substr(1, exchange_data[8].length()-2);
 
-			exchange_data[9] = ((*jtable)["data"][i]["transactTime"].dump());
-			exchange_data[9] = exchange_data[9].substr(1, 19);
+			exchange_data[9] = ((*jtable)["data"][i]["cv_transactTime"].dump());
+			exchange_data[9] = exchange_data[9].substr(1, exchange_data[9].length()-2);
 
 			exchange_data[10] = ((*jtable)["data"][i]["commission"].dump());
 			exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
@@ -483,7 +485,7 @@ void CCVServer::Bitmex_Update(json* jtable)
 				memcpy(m_trade_reply.cumQty,        (*jtable)["data"][i]["cumQty"].dump().c_str(),         (*jtable)["data"][i]["cumQty"].dump().length());
 				memcpy(m_trade_reply.key_id,        (*jtable)["data"][i]["clOrdID"].dump().c_str()+1,      (*jtable)["data"][i]["clOrdID"].dump().length()-2);
 				memcpy(m_trade_reply.bookno,        (*jtable)["data"][i]["orderID"].dump().c_str()+1, 36);
-				memcpy(m_trade_reply.transactTime,  (*jtable)["data"][i]["transactTime"].dump().c_str()+1, (*jtable)["data"][i]["transactTime"].dump().length()-2);
+				memcpy(m_trade_reply.transactTime,  (*jtable)["data"][i]["cv_transactTime"].dump().c_str()+1, (*jtable)["data"][i]["cv_transactTime"].dump().length()-2);
 				memcpy(m_trade_reply.symbol,	    (*jtable)["data"][i]["symbol"].dump().c_str()+1,	   (*jtable)["data"][i]["symbol"].dump().length()-2);
 				memcpy(m_trade_reply.buysell,	    (*jtable)["data"][i]["side"].dump().c_str()+1, 1);
 
@@ -542,8 +544,8 @@ void CCVServer::FTX_Update(json* jtable)
 			exchange_data[8] = ((*jtable)["data"][i]["execType"].dump());
 			exchange_data[8] = exchange_data[8].substr(1, exchange_data[8].length()-2);
 
-			exchange_data[9] = ((*jtable)["data"][i]["transactTime"].dump());
-			exchange_data[9] = exchange_data[9].substr(1, 19);
+			exchange_data[9] = ((*jtable)["data"][i]["cv_transactTime"].dump());
+			exchange_data[9] = exchange_data[9].substr(1, exchange_data[9].length()-2);
 
 			exchange_data[10] = ((*jtable)["data"][i]["commission"].dump());
 			exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
@@ -602,7 +604,7 @@ void CCVServer::FTX_Update(json* jtable)
 				memcpy(m_trade_reply.cumQty,        (*jtable)["data"][i]["cumQty"].dump().c_str(),         (*jtable)["data"][i]["cumQty"].dump().length());
 				memcpy(m_trade_reply.key_id,        (*jtable)["data"][i]["clOrdID"].dump().c_str()+1,      (*jtable)["data"][i]["clOrdID"].dump().length()-2);
 				memcpy(m_trade_reply.bookno,        (*jtable)["data"][i]["orderID"].dump().c_str()+1, (*jtable)["data"][i]["orderID"].dump().length()-2);
-				memcpy(m_trade_reply.transactTime,  (*jtable)["data"][i]["transactTime"].dump().c_str()+1, (*jtable)["data"][i]["transactTime"].dump().length()-2);
+				memcpy(m_trade_reply.transactTime,  (*jtable)["data"][i]["cv_transactTime"].dump().c_str()+1, (*jtable)["data"][i]["cv_transactTime"].dump().length()-2);
 				memcpy(m_trade_reply.symbol,		(*jtable)["data"][i]["symbol"].dump().c_str()+1,	(*jtable)["data"][i]["symbol"].dump().length()-2);
 				memcpy(m_trade_reply.buysell,		(*jtable)["data"][i]["side"].dump().c_str()+1, 1);
 
@@ -631,7 +633,7 @@ void CCVServer::Bybit_Update(json* jtable)
 	{
 		for(int i=0 ; i<(*jtable)["data"].size() ; i++)
 		{
-			if(((*jtable)["data"][i]["execType"].dump()) != "\"CreateByUser\"")
+			if(((*jtable)["data"][i]["cv_data_type"].dump()) != "\"match\"")
 				continue;
 
 			exchange_data[0] = ((*jtable)["data"][i]["account"].dump());
@@ -661,7 +663,7 @@ void CCVServer::Bybit_Update(json* jtable)
 			exchange_data[8] = ((*jtable)["data"][i]["execType"].dump());
 			exchange_data[8] = exchange_data[8].substr(1, exchange_data[8].length()-2);
 
-			exchange_data[9] = ((*jtable)["data"][i]["transactTime"].dump());
+			exchange_data[9] = ((*jtable)["data"][i]["cv_transactTime"].dump());
 			exchange_data[9] = exchange_data[9].substr(1, 19);
 
 			exchange_data[10] = ((*jtable)["data"][i]["commission"].dump());
@@ -721,7 +723,7 @@ void CCVServer::Bybit_Update(json* jtable)
 				memcpy(m_trade_reply.cumQty,        (*jtable)["data"][i]["cumQty"].dump().c_str(),         (*jtable)["data"][i]["cumQty"].dump().length());
 				memcpy(m_trade_reply.key_id,        (*jtable)["data"][i]["clOrdID"].dump().c_str()+1,      (*jtable)["data"][i]["clOrdID"].dump().length()-2);
 				memcpy(m_trade_reply.bookno,        (*jtable)["data"][i]["orderID"].dump().c_str()+1, 36);
-				memcpy(m_trade_reply.transactTime,  (*jtable)["data"][i]["transactTime"].dump().c_str()+1, (*jtable)["data"][i]["transactTime"].dump().length()-2);
+				memcpy(m_trade_reply.transactTime,  (*jtable)["data"][i]["cv_transactTime"].dump().c_str()+1, (*jtable)["data"][i]["cv_transactTime"].dump().length()-2);
 				memcpy(m_trade_reply.symbol,		(*jtable)["data"][i]["symbol"].dump().c_str()+1,	(*jtable)["data"][i]["symbol"].dump().length()-2);
 				memcpy(m_trade_reply.buysell,		(*jtable)["data"][i]["side"].dump().c_str()+1, 1);
 

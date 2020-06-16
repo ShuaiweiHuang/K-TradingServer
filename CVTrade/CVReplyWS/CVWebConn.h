@@ -96,10 +96,7 @@ class CCVServer: public CCVThread, public ICVClientSocketCallback, public ICVHea
 		pthread_mutex_t m_pmtxServerStatusLock;
 		static context_ptr CB_TLS_Init(const char *, websocketpp::connection_hdl);
 		static void OnData_Order_Reply(client* c, websocketpp::connection_hdl, client::message_ptr msg);
-		void Binance_Update(json*);
-		void Bitmex_Update(json*);
-		void FTX_Update(json*);
-		void Bybit_Update(json*);
+		void Transaction_Update(json*);
 
 	protected:
 		void* Run();

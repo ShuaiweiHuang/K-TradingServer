@@ -3,7 +3,7 @@
 
 #include<sys/msg.h>
 
-const int BUFSIZE = 1024;
+#define BUFSIZE 1500
 
 struct TCVQueueMessage
 {

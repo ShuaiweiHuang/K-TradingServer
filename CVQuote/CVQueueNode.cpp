@@ -18,6 +18,7 @@
 #define END_POS		9
 
 #define QUEUELOCALSIZE	1000
+#define MERGE_COUNT 5
 
 using namespace std;
 
@@ -58,23 +59,28 @@ void* CCVQueueDAO::Run()
 
 	char uncaRecvBufToken[BUFSIZE];
 	char uncaRecvBuf[BUFSIZE];
+	char uncaRecvBufPiece[BUFSIZE];
 
 	static string hash_string;
 	static string out_string;
 	static int tick_count = 0;
+	int    readcount = 0;
+
+	memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
 
 	while(m_pRecvQueue)
 	{
 		memset(uncaRecvBufToken, 0, sizeof(uncaRecvBufToken));
-		memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
-		usleep(500);
+		memset(uncaRecvBufPiece, 0, sizeof(uncaRecvBufPiece));
+		usleep(100);
+
 		int nGetMessage = m_pRecvQueue->GetMessage(uncaRecvBufToken);
+		strcpy(uncaRecvBufPiece, uncaRecvBufToken);
 #ifdef DEBUG
 		printf("SERVER: queue data read at key %d\n", m_kRecvKey);
 #endif
 		if(nGetMessage > 0)
 		{
-			strcpy(uncaRecvBuf, uncaRecvBufToken);
 
 			char *token = strtok(uncaRecvBufToken, ",");
 			int GTA_index = 0;
@@ -107,19 +113,28 @@ void* CCVQueueDAO::Run()
 				//printf("%s\n", hash_string.c_str());
 				//printf("%s\n", out_string.c_str());
 				QueueLocal.push_back(hash_string.c_str());
-				vector<shared_ptr<CCVClient> >::iterator iter = pClients->m_vClient.begin();
-				while(iter != pClients->m_vClient.end())
-				{
-					CCVClient* pClient = (*iter).get();
-					if(pClient->GetStatus() == csOffline && (*iter).unique()) {
+				strcpy(uncaRecvBuf+strlen(uncaRecvBuf), uncaRecvBufPiece);
+				readcount++;
+				if(readcount>=MERGE_COUNT) {
+					//printf("\n%d:\n %s\n", strlen(uncaRecvBuf), uncaRecvBuf);
+					vector<shared_ptr<CCVClient> >::iterator iter = pClients->m_vClient.begin();
+					while(iter != pClients->m_vClient.end())
+					{
+						CCVClient* pClient = (*iter).get();
+						if(pClient->GetStatus() == csOffline && (*iter).unique()) {
+							iter++;
+							continue;
+						}
+						//if(pClient->SendAll(NULL, (char*)out_string.c_str(), out_string.length()) != false) {
+
+						if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false ) {
+
+							pClient->m_pHeartbeat->TriggerGetReplyEvent();
+						}
 						iter++;
-						continue;
 					}
-					//if(pClient->SendAll(NULL, (char*)out_string.c_str(), out_string.length()) != false) {
-					if(pClient->SendAll(NULL, uncaRecvBuf, strlen(uncaRecvBuf)) != false) {
-						pClient->m_pHeartbeat->TriggerGetReplyEvent();
-					}
-					iter++;
+					memset(uncaRecvBuf, 0, sizeof(uncaRecvBuf));
+					readcount = 0;
 				}
 			}
 			else

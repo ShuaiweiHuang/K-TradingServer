@@ -248,15 +248,15 @@ void CCVServer::OnData_Binance(client* c, websocketpp::connection_hdl con, clien
 	symbol_str = jtable["s"];
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
 	price_str  = jtable["p"];
-	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
+	//price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
 	size_str   = jtable["q"];
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE;
 	size_str = to_string(size_int);
 
-	sprintf(netmsg, "01_ID=%s.BINANCE,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s.%s,",
-		symbol_str.c_str(), tick_count_binance, time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance, pClients->m_strEPIDNum.c_str(), tick_count_binance, jtable["T"].dump().substr(0, 10).c_str(), jtable["T"].dump().substr(10, 3).c_str() );
+	sprintf(netmsg, "01_ID=%s.BINANCE,ECC.1=%d,Time=%s,C=%.2f,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s.%s,",
+		symbol_str.c_str(), tick_count_binance, time_str.c_str(), stof(price_str), size_str.c_str(), tick_count_binance, pClients->m_strEPIDNum.c_str(), tick_count_binance, jtable["T"].dump().substr(0, 10).c_str(), jtable["T"].dump().substr(10, 3).c_str() );
 
 	tick_count_binance++;
 	int msglen = strlen(netmsg);
@@ -299,15 +299,15 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	symbol_str = jtable["data"]["s"];
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
 	price_str  = jtable["data"]["p"];
-	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
+	//price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
 	size_str   = jtable["data"]["q"];
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
 	size_str = to_string(size_int);
 
-	sprintf(netmsg, "01_ID=%s.BINANCE_F,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
-		symbol_str.c_str(), tick_count_binance_F, time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance_F, pClients->m_strEPIDNum.c_str(), tick_count_binance_F);
+	sprintf(netmsg, "01_ID=%s.BINANCE_F,ECC.1=%d,Time=%s,C=%.2f,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
+		symbol_str.c_str(), tick_count_binance_F, time_str.c_str(), stof(price_str), size_str.c_str(), tick_count_binance_F, pClients->m_strEPIDNum.c_str(), tick_count_binance_F);
 	tick_count_binance_F++;
 	int msglen = strlen(netmsg);
 	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
@@ -358,15 +358,15 @@ void CCVServer::OnData_Binance_FT(client* c, websocketpp::connection_hdl con, cl
 	symbol_str = jtable["data"]["s"];
 	symbol_str.erase(remove(symbol_str.begin(), symbol_str.end(), '\"'), symbol_str.end());
 	price_str  = jtable["data"]["p"];
-	price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
+	//price_str.erase(remove(price_str.begin(), price_str.end(), '\"'), price_str.end());
 	size_str   = jtable["data"]["q"];
 	size_str.erase(remove(size_str.begin(), size_str.end(), '\"'), size_str.end());
 
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
 	size_str = to_string(size_int);
 
-	sprintf(netmsg, "01_ID=%s.BINANCE_FT,ECC.1=%d,Time=%s,C=%s,V=%s,TC=%d,EPID=%s,ECC.2=%d,",symbol_str.c_str(),
-		tick_count_binance_FT, time_str.c_str(), price_str.c_str(), size_str.c_str(), tick_count_binance_FT, pClients->m_strEPIDNum.c_str(), tick_count_binance_FT);
+	sprintf(netmsg, "01_ID=%s.BINANCE_FT,ECC.1=%d,Time=%s,C=%.2f,V=%s,TC=%d,EPID=%s,ECC.2=%d,",symbol_str.c_str(),
+		tick_count_binance_FT, time_str.c_str(), stof(price_str), size_str.c_str(), tick_count_binance_FT, pClients->m_strEPIDNum.c_str(), tick_count_binance_FT);
 	tick_count_binance_FT++;
 	int msglen = strlen(netmsg);
 	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;

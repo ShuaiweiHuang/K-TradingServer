@@ -132,8 +132,7 @@ void* CCVServer::Run()
 			if(bRecvAll == false)
 			{
 				SetStatus(ssBreakdown);
-				//break;
-				ReconnectSocket();
+				while(1) {sleep(1);}//wait for CVServers restart
 			}
 			//printf("[%s] %s\n", m_strName.c_str(), uncaRecvBuf);
 			CCVQueueDAO* pQueueDAO = CCVQueueDAOs::GetInstance()->GetDAO();

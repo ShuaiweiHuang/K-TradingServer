@@ -303,7 +303,7 @@ void CCVServer::Transaction_Update(json *jtable) {
 				memcpy(m_trade_reply.cumQty, (*jtable)["data"][i]["cumQty"].dump().c_str(), (*jtable)["data"][i]["cumQty"].dump().length());
 				memcpy(m_trade_reply.key_id, (*jtable)["data"][i]["clOrdID"].dump().c_str() + 1,
 				       (*jtable)["data"][i]["clOrdID"].dump().length() - 2);
-				memcpy(m_trade_reply.bookno, (*jtable)["data"][i]["orderID"].dump().c_str() + 1, 36);
+				memcpy(m_trade_reply.bookno, (*jtable)["data"][i]["orderID"].dump().c_str()+1, (*jtable)["data"][i]["orderID"].dump().length()-2);
 				memcpy(m_trade_reply.transactTime, (*jtable)["data"][i]["cv_transactTime"].dump().c_str() + 1,
 				       (*jtable)["data"][i]["cv_transactTime"].dump().length() - 2);
 				memcpy(m_trade_reply.symbol, (*jtable)["data"][i]["symbol"].dump().c_str() + 1,

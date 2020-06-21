@@ -128,7 +128,7 @@ void CCVServer::OnConnect()
 			if(m_strName == "FTX") {
 				sprintf((char*)msg, "set timer to %d sec.", HEARTBEAT_INTERVAL_SEC);
 				FprintfStderrLog("HEARTBEAT_TIMER_CONFIG", -1, 0, __FILE__, __LINE__, msg, strlen((char*)msg));
-				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_FTX);
+				m_pHeartbeat->SetTimeInterval(5);
 				m_cfd.set_message_handler(bind(&OnData_FTX,&m_cfd,::_1,::_2));
 
 			}
@@ -291,6 +291,8 @@ void CCVServer::OnHeartbeatRequest()
 				m_FTX_enable = true;
 				sprintf(replymsg, "%s send subscribe message and response (%s)\n", m_strName.c_str(), msg.message().c_str());
 				FprintfStderrLog("initial protocol", -1, 0, replymsg, strlen(replymsg),  NULL, 0);
+				m_pHeartbeat->SetTimeInterval(HEARTBEAT_INTERVAL_FTX);
+
 			}
 			else
 			{

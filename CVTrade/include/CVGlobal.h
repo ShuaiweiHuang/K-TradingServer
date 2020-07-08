@@ -17,6 +17,7 @@
 #define DEALREP		0x50
 #define CONTROLREQ	0x60
 #define CONTROLREP	0x61
+#define SHUTDOWN	0x7E
 #define DISCONNMSG	0x7F
 
 #define TT_ERROR	-1100

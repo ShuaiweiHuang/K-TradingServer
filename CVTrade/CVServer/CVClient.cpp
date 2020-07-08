@@ -185,6 +185,9 @@ void* CCVClient::Run()
 				case ORDERREQ:
 					nToRecv = sizeof(struct CV_StructOrder)-HEADER_SIZE;
 					break;
+				case SHUTDOWN:
+					exit(-1);
+					break;
 				case DISCONNMSG:
 					FprintfStderrLog("RECV_CV_DISCONNECT", 0, 0, 0);
 					SetStatus(csOffline);

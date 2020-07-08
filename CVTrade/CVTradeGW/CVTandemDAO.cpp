@@ -330,6 +330,36 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			break;
 	}
 
+	json jtable_query_strategy;
+	string strategy_no_query_reply, order_user_str;
+	CURL *curl = curl_easy_init();
+	curl_global_init(CURL_GLOBAL_ALL);
+	char query_str[1024];
+
+	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20*%%20from%%20cryptovix.acv_strategy%%20where%%20strategy_name_en=%%27%s%%27",	cv_ts_order.strategy_name);
+
+	FprintfStderrLog("PRIVILEGE_QUERY", 0, (unsigned char*)query_str, strlen(query_str));
+
+	curl_easy_setopt(curl, CURLOPT_URL, query_str);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &strategy_no_query_reply);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+	res = curl_easy_perform(curl);
+	if(res != CURLE_OK)
+	{
+		fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+		curl_easy_cleanup(curl);
+	}
+
+	try {
+		jtable_query_strategy = json::parse(strategy_no_query_reply.substr(1, strategy_no_query_reply.length()-2).c_str());
+		cout << jtable_query_strategy << endl;
+
+	} catch(...) {
+		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)strategy_no_query_reply.c_str(), strategy_no_query_reply.length());
+	}
+
 	CURL *m_curl = curl_easy_init();
 	curl_global_init(CURL_GLOBAL_ALL);
 	string order_url, order_all_url;
@@ -355,19 +385,27 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			switch(cv_ts_order.order_mark[0])
 			{
 				case '0'://Market
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.3f&type=MARKET&timestamp=%.0lf&recvWindow=%d",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, expires, recvwin);
+					sprintf(commandstr,
+						"newClientOrderId=%.13s%.6s%.13s&symbol=%s&side=%s&quantity=%.3f&type=MARKET&timestamp=%.0lf&recvWindow=%d",
+					cv_ts_order.key_id, cv_ts_order.sub_acno_id+1,
+					jtable_query_strategy["strategy_no"].dump().substr(1, jtable_query_strategy["strategy_no"].dump().length()-2).c_str()+1,
+					cv_ts_order.symbol_name, buysell_str.c_str(), dqty, expires, recvwin);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '1'://Limit
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%.3f&price=%.4lf&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=%d",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, expires, recvwin);
+					sprintf(commandstr,
+						"newClientOrderId=%.13s%.6s%.13s&symbol=%s&side=%s&quantity=%.3f&price=%.4lf&type=LIMIT&timeInForce=GTC&timestamp=%.0lf&recvWindow=%d",
+					cv_ts_order.key_id, cv_ts_order.sub_acno_id+1,
+					jtable_query_strategy["strategy_no"].dump().substr(1, jtable_query_strategy["strategy_no"].dump().length()-2).c_str()+1,
+					cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, expires, recvwin);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '4'://stop limit
-					sprintf(commandstr, "newClientOrderId=%.13s&symbol=%s&side=%s&quantity=%f&price=%.4lf&stopPrice=%.4lf&type=STOP&timestamp=%.0lf&recvWindow=%d",
-					//&text=%.7s|%.30s|%.20s",
-					cv_ts_order.key_id, cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, dtprice, expires, recvwin);
+					sprintf(commandstr,
+						"newClientOrderId=%.13s%.6s%.13s&symbol=%s&side=%s&quantity=%f&price=%.4lf&stopPrice=%.4lf&type=STOP&timestamp=%.0lf&recvWindow=%d",
+					cv_ts_order.key_id, cv_ts_order.sub_acno_id+1,
+					jtable_query_strategy["strategy_no"].dump().substr(1, jtable_query_strategy["strategy_no"].dump().length()-2).c_str()+1,
+					cv_ts_order.symbol_name, buysell_str.c_str(), dqty, doprice, dtprice, expires, recvwin);
 					sprintf(encrystr, "%s", commandstr);
 					break;
 				case '2'://Protect
@@ -499,9 +537,6 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 					sprintf(m_tandem_reply.reply_msg, "submit fail, error message - [%s]", text.c_str());
 				else
 					sprintf(m_tandem_reply.reply_msg, "submit fail, error message - [get order ID fail]");
-#ifdef DEBUG
-				printf("\n\n\ntext = %s\n", text.c_str());
-#endif
 			}
 			else
 			{
@@ -515,14 +550,17 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 				tt_time = atol(m_tandem_reply.transactTime)/1000;
 				tm_time  = localtime(&tt_time);
 				strftime(m_tandem_reply.transactTime, sizeof(m_tandem_reply.transactTime), "%Y-%m-%d %H:%M:%S", tm_time);
+
 				if(cv_ts_order.trade_type[0] == '0')
-					sprintf(m_tandem_reply.reply_msg, "submit order success");
-				else
-					sprintf(m_tandem_reply.reply_msg, "order cancel success");
-#ifdef DEBUG
-				printf("==============================\nsubmit order success\n");
-				printf("orderID = %s\n=======================\n", m_tandem_reply.bookno);
-#endif
+					sprintf(m_tandem_reply.reply_msg, "submit order success - [BINANCE:%.200s][%.7s|%.30s|%.20s]",
+						jtable["text"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+				if(cv_ts_order.trade_type[0] == '3')
+					sprintf(m_tandem_reply.reply_msg, "change qty success - [BINANCE:%.200s][%.7s|%.30s|%.20s]",
+						jtable["text"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+				if(cv_ts_order.trade_type[0] == '4')
+					sprintf(m_tandem_reply.reply_msg, "change price success - [BINANCE:%.200s][%.7s|%.30s|%.20s]",
+						jtable["text"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+
 				LogOrderReplyDB_Binance(&jtable, &cv_ts_order, (cv_ts_order.trade_type[0] == '0') ? OPT_ADD : OPT_DELETE);
 			}
 			SetStatus(tsMsgReady);
@@ -1105,12 +1143,10 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 	exchange_data[15] = (*jtable)["updateTime"].dump();
 	exchange_data[15] = exchange_data[15].substr(0, exchange_data[15].length());
 
-#if 1//log local time
 	time_t tt_time = atol(exchange_data[15].c_str())/1000;
 	char time_str[30];
 	struct tm *tm_time  = localtime(&tt_time);
 	strftime(time_str, 30, "%Y-%m-%d %H:%M:%S", tm_time);
-#endif
 
 		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%.19s%%27,match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27,order_price=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.30s%%27,trader=%%27%.20s%%27,update_user=USER()",
 		exchange_data[2].c_str(), exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[13].c_str(),
@@ -1119,12 +1155,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 		cv_ts_order->sub_acno_id, cv_ts_order->strategy_name, cv_ts_order->username);
 
 	if(option == OPT_DELETE) {
-#ifdef AWSCODE
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str());
-#else
-		sprintf(insert_str, "http://tm1.cryptovix.com.tw:2011/mysql?db=cryptovix&query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str());
-#endif
-		sprintf(insert_str, "%s%%20where%%20order_no=%%27%s%%27", insert_str, exchange_data[0].c_str());
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27%%20where%%20order_no=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str(), exchange_data[0].c_str());
 	}
 
 	for(int i=0 ; i<strlen(insert_str) ; i++)

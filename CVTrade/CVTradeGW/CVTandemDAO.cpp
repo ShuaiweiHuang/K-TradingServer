@@ -31,6 +31,13 @@ extern void FprintfStderrLog(const char* pCause, int nError, unsigned char* pMes
 static size_t getResponse(char *contents, size_t size, size_t nmemb, void *userp);
 static size_t parseHeader(void *ptr, size_t size, size_t nmemb, struct HEADRESP *userdata);
 
+static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+		((std::string*)userp)->append((char*)contents, size * nmemb);
+				return size * nmemb;
+}
+
+
 int CCVTandemDAO::HmacEncodeSHA256( const char * key, unsigned int key_length, const char * input, unsigned int input_length, unsigned char * &output, unsigned int &output_length) {
 	const EVP_MD * engine = EVP_sha256();
 	output = (unsigned char*)malloc(EVP_MAX_MD_SIZE);
@@ -416,7 +423,28 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 		curl_easy_setopt(m_curl, CURLOPT_WRITEHEADER, &headresponse);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
-		
+
+		if(cv_ts_order.key_id[13] % INTERFACE_NUM)
+		{
+			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth0.c_str());
+		}
+		else
+		{
+			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth1.c_str());
+		}
+
+		if(atoi(m_request_remain.c_str()) < 20 && atoi(m_request_remain.c_str()) > 10)
+		{
+			printf("sleep 1 second for delay submit (%s)\n", m_request_remain.c_str());
+			sleep(1);
+		}
+		if(atoi(m_request_remain.c_str()) <= 10)
+		{
+			printf("sleep 2 second for delay submit (%s)\n", m_request_remain.c_str());
+			sleep(2);
+		}
+
+
 		res = curl_easy_perform(m_curl);
 #ifdef DEBUG
 		printf("apikey_str = %s\n", apikey_str);
@@ -433,6 +461,9 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 	//printf("request remain: %s\n", headresponse.remain.c_str());
 	m_request_remain = headresponse.remain;
 	m_time_limit = headresponse.epoch;
+	printf("binance request remain: %s\n", m_request_remain.c_str());
+	printf("binance time limit: %s\n", m_time_limit.c_str());
+
 	string text;
 	bool jarray;
 	switch(cv_ts_order.trade_type[0])
@@ -523,9 +554,6 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			usleep(500000);
 		}
 	}
-
-	printf("request remain: %s\n", m_request_remain.c_str());
-	printf("time limit: %s\n", m_time_limit.c_str());
 
 	return true;
 }
@@ -726,13 +754,13 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
 #if 1
-		if(cv_ts_order.sub_acno_id[6] %= INTERFACE_NUM) {
-			printf("Account %s submit with Eth:%s\n", cv_ts_order.sub_acno_id, g_TandemEth0.c_str());
+		if(cv_ts_order.key_id[13] %= INTERFACE_NUM)
+		{
 			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth0.c_str());
 		}
-		else {
+		else
+		{
 			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth1.c_str());
-			printf("Account %s submit with Eth:%s\n", cv_ts_order.sub_acno_id, g_TandemEth1.c_str());
 		}
 #endif
 		if(atoi(m_request_remain.c_str()) < 20 && atoi(m_request_remain.c_str()) > 10) {
@@ -1349,17 +1377,15 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 		curl_easy_setopt(m_curl, CURLOPT_WRITEFUNCTION, getResponse);
 		curl_easy_setopt(m_curl, CURLOPT_WRITEDATA, &response);
 
-		if(cv_ts_order.sub_acno_id[6] % INTERFACE_NUM)
+		if(cv_ts_order.key_id[13] % INTERFACE_NUM)
 		{
-			printf("Account %.7s submit with Eth:%s\n", cv_ts_order.sub_acno_id, g_TandemEth0.c_str());
 			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth0.c_str());
 		}
 		else
 		{
 			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth1.c_str());
-			printf("Account %.7s submit with Eth:%s\n", cv_ts_order.sub_acno_id, g_TandemEth1.c_str());
 		}
-
+#if 0
 		if(atoi(m_request_remain.c_str()) < 20 && atoi(m_request_remain.c_str()) > 10)
 		{
 			printf("sleep 1 second for delay submit (%s)\n", m_request_remain.c_str());
@@ -1370,7 +1396,7 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 			printf("sleep 2 second for delay submit (%s)\n", m_request_remain.c_str());
 			sleep(2);
 		}
-
+#endif
 		res = curl_easy_perform(m_curl);
 
 #ifdef DEBUG
@@ -1967,13 +1993,40 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 		default:
 			break;
 	}
-	CURL *m_curl = curl_easy_init();
-	curl_global_init(CURL_GLOBAL_ALL);
-	string order_url, order_all_url;
 
 	BybitGateway client(cv_ts_order.apiSecret_order, cv_ts_order.apiKey_order);
 	Order order;
 	order.time_in_force = "GoodTillCancel";
+
+	json jtable_query_strategy;
+	string strategy_no_query_reply, order_user_str;
+	CURL *curl = curl_easy_init();
+	curl_global_init(CURL_GLOBAL_ALL);
+	char query_str[1024];
+
+	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=select%%20*%%20from%%20cryptovix.acv_strategy%%20where%%20strategy_name_en=%%27%s%%27",	cv_ts_order.strategy_name);
+
+	FprintfStderrLog("PRIVILEGE_QUERY", 0, (unsigned char*)query_str, strlen(query_str));
+
+	curl_easy_setopt(curl, CURLOPT_URL, query_str);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &strategy_no_query_reply);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
+	res = curl_easy_perform(curl);
+	if(res != CURLE_OK)
+	{
+		fprintf(stderr, "curl_easy_perform() failed: %s\n",
+		curl_easy_strerror(res));
+		curl_easy_cleanup(curl);
+	}
+
+	try {
+		jtable_query_strategy = json::parse(strategy_no_query_reply.substr(1, strategy_no_query_reply.length()-2).c_str());
+		cout << jtable_query_strategy << endl;
+
+	} catch(...) {
+		FprintfStderrLog("JSON_PARSE_FAIL", 0, (unsigned char*)strategy_no_query_reply.c_str(), strategy_no_query_reply.length());
+	}
 
 	switch(cv_ts_order.trade_type[0])
 	{
@@ -1989,7 +2042,8 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 					order.qty = to_string((int)dqty);
 					order.side = buysell_str;
 					order.symbol = cv_ts_order.symbol_name;
-					sprintf(commandstr, "%.7s|%.30s|%.20s|%.13s", cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, cv_ts_order.key_id);
+					sprintf(commandstr, "%.13s%.6s%.13s", cv_ts_order.key_id, cv_ts_order.sub_acno_id+1,
+						jtable_query_strategy["strategy_no"].dump().substr(1, jtable_query_strategy["strategy_no"].dump().length()-2).c_str()+1);
 					order.link_id = commandstr;
 					response = client.OnOrder(order);
 					break;
@@ -2001,7 +2055,8 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 					order.side = buysell_str;
 					order.symbol = cv_ts_order.symbol_name;
 					order.price = doprice;
-					sprintf(commandstr, "%.7s|%.30s|%.20s|%.13s", cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, cv_ts_order.key_id);
+					sprintf(commandstr, "%.13s%.6s%.13s", cv_ts_order.key_id, cv_ts_order.sub_acno_id+1,
+						jtable_query_strategy["strategy_no"].dump().substr(1, jtable_query_strategy["strategy_no"].dump().length()-2).c_str()+1);
 					order.link_id = commandstr;
 					response = client.OnOrder(order);
 					break;
@@ -2015,7 +2070,8 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 					//order.price = doprice;
 					order.base_price = doprice;
 					order.stop_px = dtprice;
-					sprintf(commandstr, "%.7s|%.30s|%.20s|%.13s", cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, cv_ts_order.key_id);
+					sprintf(commandstr, "%.13s%.6s%.13s", cv_ts_order.key_id, cv_ts_order.sub_acno_id+1,
+						jtable_query_strategy["strategy_no"].dump().substr(1, jtable_query_strategy["strategy_no"].dump().length()-2).c_str()+1);
 					order.link_id = commandstr;
 					response = client.OnStopOrder(order);
 					break;
@@ -2029,7 +2085,8 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 					order.price = doprice;
 					order.base_price = doprice;
 					order.stop_px = dtprice;
-					sprintf(commandstr, "%.7s|%.30s|%.20s|%.13s", cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username, cv_ts_order.key_id);
+					sprintf(commandstr, "%.13s%.6s%.13s", cv_ts_order.key_id, cv_ts_order.sub_acno_id+1,
+						jtable_query_strategy["strategy_no"].dump().substr(1, jtable_query_strategy["strategy_no"].dump().length()-2).c_str()+1);
 					order.link_id = commandstr;
 					response = client.OnStopOrder(order);
 					break;

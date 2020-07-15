@@ -86,7 +86,7 @@ void* CCVReadQueueDAO::Run()
 			if(nGetMessage != sizeof(struct CV_StructTSOrder))
 				FprintfStderrLog("RECV_Q_ERROR_LEN", -1, uncaRecvBuf, 0);
 
-			FprintfStderrLog("RECV_Q", 0, uncaRecvBuf, nGetMessage);
+			//FprintfStderrLog("RECV_Q", 0, uncaRecvBuf, nGetMessage);
 			memcpy(&cv_ts_order, uncaRecvBuf, nGetMessage);
 			memset(uncaOrderNumber, 0, sizeof(uncaOrderNumber));
 			memcpy(uncaOrderNumber, cv_ts_order.key_id, 13);
@@ -134,7 +134,7 @@ void* CCVReadQueueDAO::Run()
 
 					if(bResult == true)
 					{
-						FprintfStderrLog("SEND_TIG", 0, uncaRecvBuf, nGetMessage);
+						//FprintfStderrLog("SEND_TIG", 0, uncaRecvBuf, nGetMessage);
 						break;
 					}
 					else
@@ -160,7 +160,7 @@ void* CCVReadQueueDAO::Run()
 		}
 		else
 		{
-			FprintfStderrLog("TG_RECV_Q_ERROR", -1, uncaRecvBuf, 0);
+			//FprintfStderrLog("TG_RECV_Q_ERROR", -1, uncaRecvBuf, 0);
 			perror("TG_RECV_Q_ERROR");
 			exit(-1);
 		}

@@ -158,7 +158,8 @@ void* CCVClient::Run()
 
 		if(bRecvAll == false)
 		{
-			FprintfStderrLog("RECV_ESC_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), uncaEscapeBuf, sizeof(uncaEscapeBuf));
+			//FprintfStderrLog("RECV_ESC_ERROR", -1, m_uncaLogonID, sizeof(m_uncaLogonID), uncaEscapeBuf, sizeof(uncaEscapeBuf));
+			FprintfStderrLog("RECV_ESC_ERROR", -1, 0, 0, 0, 0);
 			continue;
 		}
 

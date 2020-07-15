@@ -95,7 +95,7 @@ void* CCVQueueDAO::Run()
 		int nGetMessage = m_pRecvQueue->GetMessage(ReplyQueueMsg);
 		if(nGetMessage > 0)
 		{
-			FprintfStderrLog("RECV_Q", 0, ReplyQueueMsg, nGetMessage);
+			//FprintfStderrLog("RECV_Q", 0, ReplyQueueMsg, nGetMessage);
 
 			memset(caKeyID, 0, sizeof(caKeyID));
 			memset(caStatus, 0, sizeof(caStatus));

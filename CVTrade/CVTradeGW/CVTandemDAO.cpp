@@ -580,7 +580,7 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 
 		if(pWriteQueueDAO)
 		{
-			FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
+			//FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
 			pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
 			pWriteQueueDAO->TriggerWakeUpEvent();
 			SetStatus(tsServiceOn);
@@ -985,7 +985,7 @@ bool CCVTandemDAO::OrderSubmit_Bitmex(struct CV_StructTSOrder cv_ts_order, int n
 
 			if(pWriteQueueDAO)
 			{
-				FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
+				//FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
 				pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
 				pWriteQueueDAO->TriggerWakeUpEvent();
 				SetStatus(tsServiceOn);
@@ -1094,68 +1094,76 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 	char insert_str[MAXDATA], delete_str[MAXDATA];
 
 	string response, exchange_data[30];
+	if(option == OPT_ADD)
+	{
+		exchange_data[0] = (*jtable)["orderId"].dump();
+		exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
 
-	exchange_data[0] = (*jtable)["orderId"].dump();
-	exchange_data[0] = exchange_data[0].substr(0, exchange_data[0].length());
+		exchange_data[1] = (*jtable)["symbol"].dump();
+		exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
 
-	exchange_data[1] = (*jtable)["symbol"].dump();
-	exchange_data[1] = exchange_data[1].substr(1, exchange_data[1].length()-2);
+		exchange_data[2] = (*jtable)["side"].dump();
+		exchange_data[2] = exchange_data[2].substr(1, exchange_data[2].length()-2);
 
-	exchange_data[2] = (*jtable)["accountId"].dump();
-	exchange_data[2] = exchange_data[2].substr(0, exchange_data[2].length());
+		exchange_data[3] = (*jtable)["price"].dump();
+		exchange_data[3] = exchange_data[3].substr(1, exchange_data[3].length()-2);
+		if(exchange_data[3] == "null")
+			exchange_data[3] = "0";
 
-	exchange_data[3] = (*jtable)["status"].dump();
-	exchange_data[3] = exchange_data[3].substr(1, exchange_data[3].length()-2);
+		exchange_data[4] = (*jtable)["origQty"].dump();
+		exchange_data[4] = exchange_data[4].substr(1, exchange_data[4].length()-2);
 
-	exchange_data[4] = (*jtable)["clientOrderId"].dump();
-	exchange_data[4] = exchange_data[4].substr(1, exchange_data[4].length()-2);
+		exchange_data[5] = (*jtable)["type"].dump();
+		exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
 
-	exchange_data[5] = (*jtable)["price"].dump();
-	exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
+		exchange_data[6] = (*jtable)["status"].dump();
+		exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
 
-	exchange_data[6] = (*jtable)["origQty"].dump();
-	exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
+		exchange_data[7] = (*jtable)["updateTime"].dump();
+		exchange_data[7] = exchange_data[7].substr(0, exchange_data[7].length());
 
-	exchange_data[7] = (*jtable)["executedQty"].dump();
-	exchange_data[7] = exchange_data[7].substr(1, exchange_data[7].length()-2);
+		exchange_data[8] = (*jtable)["stopPrice"].dump();
+		exchange_data[8] = exchange_data[8].substr(1, exchange_data[8].length()-2);
 
-	exchange_data[8] = (*jtable)["cumQty"].dump();
-	exchange_data[8] = exchange_data[8].substr(1, exchange_data[8].length()-2);
+		exchange_data[9] = (*jtable)["executedQty"].dump();
+		exchange_data[9] = exchange_data[9].substr(1, exchange_data[9].length()-2);
 
-	exchange_data[9] = (*jtable)["cumQuote"].dump();
-	exchange_data[9] = exchange_data[9].substr(1, exchange_data[9].length()-2);
+		exchange_data[10] = to_string(atoi((*jtable)["origQty"].dump().c_str()) - atoi((*jtable)["cumQty"].dump().c_str()));
 
-	exchange_data[10] = (*jtable)["timeInForce"].dump();
-	exchange_data[10] = exchange_data[10].substr(1, exchange_data[10].length()-2);
+		exchange_data[11] = (*jtable)["clientOrderId"].dump();
+		exchange_data[11] = exchange_data[4].substr(1, exchange_data[4].length()-2);
 
-	exchange_data[11] = (*jtable)["type"].dump();
-	exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
 
-	exchange_data[12] = (*jtable)["reduceOnly"].dump();
-	exchange_data[12] = exchange_data[12].substr(0, exchange_data[12].length());
+		time_t tt_time = atol(exchange_data[7].c_str())/1000;
+		char time_str[30];
+		struct tm *tm_time  = localtime(&tt_time);
+		strftime(time_str, 30, "%Y-%m-%d %H:%M:%S", tm_time);
 
-	exchange_data[13] = (*jtable)["side"].dump();
-	exchange_data[13] = exchange_data[13].substr(1, exchange_data[13].length()-2);
+		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_binance_f_order_history_create(\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%.15s\",\"%.2s\",\"%.13s\")",
+		cv_ts_order->account,
+		exchange_data[0].c_str(),
+		exchange_data[1].c_str(),
+		exchange_data[2].c_str(),
+		exchange_data[3].c_str(),
+		exchange_data[4].c_str(),
+		exchange_data[5].c_str(),
+		exchange_data[6].c_str(),
+		time_str,
+		exchange_data[8].c_str(),
+		exchange_data[3].c_str(),
+		exchange_data[9].c_str(),
+		exchange_data[10].c_str(),
+		exchange_data[11].c_str(),
+		cv_ts_order->client_ip,
+		cv_ts_order->agent_id,
+		cv_ts_order->seq_id);
+	}
 
-	exchange_data[14] = (*jtable)["stopPrice"].dump();
-	exchange_data[14] = exchange_data[14].substr(1, exchange_data[14].length()-2);
-
-	exchange_data[15] = (*jtable)["updateTime"].dump();
-	exchange_data[15] = exchange_data[15].substr(0, exchange_data[15].length());
-
-	time_t tt_time = atol(exchange_data[15].c_str())/1000;
-	char time_str[30];
-	struct tm *tm_time  = localtime(&tt_time);
-	strftime(time_str, 30, "%Y-%m-%d %H:%M:%S", tm_time);
-
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20binance_order_history%%20set%%20exchange=%27BINANCE%27,account=%%27%s%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%.19s%%27,match_qty=%%27%s%%27,serial_no=%%27%s%%27,stop_price=%%27%s%%27,order_price=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.30s%%27,trader=%%27%.20s%%27,update_user=USER()",
-		exchange_data[2].c_str(), exchange_data[0].c_str(), exchange_data[1].c_str(), exchange_data[13].c_str(),
-		exchange_data[6].c_str(), exchange_data[11].c_str(), exchange_data[3].c_str(), time_str,
-		exchange_data[7].c_str(), exchange_data[4].c_str(), exchange_data[14].c_str(), exchange_data[5].c_str(),
-		cv_ts_order->sub_acno_id, cv_ts_order->strategy_name, cv_ts_order->username);
-
-	if(option == OPT_DELETE) {
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=update%%20binance_order_history%%20set%%20order_status=%%27%s%%27,match_qty=%%27%s%%27%%20where%%20order_no=%%27%s%%27", exchange_data[3].c_str(), exchange_data[7].c_str(), exchange_data[0].c_str());
+	if(option == OPT_DELETE)
+	{
+                sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_binance_order_history_modify(\"%s\",\"%s\",NULL,NULL,NULL,NULL,NULL,\"closed\",NULL,NULL,NULL,NULL,NULL)",
+                cv_ts_order->account,
+                cv_ts_order->order_bookno);
 	}
 
 	for(int i=0 ; i<strlen(insert_str) ; i++)
@@ -1171,11 +1179,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
 	curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
-	printf("================insert_str\n%s\n==============", insert_str);
-#ifdef DEBUG
-	printf("================insert_str\n%s\n==============", insert_str);
-	printf("================response\n%s\n===============\n", response.c_str());
-#endif
+	printf("[UpdateBinanceOrderHistory] %s", insert_str);
 	return true;
 }
 
@@ -1416,24 +1420,8 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 		{
 			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth1.c_str());
 		}
-#if 0
-		if(atoi(m_request_remain.c_str()) < 20 && atoi(m_request_remain.c_str()) > 10)
-		{
-			printf("sleep 1 second for delay submit (%s)\n", m_request_remain.c_str());
-			sleep(1);
-		}
-		if(atoi(m_request_remain.c_str()) <= 10)
-		{
-			printf("sleep 2 second for delay submit (%s)\n", m_request_remain.c_str());
-			sleep(2);
-		}
-#endif
 		res = curl_easy_perform(m_curl);
 
-#ifdef DEBUG
-		printf("apikey_str = %s\n", apikey_str);
-		printf("execution_str = %s\n", execution_str);
-#endif
 		printf("\n=========order response==========\n%s\n=================================\n", response.c_str());
 
 		if(res != CURLE_OK)
@@ -1579,7 +1567,7 @@ bool CCVTandemDAO::OrderSubmit_FTX(struct CV_StructTSOrder cv_ts_order, int nToS
 
 			if(pWriteQueueDAO)
 			{
-				FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
+				//FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
 				pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
 				pWriteQueueDAO->TriggerWakeUpEvent();
 				SetStatus(tsServiceOn);
@@ -1614,7 +1602,6 @@ bool CCVTandemDAO::LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv
 
 		exchange_data[3] = (*jtable)["result"]["price"].dump();
 		exchange_data[3] = exchange_data[3].substr(0, exchange_data[3].length());
-
 		if(exchange_data[3] == "null")
 			exchange_data[3] = "0";
 
@@ -1645,28 +1632,6 @@ bool CCVTandemDAO::LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv
 		exchange_data[11] = (*jtable)["result"]["clientId"].dump();
 		exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
 
-#if 0
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20ftx_order_history%%20set%%20exchange=%%27FTX%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_price=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_price=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27,update_user=USER(),source_ip=%%27%.15s%%27,agent_id=%%27%.2s%%27,seq_id=%%27%.13s%%27,account=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.20s%%27,trader=%%27%.20s%%27",
-		exchange_data[0].c_str(),
-		exchange_data[1].c_str(),
-		exchange_data[2].c_str(),
-		exchange_data[3].c_str(),
-		exchange_data[4].c_str(),
-		exchange_data[5].c_str(),
-		exchange_data[6].c_str(),
-		exchange_data[7].c_str(),
-		exchange_data[8].c_str(),
-		exchange_data[9].c_str(),
-		exchange_data[10].c_str(),
-		exchange_data[11].c_str(),
-		cv_ts_order->client_ip,
-		cv_ts_order->agent_id,
-		cv_ts_order->seq_id,
-		cv_ts_order->account,
-		cv_ts_order->sub_acno_id,
-		cv_ts_order->strategy_name,
-		cv_ts_order->username);
-#endif
 		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_ftx_order_history_create(\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%.15s\",\"%.2s\",\"%.13s\")",
 		cv_ts_order->account,
 		exchange_data[0].c_str(),
@@ -1683,16 +1648,14 @@ bool CCVTandemDAO::LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv
 		exchange_data[11].c_str(),
 		cv_ts_order->client_ip,
 		cv_ts_order->agent_id,
-		cv_ts_order->seq_id,
-		cv_ts_order->sub_acno_id,
-		cv_ts_order->strategy_name,
-		cv_ts_order->username);
+		cv_ts_order->seq_id);
 
 	}
 
 	if(option == OPT_DELETE)
 	{
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_ftx_order_history_modify_20200609(\"%s\",\"%s\",NULL,NULL,NULL,NULL,NULL,\"closed\",NULL,NULL,NULL,NULL,NULL)",
+		sprintf(insert_str,
+			"https://127.0.0.1:2012/mysql/?query=call%%20sp_ftx_order_history_modify_20200609(\"%s\",\"%s\",NULL,NULL,NULL,NULL,NULL,\"closed\",NULL,NULL,NULL,NULL,NULL)",
 		cv_ts_order->account,
 		cv_ts_order->order_bookno);
 	}
@@ -2300,7 +2263,7 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 
 			if(pWriteQueueDAO)
 			{
-				FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
+				//FprintfStderrLog("GET_WRITEQUEUEDAO", -1, (unsigned char*)&m_tandem_reply ,sizeof(m_tandem_reply));
 				pWriteQueueDAO->SetReplyMessage((unsigned char*)&m_tandem_reply, sizeof(m_tandem_reply));
 				pWriteQueueDAO->TriggerWakeUpEvent();
 				SetStatus(tsServiceOn);
@@ -2323,9 +2286,15 @@ bool CCVTandemDAO::LogOrderReplyDB_Bybit(json* jtable, struct CV_StructTSOrder* 
 
 	string response, exchange_data[30];
 
+	cout << endl << endl << *jtable << endl << endl;
+
 	if(option == OPT_ADD)
 	{
 		exchange_data[0] = (*jtable)["result"]["order_id"].dump();
+		if(exchange_data[0] == "null")
+		{
+			exchange_data[0] = (*jtable)["result"]["stop_order_id"].dump();
+		}
 		exchange_data[0] = exchange_data[0].substr(1, exchange_data[0].length()-2);
 
 		exchange_data[1] = (*jtable)["result"]["symbol"].dump();
@@ -2339,87 +2308,67 @@ bool CCVTandemDAO::LogOrderReplyDB_Bybit(json* jtable, struct CV_StructTSOrder* 
 		if(exchange_data[3] == "null")
 			exchange_data[3] = "0";
 
+		exchange_data[4] = (*jtable)["result"]["stop_px"].dump();
+		exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
+		if(exchange_data[4] == "null")
+			exchange_data[4] = "0";
+
+		exchange_data[5] = (*jtable)["result"]["qty"].dump();
+		exchange_data[5] = exchange_data[5].substr(0, exchange_data[5].length());
+
+		exchange_data[6] = (*jtable)["result"]["order_type"].dump();
+		exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
+
+		exchange_data[7] = (*jtable)["result"]["order_status"].dump();
+		exchange_data[7] = exchange_data[7].substr(1, exchange_data[7].length()-2);
+
+		exchange_data[8] = (*jtable)["result"]["created_at"].dump();
+		exchange_data[8] = exchange_data[8].substr(1, 19);
+		exchange_data[8][10] = ' ';
+
 		exchange_data[9] = (*jtable)["result"]["price"].dump();
 		exchange_data[9] = exchange_data[9].substr(0, exchange_data[9].length());
 		if(exchange_data[9] == "null")
 			exchange_data[9] = "0";
 
-		exchange_data[4] = (*jtable)["result"]["qty"].dump();
-		exchange_data[4] = exchange_data[4].substr(0, exchange_data[4].length());
-
-		exchange_data[5] = (*jtable)["result"]["order_type"].dump();
-		exchange_data[5] = exchange_data[5].substr(1, exchange_data[5].length()-2);
-
-		exchange_data[6] = (*jtable)["result"]["order_status"].dump();
-		exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
-
-		exchange_data[7] = (*jtable)["result"]["created_at"].dump();
-		exchange_data[7] = exchange_data[7].substr(1, 19);
-		exchange_data[7][10] = ' ';
-
-		exchange_data[8] = (*jtable)["result"]["price"].dump();
-		exchange_data[8] = exchange_data[8].substr(0, exchange_data[8].length());
-		if(exchange_data[8] == "null")
-			exchange_data[8] = "0";
-
 		exchange_data[10] = (*jtable)["result"]["cum_exec_qty"].dump();
 		exchange_data[10] = exchange_data[10].substr(0, exchange_data[10].length());
+		if(exchange_data[10] == "null")
+			exchange_data[10] = "0";
 
 		exchange_data[11] = (*jtable)["result"]["leaves_qty"].dump();
 		exchange_data[11] = exchange_data[11].substr(0, exchange_data[11].length());
+		if(exchange_data[11] == "null")
+			exchange_data[11] = "0";
 
 		exchange_data[12] = (*jtable)["result"]["order_link_id"].dump();
 		exchange_data[12] = exchange_data[12].substr(1, exchange_data[12].length()-2);
 
-#if 0
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=insert%%20into%%20bybit_order_history%%20set%%20exchange=%%27BYBIT%%27,order_no=%%27%s%%27,symbol=%%27%s%%27,side=%%27%s%%27,order_price=%%27%s%%27,order_qty=%%27%s%%27,order_type=%%27%s%%27,order_status=%%27%s%%27,order_time=%%27%s%%27,match_price=%%27%s%%27,match_qty=%%27%s%%27,remaining_qty=%%27%s%%27,remark=%%27%s%%27,update_user=USER(),source_ip=%%27%.15s%%27,agent_id=%%27%.2s%%27,seq_id=%%27%.13s%%27,account=%%27%s%%27,accounting_no=%%27%.7s%%27,strategy=%%27%.20s%%27,trader=%%27%.20s%%27",
-		exchange_data[0].c_str(),
-		exchange_data[1].c_str(),
-		exchange_data[2].c_str(),
-		exchange_data[3].c_str(),
-		exchange_data[4].c_str(),
-		exchange_data[5].c_str(),
-		exchange_data[6].c_str(),
-		exchange_data[7].c_str(),
-		exchange_data[8].c_str(),
-		exchange_data[9].c_str(),
-		exchange_data[10].c_str(),
-		exchange_data[11].c_str(),
-		cv_ts_order->client_ip,
-		cv_ts_order->agent_id,
-		cv_ts_order->seq_id,
-		cv_ts_order->account,
-		cv_ts_order->sub_acno_id,
-		cv_ts_order->strategy_name,
-		cv_ts_order->username);
-#endif
 		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_bybit_order_history_create(\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%.15s\",\"%.2s\",\"%.13s\")",
 		cv_ts_order->account,
 		exchange_data[0].c_str(),
 		exchange_data[1].c_str(),
 		exchange_data[2].c_str(),
 		exchange_data[3].c_str(),
-		exchange_data[9].c_str(),
-		exchange_data[4].c_str(),
 		exchange_data[5].c_str(),
 		exchange_data[6].c_str(),
 		exchange_data[7].c_str(),
 		exchange_data[8].c_str(),
+		exchange_data[4].c_str(),
+		exchange_data[9].c_str(),
 		exchange_data[10].c_str(),
 		exchange_data[11].c_str(),
 		exchange_data[12].c_str(),
 		cv_ts_order->client_ip,
 		cv_ts_order->agent_id,
-		cv_ts_order->seq_id,
-		cv_ts_order->sub_acno_id,
-		cv_ts_order->strategy_name,
-		cv_ts_order->username);
+		cv_ts_order->seq_id);
 
 	}
 
 	if(option == OPT_DELETE)
 	{
-		sprintf(insert_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_bybit_order_history_modify(\"%s\",\"%.36s\",NULL,NULL,NULL,NULL,NULL,\"Cancelled\",NULL,NULL,NULL,NULL,NULL,NULL)",
+		sprintf(insert_str,
+			"https://127.0.0.1:2012/mysql/?query=call%%20sp_bybit_order_history_modify(\"%s\",\"%.36s\",NULL,NULL,NULL,NULL,NULL,\"Cancelled\",NULL,NULL,NULL,NULL,NULL,NULL)",
 		cv_ts_order->account,
 		cv_ts_order->order_bookno);
 	}
@@ -2429,7 +2378,9 @@ bool CCVTandemDAO::LogOrderReplyDB_Bybit(json* jtable, struct CV_StructTSOrder* 
 		if(insert_str[i] == ' ')
 			insert_str[i] = '+';
 	}
-	printf("\n\n%s\n\n", insert_str);
+
+	printf("[UpdateOrderHistory]%s\n", insert_str);
+
 	CURL *curl = curl_easy_init();
 	curl_easy_setopt(curl, CURLOPT_URL, insert_str);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, getResponse);
@@ -2437,6 +2388,8 @@ bool CCVTandemDAO::LogOrderReplyDB_Bybit(json* jtable, struct CV_StructTSOrder* 
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
 	curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
-	printf("================response\n%s\n===============\n", response.c_str());
+
+	printf("[response]%s\n", response.c_str());
+
 	return true;
 }

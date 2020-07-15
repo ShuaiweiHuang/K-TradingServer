@@ -346,7 +346,7 @@ void CCVServer::OnData_Order_Reply(client *c, websocketpp::connection_hdl con, c
 		if (jtable["table"] != "margin" && jtable["table"] != "position" && jtable["cv_exchange"].dump() != "null") {
 
 			if (jtable["cv_exchange"] == "BINANCE" || jtable["cv_exchange"] == "BITMEX" || jtable["cv_exchange"] == "FTX" ||
-			    jtable["cv_exchange"] == "BYBIT") {
+			    jtable["cv_exchange"] == "BYBIT" || jtable["cv_exchange"] == "BINANCE_F") {
 
 				pServer->Transaction_Update(&jtable);
 

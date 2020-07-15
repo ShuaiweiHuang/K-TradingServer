@@ -550,16 +550,15 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 				tt_time = atol(m_tandem_reply.transactTime)/1000;
 				tm_time  = localtime(&tt_time);
 				strftime(m_tandem_reply.transactTime, sizeof(m_tandem_reply.transactTime), "%Y-%m-%d %H:%M:%S", tm_time);
-
 				if(cv_ts_order.trade_type[0] == '0')
 					sprintf(m_tandem_reply.reply_msg, "submit order success - [BINANCE:%.200s][%.7s|%.30s|%.20s]",
-						jtable["text"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+						jtable["clientOrderId"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 				if(cv_ts_order.trade_type[0] == '3')
 					sprintf(m_tandem_reply.reply_msg, "change qty success - [BINANCE:%.200s][%.7s|%.30s|%.20s]",
-						jtable["text"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+						jtable["clientOrderId"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 				if(cv_ts_order.trade_type[0] == '4')
 					sprintf(m_tandem_reply.reply_msg, "change price success - [BINANCE:%.200s][%.7s|%.30s|%.20s]",
-						jtable["text"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
+						jtable["clientOrderId"].dump().c_str(),cv_ts_order.sub_acno_id, cv_ts_order.strategy_name, cv_ts_order.username);
 
 				LogOrderReplyDB_Binance(&jtable, &cv_ts_order, (cv_ts_order.trade_type[0] == '0') ? OPT_ADD : OPT_DELETE);
 			}

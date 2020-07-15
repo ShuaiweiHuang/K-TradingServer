@@ -306,8 +306,10 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	int size_int = stof(size_str) * SCALE_VOL_BINANCE_F;
 	size_str = to_string(size_int);
 
-	sprintf(netmsg, "01_ID=%s.BINANCE_F,ECC.1=%d,Time=%s,C=%.2f,V=%s,TC=%d,EPID=%s,ECC.2=%d,",
-		symbol_str.c_str(), tick_count_binance_F, time_str.c_str(), stof(price_str), size_str.c_str(), tick_count_binance_F, pClients->m_strEPIDNum.c_str(), tick_count_binance_F);
+	sprintf(netmsg, "01_ID=%s.BINANCE_F,ECC.1=%d,Time=%s,C=%.2f,V=%s,TC=%d,EPID=%s,ECC.2=%d,EPOCH=%s.%s,",
+		symbol_str.c_str(), tick_count_binance_F, time_str.c_str(), stof(price_str), size_str.c_str(), tick_count_binance_F, pClients->m_strEPIDNum.c_str(), tick_count_binance_F, jtable["data"]["T"].dump().substr(0, 10).c_str(), jtable["data"]["T"].dump().substr(10, 3).c_str() );
+
+
 	tick_count_binance_F++;
 	int msglen = strlen(netmsg);
 	netmsg[strlen(netmsg)] = GTA_TAIL_BYTE_1;
@@ -316,8 +318,8 @@ void CCVServer::OnData_Binance_F(client* c, websocketpp::connection_hdl con, cli
 	assert(pClients);
 	pQueueDAO->SendData(netmsg, strlen(netmsg));
 #ifdef DEBUG
-	cout << setw(4) << jtable << endl;
 	cout << netmsg << endl;
+	cout << setw(4) << jtable << endl;
 #endif
 }
 

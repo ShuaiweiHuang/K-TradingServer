@@ -2076,7 +2076,12 @@ bool CCVTandemDAO::OrderSubmit_Bybit(struct CV_StructTSOrder cv_ts_order, int nT
 					order.side = buysell_str;
 					order.symbol = cv_ts_order.symbol_name;
 					order.price = doprice;
-					order.base_price = doprice;
+
+					if(buysell_str == "Buy")
+						order.base_price = dtprice - 1;
+					else
+						order.base_price = dtprice + 1;
+
 					order.stop_px = dtprice;
 					sprintf(commandstr, "%.13s%.6s%.13s", cv_ts_order.key_id, cv_ts_order.sub_acno_id+1,
 						jtable_query_strategy["strategy_no"].dump().substr(1, jtable_query_strategy["strategy_no"].dump().length()-2).c_str()+1);
@@ -2316,6 +2321,15 @@ bool CCVTandemDAO::LogOrderReplyDB_Bybit(json* jtable, struct CV_StructTSOrder* 
 		exchange_data[5] = exchange_data[5].substr(0, exchange_data[5].length());
 
 		exchange_data[6] = (*jtable)["result"]["order_type"].dump();
+
+		if((*jtable)["result"]["stop_order_type"].dump() != "null")
+		{
+			if((exchange_data[6]) == "\"Market\"")
+				exchange_data[6] = "\"StopMarket\"";
+			else
+				exchange_data[6] = "\"StopLimit\"";
+		}
+
 		exchange_data[6] = exchange_data[6].substr(1, exchange_data[6].length()-2);
 
 		exchange_data[7] = (*jtable)["result"]["order_status"].dump();

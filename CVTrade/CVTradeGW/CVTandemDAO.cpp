@@ -1130,7 +1130,7 @@ bool CCVTandemDAO::LogOrderReplyDB_Binance(json* jtable, struct CV_StructTSOrder
 		exchange_data[10] = to_string(atoi((*jtable)["origQty"].dump().c_str()) - atoi((*jtable)["cumQty"].dump().c_str()));
 
 		exchange_data[11] = (*jtable)["clientOrderId"].dump();
-		exchange_data[11] = exchange_data[4].substr(1, exchange_data[4].length()-2);
+		exchange_data[11] = exchange_data[11].substr(1, exchange_data[11].length()-2);
 
 
 		time_t tt_time = atol(exchange_data[7].c_str())/1000;

@@ -18,7 +18,7 @@
 #define END_POS		9
 
 #define QUEUELOCALSIZE	1000
-#define MERGE_COUNT 5
+#define MERGE_COUNT 1
 
 using namespace std;
 

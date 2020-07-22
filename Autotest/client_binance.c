@@ -209,7 +209,7 @@ void* test_run(void *arg)
 			ts_order.header_bit[0] = 0x1b;
 			ts_order.header_bit[1] = 0x40;
 			memcpy(ts_order.sub_acno_id, cp_account, 7);
-			memcpy(ts_order.strategy_name, "MACD-1234\0", 30);
+			memcpy(ts_order.strategy_name, "KEANU_BTCUSDT_BINANCE\0", 30);
 			memcpy(ts_order.agent_id, "MC", 2);
 			memcpy(ts_order.broker_id, "9801", 4);
 			memcpy(ts_order.exchange_id, "BINANCE_F\0", 10);

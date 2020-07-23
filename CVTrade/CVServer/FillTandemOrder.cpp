@@ -45,7 +45,6 @@ long FillTandemBitcoinOrderFormat(string& strService,
 	CCVClients* pClients = CCVClients::GetInstance();
 	assert(pClients);
 	memcpy(ucvts.cv_ts_order.client_ip, pIP, IPLEN);
-	memcpy(ucvts.cv_ts_order.username, pUsername, 20); 
 	memcpy(ucvts.cv_ts_order.exchange_id, ucv.cv_order.exchange_id, 10);
 	memcpy(ucvts.cv_ts_order.seq_id, ucv.cv_order.seq_id, 13); 
 

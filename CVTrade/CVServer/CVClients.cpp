@@ -249,7 +249,7 @@ void CCVClients::CheckOnlineClientVector()
 		else
 		{
 			if(!counter_for_RCLoad%300) // every 5 mins
-				m_vOnlineClient[index]->LoadRiskControl((m_vOnlineClient[index])->m_logon_type.logon_id);
+				m_vOnlineClient[index]->LoadRiskControl((m_vOnlineClient[index])->m_logon_type.logon_id, 0);
 			index++;
 		}
 	}

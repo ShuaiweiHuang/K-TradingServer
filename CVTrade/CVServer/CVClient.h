@@ -70,6 +70,8 @@ struct RiskctlData
 	int riskctl_side_limit_current;
 	int riskctl_cum_limit;
 	int riskctl_time_limit;
+	int riskctl_order_timestamp[MAX_TIME_LIMIT];
+	int riskctl_order_index;
 };
 
 class CCVClient: public CCVThread
@@ -104,8 +106,8 @@ class CCVClient: public CCVThread
 		void ReplyAccountNum();
 
 	public:
-		void LoadRiskControl(char* p_username);
-		void LoadRiskControlSubuser(char* p_username);
+		void LoadRiskControl(char* p_username, int initial);
+		void LoadRiskControlSubuser(char* p_username, int initial);
 		CCVClient(struct TCVClientAddrInfo &ClientAddrInfo, string strService);
 		TCVClientStauts GetStatus();
 		virtual ~CCVClient();

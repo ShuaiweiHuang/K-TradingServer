@@ -268,7 +268,7 @@ void* CCVClient::Run()
 					{
 						SetStatus(csOnline);
 						ReplyAccountNum();
-						LoadRiskControl(m_logon_type.logon_id);
+						LoadRiskControl(m_logon_type.logon_id, 1);
 						m_pHeartbeat->Start();
 					}
 					else//logon failed
@@ -411,33 +411,31 @@ void* CCVClient::Run()
 						order_qty = atoi(Qty);
 						if(cv_order.cv_order.trade_type[0] == '0') {
 
-							m_order_timestamp[m_order_index] = (unsigned)time(NULL);
+							m_iter->second.riskctl_order_timestamp[m_iter->second.riskctl_order_index] = (unsigned)time(NULL);
 
 							m_riskctl_time_limit_current = 0;
 
 							for(int i=0 ; i<MAX_TIME_LIMIT ; i++)
 							{
-#ifdef DEBUG
-								printf("time = %u\n", m_order_timestamp[i]);
-#endif
-								if(((unsigned)time(NULL) - m_order_timestamp[i]) < 60)
+								//printf("time = %u\n", m_iter->second.riskctl_order_timestamp[i]);
+								if(((unsigned)time(NULL) - m_iter->second.riskctl_order_timestamp[i]) < 60)
 									m_riskctl_time_limit_current++;
 							}
 							if(m_riskctl_time_limit_current > m_iter->second.riskctl_time_limit) {
-								m_order_timestamp[m_order_index] = 0;
+								m_iter->second.riskctl_order_timestamp[m_iter->second.riskctl_order_index] = 0;
 								lOrderNumber = RC_TIME_ERROR;
 							}
 							else {
-								m_order_index++;
-								m_order_index %= MAX_TIME_LIMIT;
+								m_iter->second.riskctl_order_index++;
+								m_iter->second.riskctl_order_index %= MAX_TIME_LIMIT;
 							}
 							printf("trade rate limit = %d\n", m_riskctl_time_limit_current);
 						}
 
-
+#ifdef DEBUG
 						printf("\n\n\nQty = %s, order_qty = %d, order_limit = %d, side_limit = %d\n",
 							Qty, order_qty, m_iter->second.riskctl_limit, m_iter->second.riskctl_side_limit);
-
+#endif
 
 #ifdef RISKCTL
 						if(order_qty >= m_iter->second.riskctl_limit)
@@ -477,22 +475,26 @@ void* CCVClient::Run()
 						memcpy(error_message, pErrorMessage->GetErrorMessage(-errorcode),strlen(pErrorMessage->GetErrorMessage(-errorcode)));
 
 						if(errorcode == -RC_LIMIT_ERROR) {
-							sprintf(replymsg.reply_msg, "[Server:%s(current:%d/limit:%d)]",
+							sprintf(replymsg.reply_msg, "[Server:%s(order qty:%d/limit:%d)]",
 								error_message, order_qty, m_iter->second.riskctl_limit);
 						}
+
 						if(errorcode == -RC_SIDE_ERROR)
 						{
-							sprintf(replymsg.reply_msg, "[Server:%s(current:%d/limit:%d)]",
+							sprintf(replymsg.reply_msg, "[Server:%s(order qty:%d/current:%d/limit:%d)]",
 								error_message,
+								order_qty,
 								m_iter->second.riskctl_side_limit_current,
 								m_iter->second.riskctl_side_limit);
 						}
+
 						if(errorcode == -RC_TIME_ERROR) {
 							sprintf(replymsg.reply_msg, "[Server:%s(current:%d/limit:%d)]", 
 								error_message,
 								m_riskctl_time_limit_current,
 								m_iter->second.riskctl_time_limit);
 						}
+
 						if(errorcode == -PR_ERROR) {
 							sprintf(replymsg.reply_msg, "[Server:%s(price:%.9s)]", replymsg.reply_msg, cv_order.cv_order.order_price);
 						}
@@ -678,7 +680,7 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb, void *use
 		return size * nmemb;
 }
 
-void CCVClient::LoadRiskControl(char* p_username)
+void CCVClient::LoadRiskControl(char* p_username, int initial)
 {
 	json jtable_query_user;
 	CURLcode res;
@@ -689,7 +691,7 @@ void CCVClient::LoadRiskControl(char* p_username)
 	unsigned int mac_length = 0;
 	char query_str[1024];
 
- 	LoadRiskControlSubuser(p_username);
+ 	LoadRiskControlSubuser(p_username, initial);
 
 	if(!curl)
 	{
@@ -735,12 +737,12 @@ void CCVClient::LoadRiskControl(char* p_username)
 		{
 			order_user_str = jtable_query_user[i]["data1"].dump();
 			order_user_str.erase(remove(order_user_str.begin(), order_user_str.end(), '\"'), order_user_str.end());
- 			LoadRiskControlSubuser((char*)order_user_str.c_str());
+ 			LoadRiskControlSubuser((char*)order_user_str.c_str(), initial);
 		}
 	}
 	curl_easy_cleanup(curl);
 }
-void CCVClient::LoadRiskControlSubuser(char* p_username)
+void CCVClient::LoadRiskControlSubuser(char* p_username, int initial)
 {
 	json jtable_query_limit;
 	CURLcode res;
@@ -752,7 +754,6 @@ void CCVClient::LoadRiskControlSubuser(char* p_username)
 	char query_str[1024];
 	m_riskctl_side_limit_current = 0;
 	m_riskctl_time_limit_current = 0;
-	m_order_index = 0;
 
 	if(!curl)
 	{
@@ -797,8 +798,10 @@ void CCVClient::LoadRiskControlSubuser(char* p_username)
 
 		for(int i=0 ; i<jtable_query_limit[0].size() ; i++)
 		{
-			rcdata.riskctl_side_limit_current = 0;
+			if(initial)
+				rcdata.riskctl_order_index = 0;
 
+			rcdata.riskctl_side_limit_current = 0;
 			unit_str			= jtable_query_limit[0][i]["unit"].dump();
 			strategy_str			= jtable_query_limit[0][i]["strategy"].dump();
 			exchange_str			= jtable_query_limit[0][i]["exchange"].dump();
@@ -832,9 +835,10 @@ void CCVClient::LoadRiskControlSubuser(char* p_username)
 			m_mRiskControl.insert(pair<string, struct RiskctlData>((accno_str+strategy_str), rcdata));
 		}
 
+		printf("Strategy\t\t\t\tSingle limit\tSide limit\tCumulative limit\tfrequency limit\n");
 		for(iter = m_mRiskControl.begin(); iter != m_mRiskControl.end() ; iter++)
 		{
-			printf("[RiskCtl List] %s\t\t\t%d\t%d\t%d\t%d\n",
+		printf("%s\t\t\t\t%d\t\t%d\t\t%d\t\t%d\n",
 				iter->first.c_str(),
 				iter->second.riskctl_limit,
 				iter->second.riskctl_side_limit,

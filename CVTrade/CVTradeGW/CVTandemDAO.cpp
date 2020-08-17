@@ -1654,7 +1654,7 @@ bool CCVTandemDAO::LogOrderReplyDB_FTX(json* jtable, struct CV_StructTSOrder* cv
 	if(option == OPT_DELETE)
 	{
 		sprintf(insert_str,
-			"https://127.0.0.1:2012/mysql/?query=call%%20sp_ftx_order_history_modify_20200609(\"%s\",\"%s\",NULL,NULL,NULL,NULL,NULL,\"closed\",NULL,NULL,NULL,NULL,NULL)",
+			"https://127.0.0.1:2012/mysql/?query=call%%20sp_ftx_order_history_modify(\"%s\",\"%s\",NULL,NULL,NULL,NULL,NULL,\"closed\",NULL,NULL,NULL,NULL,NULL)",
 		cv_ts_order->account,
 		cv_ts_order->order_bookno);
 	}

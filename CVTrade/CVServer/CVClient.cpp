@@ -761,7 +761,7 @@ void CCVClient::LoadRiskControlSubuser(char* p_username, int initial)
 		return;
 	}
 
-	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_risk_control_search(\"%s\")", p_username);
+	sprintf(query_str, "https://127.0.0.1:2012/mysql/?query=call%%20sp_risk_control_search(\"%s\",\"\",\"\")", p_username);
 
 	printf("[RISK_QUERY] %s\n", query_str);
 	curl_easy_setopt(curl, CURLOPT_URL, query_str);

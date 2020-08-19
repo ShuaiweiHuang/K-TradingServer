@@ -470,7 +470,7 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 		{
 			curl_easy_setopt(m_curl, CURLOPT_INTERFACE, g_TandemEth1.c_str());
 		}
-
+#if 0
 		if(atoi(m_request_remain.c_str()) < 20 && atoi(m_request_remain.c_str()) > 10)
 		{
 			printf("sleep 1 second for delay submit (%s)\n", m_request_remain.c_str());
@@ -481,7 +481,7 @@ bool CCVTandemDAO::OrderSubmit_Binance(struct CV_StructTSOrder cv_ts_order, int 
 			printf("sleep 2 second for delay submit (%s)\n", m_request_remain.c_str());
 			sleep(2);
 		}
-
+#endif
 
 		res = curl_easy_perform(m_curl);
 #ifdef DEBUG
